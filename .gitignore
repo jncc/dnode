@@ -1,0 +1,13 @@
+
+#npm
+node_modules/
+npm-debug.log
+
+# build output
+built/
+
+# Elastic Beanstalk
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+

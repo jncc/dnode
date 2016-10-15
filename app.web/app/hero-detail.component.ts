@@ -1,5 +1,5 @@
 
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Location } from '@angular/common';
 
@@ -19,6 +19,8 @@ export class HeroDetailComponent implements OnInit {
     private location:    Location
   ) { }
 
+  hero: Hero
+
   ngOnInit() {
     // each time params (observable) changes...
     this.route.params.forEach((params: Params) => {
@@ -28,10 +30,11 @@ export class HeroDetailComponent implements OnInit {
     });
   }
 
+  save() {
+    this.heroService.update(this.hero).then(() => this.goBack());
+  }
+
   goBack() {
     this.location.back();
   }
-
-  @Input()
-  hero: Hero
 }

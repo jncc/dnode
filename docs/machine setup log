@@ -19,3 +19,10 @@ git clone https://github.com/jncc/dnode.git
 cd dnode/luigi
 
 python luigitutorial.py --local-scheduler NameSubstituter --name samuel
+
+sudo luigid --background
+
+(Add port exception for 8082 to aws sec groups)
+
+http://52.50.101.63:8082/static/visualiser/index.html (hurah! should see the luigi web interface)
+

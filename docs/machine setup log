@@ -26,3 +26,5 @@ sudo luigid --background
 
 http://52.50.101.63:8082/static/visualiser/index.html (hurah! should see the luigi web interface)
 
+python example.py --scheduler-host localhost NameSubstituter --name Felix
+

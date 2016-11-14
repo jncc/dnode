@@ -23,3 +23,5 @@ class ProcessS3File(luigi.Task):
             text = text.replace('World', self.name)
             outfile.write(text)
 
+if __name__ == '__main__':
+    luigi.run()

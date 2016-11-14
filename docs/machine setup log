@@ -1,2 +1,18 @@
 sudo apt-get update && sudo apt-get -y upgrade
 sudo apt-get install python-pip
+pip -V # version
+pip install --upgrade pip
+pip install tornado
+sudo pip install luigi
+
+sudo pip install awscli --ignore-installed six
+
+$ aws configure
+AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
+AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+Default region name [None]: eu-west-1
+Default output format [None]: ENTER
+
+
+
+

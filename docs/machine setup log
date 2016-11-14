@@ -14,5 +14,8 @@ Default region name [None]: eu-west-1
 Default output format [None]: ENTER
 
 
+git clone https://github.com/jncc/dnode.git 
 
+cd dnode/luigi
 
+python luigitutorial.py --local-scheduler NameSubstituter --name samuel

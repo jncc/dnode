@@ -11,6 +11,8 @@ class MyS3File(luigi.ExternalTask):
 
 class ProcessS3File(luigi.Task):
 
+    name = luigi.Parameter()
+
     def requires(self):
         return MyS3File()
 

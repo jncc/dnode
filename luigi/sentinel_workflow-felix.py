@@ -1,82 +1,44 @@
-import luigi
-from luigi.s3 import S3Target
 
-class YesterdaysAvailableListTask(luigi.ExternalTask):    
-    yesterday = luigi.Parameter()
-    def output(self):
-	    return S3Target('s3://jncc-data/sentinel-' + yesterday + 'example/hello.txt')
-    
+SentinelDownloadTask - using database
+=====================================
 
-class SentinelListTask(luigi.Task)
-
-
-# SentinelListTask
-# ================
-# SentinelListTask/2016-11-13/available.json  (files to download)
-# query esa hub for all products ingested in last 2 weeks (in available.json)
-# query catalog for all products in that set that have been downloaded and subtract
+Get recent available products
+available = Intersect with the catalogue database (where location isblank and attempts < 20)
+(Write a log with SentinelDownloadTask/20161114114704/files-to-download.txt)
+Inserts new records or increments attempts count on existing records
+Foreach file in available
+    Increment attempt
+    Download the file to S3
+    Update the record with availability
 
 
-let window = now - 2 weeks 
-let esa = esaListService
-
-products = esa.GetProductMetadata(ingestedFrom:window.Start, ingestedTo:window.End)
-
-let catalog = eodipCatalogService
-
-for each product in products
-    if catalog.contains(product.id)
-        products.remove(product)
-
-write products to "SentinelListTask/" + date.today + "/available.json" on s3 pot
-
-# available.json
-# [{"id":"dd","title":"S1_DDDD"},{"id":"dd","title":"S1_DDDE"}]
-
-# notes:
-# Handles files taht won't download, they will fall outside of the moving window
-# Potentially means getting a large set of data from esa 
-# Won't continue failed downloads if the esa metadata service is down. The list depends on esa being up.
+Disadvantages:
+lots of little database accesses to the live catalogue system over time
+The changes to the catalogue database are not isolated to a single transaction
+Ongoing database updates throughout the day.
+Scalability (of catalogue database particularly
 
 
-# 
-# Luigi - SentinelDownloadTask 
-# ====================
-let availableProducts = read("SentinelListTask/" + date.today + "/available.json")
 
-let downloadTask = sentinelDownloader
+SentinelListTask
+=================
+Gets latest available.json e.g. SentinelListTask/2016-11-13/available.json 
 
-for each product in products
-    new downloadTask.download(product)
+Reads last ingestion date from available json
+If this is older than 3 days, fail
 
+Queries ESA for everything after last ingestion date
 
-# downloadTask(product)
-# ====================
-downloadTask(product) 
-    let esa = esaDownloadService
+Queries catalogue database for intersection (NOT IN)
 
-    productZipFile = esa.GetProduct(product.id)
+Makes new available.json for today
 
-    if productZipFile != null
-        write productZipFile to "SentinelRepo/" + product.title
-        product.AddProperty("location") = "SentinelRepo/" + product.title
-        write product to "SentinelDownloadTask/" + date.today + "/" + product.title + ".json"
-    
-
-# "SentinelDownloadTask/" + date.today + "/" + product.title + ".json"
-{"id":"dd","title":"S1_DDDD","location":"s3://sentnel/raw/S1_DDDD.zip"}
-
-# SentinelCatalogTask
-# ====================
-let file = s3FileSystem.GetFileList("SentinelDownloadTask/" + date.today)
-
-let catalog = eodipCatalogService
-
-for each file in files
-    product = s3FileSystem.read(file)
-    catalog.addProduct(product)
-
-
-'
-
+SentinelDownloadTask
+====================
+Foreach file in available
+    Download the file to S3
+    If fails
+        log
+    else 
+        INSERT record into catalogue
 

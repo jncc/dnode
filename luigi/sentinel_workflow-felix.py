@@ -27,6 +27,10 @@ Gets latest available.json e.g. SentinelListTask/2016-11-13/available.json
 Reads last ingestion date from available json
 If this is older than 3 days, fail
 
+Increments attempts??
+
+Removes everything with attempts > 10?? 
+
 Queries ESA for everything after last ingestion date
 
 Queries catalogue database for intersection (NOT IN)

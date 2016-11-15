@@ -22,18 +22,23 @@ Scalability (of catalogue database particularly
 
 SentinelListTask
 =================
+Requires yesterday's available.json
 Gets latest available.json e.g. SentinelListTask/2016-11-13/available.json 
-If this is older than 3 days, fail
-Queries ESA for last 3 weeks
+If latest record is older than 3 days, fail
+Queries ESA from latest record date
+Adds new records to the in-memory available list # don't fail on exception
 Queries catalogue database for intersection (NOT IN)
 Makes new available.json for today
 
 SentinelDownloadTask
 ====================
+Requires today's available.json
 Foreach file in available
     Download the file to S3
     If fails
         log
     else 
         INSERT record into catalogue
+
+$ luigi SentinelDownloadTask --date (%DATE) 
 

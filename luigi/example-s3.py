@@ -5,7 +5,7 @@ class MyS3File(luigi.ExternalTask):
 
     def output(self):
         
-	return S3Target('s3://jncc-data/example/hello.txt')
+	return S3Target('s3://jncc-data/example/helloXtxt')
 #	return S3Target('s3://s3-eu-west-1/jncc-data/example/hello.txt')
 # s3-eu-west-1.amazonaws.com/eodip/sentinel/S1A_IW_GRDH_1SDV_20151119T175834_20151119T175859_008677_00C566_A3A0.zip
 # https://s3-eu-west-1.amazonaws.com/jncc-data/example/hello.txt

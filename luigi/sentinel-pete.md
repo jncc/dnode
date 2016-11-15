@@ -20,9 +20,20 @@ Scalability (of catalogue database particularly
 
 
 
+SentinelListTask
+=================
+Gets latest available.json e.g. SentinelListTask/2016-11-13/available.json 
+If this is older than 3 days, fail
+Queries ESA for last 3 weeks
+Queries catalogue database for intersection (NOT IN)
+Makes new available.json for today
 
-
-
-
-
+SentinelDownloadTask
+====================
+Foreach file in available
+    Download the file to S3
+    If fails
+        log
+    else 
+        INSERT record into catalogue
 

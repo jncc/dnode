@@ -20,3 +20,7 @@ class ConfigManager:
         password = self.config.get('EsaCredentials','password')
 
         return username + ':' + password
+    
+    def get_temp_path(self):
+        return self.config.get('DownloaderConfig','tempPath')
+        

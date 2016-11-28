@@ -1,0 +1,5 @@
+[DownloaderConfig]
+tempPath = /home/felix/temp/
+[EsaCredentials]
+username = USER
+password = PASSWORD

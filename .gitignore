@@ -11,3 +11,6 @@ built/
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 
+# Python
+*.pyc
+

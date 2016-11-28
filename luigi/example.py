@@ -1,20 +1,22 @@
 import luigi
+from luigi.util import requires
+from luigi.util import inherits
 
 class HelloWorld(luigi.Task):
-    def requires(self):
-        return None
+    
+    name = luigi.Parameter()
+
     def output(self):
         return luigi.LocalTarget('helloworld.txt')
     def run(self):
         with self.output().open('w') as outfile:
             outfile.write('Hello World!\n')
 
+@requires(HelloWorld)
 class NameSubstituter(luigi.Task):
-    
-    name = luigi.Parameter()
 
-    def requires(self):
-        return HelloWorld()
+    # def requires(self):
+    #     return HelloWorld()
 
     def output(self):
         return luigi.LocalTarget(self.input().path + '.name_' + self.name)

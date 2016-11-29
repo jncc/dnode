@@ -2,6 +2,8 @@ import json
 import os
 import zipfile
 import pycurl
+import boto
+import boto.s3
 
 from config_manager import ConfigManager
 
@@ -120,12 +122,12 @@ class ProductDownloader:
                 continue
             
             # transfer to s3
-            product["location"] = __copy_product_to_s3(sourcepath, product["title"])
+            product["location"] = self.__copy_product_to_s3(sourcepath, product["title"])
             if product["location"] = '': 
                 continue
             
             # add metadata to catalog
-            __add_product_to_catalog(product)
+            self.__add_product_to_catalog(product)
 
             downloadedProductCount = downloadedProductCount + 1
 

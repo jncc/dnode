@@ -16,7 +16,7 @@ class ProductListManager:
     def __init__(self):
         self.config = ConfigManager("cfg.ini")
 
-    def get_last_ingestion_date(self, productList):
+    def __get_last_ingestion_date(self, productList):
         topDate = None
 
         for product in productList["products"]:
@@ -26,14 +26,14 @@ class ProductListManager:
 
         return topDate
         
-    def get_search_url(self, lastIngestionDate):
+    def __get_search_url(self, lastIngestionDate):
         ingestionDateString = lastIngestionDate.strftime('%Y-%m-%d') + 'T00:00:00.000Z'
         criteria = {'q': 'ingestiondate:[%s TO NOW] AND footprint:"Intersects(%s)"' % (ingestionDateString, ProductListManager.POLYGON)}
         url = ProductListManager.SEARCH_URL_BASE + '?' + urllib.urlencode(criteria)
 
         return url
 
-    def get_xml_data(self, url):
+    def __get_xml_data(self, url):
         
         rawDataBuffer = StringIO()
 
@@ -52,7 +52,7 @@ class ProductListManager:
 
         return rawDataBuffer.getvalue()
 
-    def add_products_to_list(self, rawProductsData, productList):
+    def __add_products_to_list(self, rawProductsData, productList):
         try:
             root = eTree.fromstring(rawProductsData)
         except eTree.ParseError:
@@ -108,12 +108,12 @@ class ProductListManager:
             productList["products"].append(product)
 
 
-    def collect_product_ids(self, productList):
+    def __collect_product_ids(self, productList):
         productIds = []
         for product in productList["products"]:
             productIds.append(product["uniqueId"])
     
-    def check_downloads_in_cat(self, productIds):
+    def __check_downloads_in_cat(self, productIds):
         dowloadedProductIds = ["31ed1d48-3e05-4156-9ec2-7bf17e98802e"]
         #TODO: Implement query against catalog api
         #catalog.get_downloadedProductIds(productIds)
@@ -123,21 +123,21 @@ class ProductListManager:
 
     def create_list(self,runDate, lastListFile, outputListFile):
         productList = json.load(lastListFile)
-        lastIngestionDate = self.get_last_ingestion_date(productList)
+        lastIngestionDate = self.__get_last_ingestion_date(productList)
 
         # If latest record is older than 3 days, fail
         if (runDate - lastIngestionDate).days > 3:
             raise Exception("Last ingestion date older then 3 days")
 
-        searchUrl = self.get_search_url(lastIngestionDate)
+        searchUrl = self.__get_search_url(lastIngestionDate)
 
-        rawProductsData = self.get_xml_data(searchUrl)
+        rawProductsData = self.__get_xml_data(searchUrl)
 
-        self.add_products_to_list(rawProductsData, productList)
+        self.__add_products_to_list(rawProductsData, productList)
 
-        productIds = self.collect_product_ids(productList)
+        productIds = self.__collect_product_ids(productList)
 
-        downloadedProductIds = self.check_downloads_in_cat(productIds)
+        downloadedProductIds = self.__check_downloads_in_cat(productIds)
 
         #remove downloaded products from list
         productList["products"] = [product for product in productList["products"] if product["uniqueId"] not in downloadedProductIds]

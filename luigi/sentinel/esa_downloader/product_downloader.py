@@ -19,7 +19,7 @@ class ProductDownloader:
 
         url = "%s/Products('%s')/$value" % (self.DOWNLOAD_URL_BASE,uniqueId)
         
-        tempPath = ConfigManager.get_temp_path()
+        tempPath = self.config.get_temp_path()
         zipname = "%s.zip" % name
         tempFilename = os.path.join(tempPath,zipname)
         
@@ -29,7 +29,7 @@ class ProductDownloader:
                 c.setopt(c.URL,url)
                 c.setopt(c.FOLLOWLOCATION, True)
                 c.setopt(c.SSL_VERIFYPEER, False)
-                c.setopt(c.USERPWD,auth)
+                c.setopt(c.USERPWD, self.config.get_esa_credentials())
                 c.setopt(c.WRITEFUNCTION,f.write)
                 c.perform()
                 c.close()
@@ -101,15 +101,17 @@ class ProductDownloader:
     def download_products(self, productListFile):
         productList = json.load(productListFile)
 
-        downloadedProductCount = 0
+        downloadedProductCount = None
         errorCount = 0
+
         for product in productList["products"]:
             # download product
             productZipFile = None
             try:
                 productZipFile = self.__download_product(product)
-            except e: 
-                msg = e.msg
+            except Exception as e: 
+                message = e.message
+                print message
                 #TODO: log silently without fialing, downloads will frequently fail
                 continue
 
@@ -123,7 +125,7 @@ class ProductDownloader:
             
             # transfer to s3
             product["location"] = self.__copy_product_to_s3(sourcepath, product["title"])
-            if product["location"] = '': 
+            if product["location"] == '': 
                 continue
             
             # add metadata to catalog

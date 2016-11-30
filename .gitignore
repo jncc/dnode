@@ -13,4 +13,6 @@ built/
 
 # Python
 *.pyc
+luigi/luigi_env/
+
 

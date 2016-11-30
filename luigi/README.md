@@ -1,4 +1,4 @@
-#Python build environment setup
+#Python environment setup
 Configure the development environment as follows
 ```
 # Install required apt packages

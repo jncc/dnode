@@ -14,3 +14,9 @@ source luigi_venv/bin/activate
 # Install python depenancies
 pip install -r requirements.txt
 ```
+# Update Python Environment
+After adding or updating PIP manged libraires refresh the requirement file.
+```
+rm requirements.txt
+pip freeze > requirements.txt
+```

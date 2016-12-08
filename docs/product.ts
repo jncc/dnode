@@ -4,7 +4,7 @@ export class Product {
     title:             string // parsed from the filename
     footprint:         string // geojson
     properties: {
-        endposition:   string // date; parsed from the filename
+        capturedate:   string // date; parsed from the filename
         cloudcoverage: number // can't do right now
     }
     representations: {

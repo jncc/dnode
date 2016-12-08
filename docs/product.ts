@@ -14,8 +14,8 @@ export class Product {
             type:      string // file type e.g. "Geotiff"
         },
         wms: {
-            name:       string // potentially uuid from id
-            base_url:   string // geoserver WMS URL i.e. https://eo.jncc.gov.uk/geoserver/ows
+            name:      string // potentially uuid from id
+            base_url:  string // geoserver WMS URL i.e. https://eo.jncc.gov.uk/geoserver/ows
         }
     }
 }

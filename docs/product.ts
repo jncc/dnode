@@ -14,7 +14,8 @@ export class Product {
             type:      string // file type e.g. "Geotiff"
         },
         wms: {
-            url:       string // geoserver WMS URL
+            name:           string
+            base_url:       string // geoserver WMS URL
         }
     }
 }

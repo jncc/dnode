@@ -9,7 +9,7 @@ export class Product {
     }
     representations: {
         download: {
-            url:       string // S3 URL
+            url:       string // S3 URL i.e. https://s3-eu-west-1.amazonaws.com/eodip/ard/S2_20160719_37_4/S2_20160719_37_4.tif
             size:      number // file size in kilobytes
             type:      string // file type e.g. "Geotiff"
         },

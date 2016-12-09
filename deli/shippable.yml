@@ -1,0 +1,41 @@
+
+language: node_js
+
+# not sure why i used an old node.js - todo update to v6 / latest
+node_js:
+  - 4.2.3
+
+# only build master and all branches beginning with "beta"
+branches:
+  only:
+    - master
+    - beta*
+
+build:
+  ci:
+    - npm install
+    - npm run build:prod # todo: run tests too
+
+  post_ci:
+    - ls -a
+    - pwd
+    # DockerHub
+    - docker build -t="sumothecat/my-capabilities:$BRANCH.$BUILD_NUMBER" .
+    - docker push sumothecat/my-capabilities:$BRANCH.$BUILD_NUMBER
+    # Addresses botocore version mismatch errors
+    - pip install --upgrade botocore
+
+integrations:
+  deploy:
+    # AWS Integration to deploy Docker image
+    - integrationName: "aws-integration-my-capabilities"
+      type: aws
+      application_name: "my-capabilities-app"
+      env_name: "my-capabilities-app-dev"
+      region: "eu-west-1"
+      image_name: "sumothecat/my-capabilities"
+      image_tag: "$BRANCH.$BUILD_NUMBER"
+
+  hub:
+    - integrationName: "docker-integration-my-capabilities"
+      type: docker

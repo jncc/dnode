@@ -28,25 +28,24 @@ regex = r"ard/(?P<name>.*)/S2_(?P<year>\d\d\d\d)(?P<month>\d\d)(?P<day>\d\d)_(?P
 def makeProduct(result):
     m = re.search(regex, result.key).groupdict()
     guid = uuid.uuid4().urn[9:]
-    product = { "id"   : guid,
-                "title" : m["name"],
-                "footprint": "todo",
-                "properties": {
-                    "capturedate": m["year"] + "-" + m["month"] + "-" + m["day"]
-                },
-                "representations": {
-                    "download": {
-                        "url": "https://s3-eu-west-1.amazonaws.com/eodip/ard/" + m["name"] + "/" + m["name"] + ".tif",
-                        "size": result.size,
-                        "type": "Geotiff", 
-                    },
-                    "wms": {
-                        "name": guid,
-                        "base_url": "https://eo.jncc.gov.uk/geoserver/ows"
-                    }
-                }
+    return { "id"   : guid,
+             "title" : m["name"],
+             "footprint": "todo",
+             "properties": {
+                 "capturedate": m["year"] + "-" + m["month"] + "-" + m["day"]
+             },
+             "representations": {
+                 "download": {
+                     "url": "https://s3-eu-west-1.amazonaws.com/eodip/ard/" + m["name"] + "/" + m["name"] + ".tif",
+                     "size": result.size,
+                     "type": "Geotiff", 
+                 },
+                 "wms": {
+                     "name": guid,
+                     "base_url": "https://eo.jncc.gov.uk/geoserver/ows"
+                 }
+             }
     }
-    return product
 
 products = (seq(results)
     .filter(lambda r: re.match(regex, r.key) != None)

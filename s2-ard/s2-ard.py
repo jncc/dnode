@@ -25,11 +25,10 @@ results = bucket.objects.filter(Prefix='ard', )
 # results are S3 keys like 'ard/S2_20160723_94_1/S2_20160723_94_1.tif'
 regex = r"ard/(?P<name>.*)/S2_(?P<year>\d\d\d\d)(?P<month>\d\d)(?P<day>\d\d)_(?P<orbit>\d+)_(?P<row>\d).tif"
 
-def applyRegex(result):
-    # split on '/' to give us the filenames like 'S2_20160723_94_1.tif'
-    # filename = r.key.split('/')[2]
+def makeProduct(result):
     m = re.search(regex, result.key).groupdict()
-    product = { "id"   : uuid.uuid4().urn[9:],
+    guid = uuid.uuid4().urn[9:]
+    product = { "id"   : guid,
                 "title" : m["name"],
                 "footprint": "todo",
                 "properties": {
@@ -42,7 +41,7 @@ def applyRegex(result):
                         "type": "Geotiff", 
                     },
                     "wms": {
-                        "name": uuid.uuid4().urn[9:],
+                        "name": guid,
                         "base_url": "https://eo.jncc.gov.uk/geoserver/ows"
                     }
                 }
@@ -51,7 +50,7 @@ def applyRegex(result):
 
 products = (seq(results)
     .filter(lambda r: re.match(regex, r.key) != None)
-    .map(lambda r: applyRegex(r))).to_list()
+    .map(lambda r: makeProduct(r))).to_list()
 
 
 # pp.pprint(products)

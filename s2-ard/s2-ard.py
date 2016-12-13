@@ -1,11 +1,13 @@
 
 # This script gets the Sentinel-2 ARD catalogue data for alpha-1 from the S3 bucket.
-# It produces json containing the product representations for the web deli.
+# It produces products.json containing the product representations for the web deli.
 
 # pip install boto3
 # pip install awscli
 # pip install pyfunctional
 # aws configure
+
+from __future__ import print_function
 
 import boto3
 import pprint
@@ -32,10 +34,9 @@ def getFootprintGeojson(orbit, row):
         j = json.load(jsonFile)
         feature = seq(j["features"]).filter(lambda f: f["properties"]["id"] == int(row)).head_option()
         if feature == None:
-            print("Failed to get footprint for row " + row + " in " + filepath)
-            None
+            return None
         else:
-            { "type": "Feature", "properties": {}, "geometry": feature["geometry"] }
+            return { "type": "Feature", "properties": {}, "geometry": feature["geometry"] }
             
 def makeProduct(result):
     m = re.search(regex, result.key).groupdict()
@@ -59,10 +60,10 @@ def makeProduct(result):
              }
     }
 
-(seq(results)
+output = (seq(results)
     .filter(lambda r: re.match(regex, r.key) != None)
     .map(lambda r: makeProduct(r))
-    .filter(lambda p: p["footprint"] != None)
-    .to_json("products.json"))
+    .partition(lambda p: p["footprint"] == None))
 
-
+output[0].for_each(lambda p: print("Failed to get footprint for " + p["title"]))
+output[1].to_json("products.json")

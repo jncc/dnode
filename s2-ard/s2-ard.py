@@ -4,7 +4,7 @@
 
 # pip install boto3
 # pip install awscli
-# pip install pyfunctional 
+# pip install pyfunctional
 # aws configure
 
 import boto3
@@ -25,12 +25,24 @@ results = bucket.objects.filter(Prefix='ard', )
 # results are S3 keys like 'ard/S2_20160723_94_1/S2_20160723_94_1.tif'
 regex = r"ard/(?P<name>.*)/S2_(?P<year>\d\d\d\d)(?P<month>\d\d)(?P<day>\d\d)_(?P<orbit>\d+)_(?P<row>\d).tif"
 
+def getFootprintGeojson(orbit, row):
+    filepath = "scenes/" + orbit + ".geojson"
+    with open(filepath) as jsonFile:
+        # load a FeatureCollection geojson object with features[] which have a "properties" object with an "id" row property
+        j = json.load(jsonFile)
+        feature = seq(j["features"]).filter(lambda f: f["properties"]["id"] == int(row)).head_option()
+        if feature == None:
+            print("Failed to get footprint for row " + row + " in " + filepath)
+            None
+        else:
+            { "type": "Feature", "properties": {}, "geometry": feature["geometry"] }
+            
 def makeProduct(result):
     m = re.search(regex, result.key).groupdict()
     guid = uuid.uuid4().urn[9:]
     return { "id"   : guid,
              "title" : m["name"],
-             "footprint": "todo",
+             "footprint": getFootprintGeojson(m["orbit"], m["row"]),
              "properties": {
                  "capturedate": m["year"] + "-" + m["month"] + "-" + m["day"]
              },
@@ -47,12 +59,10 @@ def makeProduct(result):
              }
     }
 
-products = (seq(results)
+(seq(results)
     .filter(lambda r: re.match(regex, r.key) != None)
-    .map(lambda r: makeProduct(r))).to_list()
-
-
-# pp.pprint(products)
-print(json.dumps({"products" : products}))
+    .map(lambda r: makeProduct(r))
+    .filter(lambda p: p["footprint"] != None)
+    .to_json("products.json"))
 
 

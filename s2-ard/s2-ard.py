@@ -39,10 +39,10 @@ def getFootprintGeojson(orbit, row):
             return { "type": "Feature", "properties": {}, "geometry": feature["geometry"] }
             
 def makeProduct(result, match):
-    print(result.key)
+    # print(result.key)
     m = match.groupdict()
     guid = uuid.uuid4().urn[9:]
-    prod = { "id"   : guid,
+    return { "id"   : guid,
              "title" : m["name"],
              "footprint": getFootprintGeojson(m["orbit"], m["row"]),
              "properties": {
@@ -60,20 +60,14 @@ def makeProduct(result, match):
                  }
              }
     }
-    pp.pprint(prod)
-    return prod
 
 products, failures = (seq(results)
     .map(lambda r: { "result": r, "match": re.match(regex, r.key) })
     .filter(lambda x: x["match"] != None)
     .distinct_by(lambda x: x["match"].group(0))
     .map(lambda x: makeProduct(x["result"], x["match"]))
-    .cache()
+    .cache() # force evaluation once
     .partition(lambda p: p['footprint'] != None))
-
-# force eval
-#products.cache()
-#failures.cache()
 
 failures.for_each(lambda p: print("Failed to get footprint for " + p["title"]))
 products.to_json("products.json")

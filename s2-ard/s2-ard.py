@@ -25,7 +25,7 @@ bucket = s3.Bucket('eodip')
 results = bucket.objects.filter(Prefix='ard', )
 
 # results are S3 keys like 'ard/S2_20160723_94_1/S2_20160723_94_1.tif'
-regex = r"ard/(?P<name>.*)/S2_(?P<year>\d\d\d\d)(?P<month>\d\d)(?P<day>\d\d)_(?P<orbit>\d+)_(?P<row>\d).tif"
+regex = r"^ard/(?P<name>.*)/S2_(?P<year>\d\d\d\d)(?P<month>\d\d)(?P<day>\d\d)_(?P<orbit>\d+)_(?P<row>\d).tif$"
 
 def getFootprintGeojson(orbit, row):
     filepath = "scenes/" + orbit + ".geojson"
@@ -38,10 +38,11 @@ def getFootprintGeojson(orbit, row):
         else:
             return { "type": "Feature", "properties": {}, "geometry": feature["geometry"] }
             
-def makeProduct(result):
-    m = re.search(regex, result.key).groupdict()
+def makeProduct(result, match):
+    print(result.key)
+    m = match.groupdict()
     guid = uuid.uuid4().urn[9:]
-    return { "id"   : guid,
+    prod = { "id"   : guid,
              "title" : m["name"],
              "footprint": getFootprintGeojson(m["orbit"], m["row"]),
              "properties": {
@@ -59,11 +60,21 @@ def makeProduct(result):
                  }
              }
     }
+    pp.pprint(prod)
+    return prod
 
-output = (seq(results)
-    .filter(lambda r: re.match(regex, r.key) != None)
-    .map(lambda r: makeProduct(r))
-    .partition(lambda p: p["footprint"] == None))
+products, failures = (seq(results)
+    .map(lambda r: { "result": r, "match": re.match(regex, r.key) })
+    .filter(lambda x: x["match"] != None)
+    .distinct_by(lambda x: x["match"].group(0))
+    .map(lambda x: makeProduct(x["result"], x["match"]))
+    .cache()
+    .partition(lambda p: p['footprint'] != None))
 
-output[0].for_each(lambda p: print("Failed to get footprint for " + p["title"]))
-output[1].to_json("products.json")
+# force eval
+#products.cache()
+#failures.cache()
+
+failures.for_each(lambda p: print("Failed to get footprint for " + p["title"]))
+products.to_json("products.json")
+print("Wrote " + str(products.size()) + " product records to products.json")

@@ -6,7 +6,7 @@ sudo apt-get install build-essential
 sudo apt-get install libcurl4-openssl-dev 
 
 # Create a python virtual environment
-virtualenv luigi_venv
+virtualenv luigi_venv - p python2
 
 # Activate the virtual environment
 source luigi_venv/bin/activate

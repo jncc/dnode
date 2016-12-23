@@ -10,7 +10,7 @@ from datetime import timedelta
 FILE_ROOT = '/home/felix/temp/'
 
 class LastAvailableProductsList(luigi.ExternalTask):
-    runDate = luigi.DateParameter(default=datetime.date.today())
+    runDate = luigi.DateParameter(default=datetime.datetime.now())
 
     def output(self):
         d = self.runDate - timedelta(days=1)

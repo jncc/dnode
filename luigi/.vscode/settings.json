@@ -1,3 +1,5 @@
+// Place your settings in this file to overwrite default and user settings.
 {
-    "python.linting.pylintEnabled": false
+    "python.pythonPath":"${workspaceRoot}/luigi_venv/bin/python",
+    "python.linting.enabled": false
 }

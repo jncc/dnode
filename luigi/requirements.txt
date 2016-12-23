@@ -1,11 +1,15 @@
 backports-abc==0.5
 boto==2.43.0
 certifi==2016.9.26
+dill==0.2.5
 docutils==0.12
+future==0.15.2
 lockfile==0.12.2
 luigi==2.3.3
 pycurl==7.43.0
+PyFunctional==0.8.0
 python-daemon==2.1.2
 singledispatch==3.4.0.3
 six==1.10.0
+tabulate==0.7.5
 tornado==4.4.2

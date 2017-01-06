@@ -23,4 +23,8 @@ class ConfigManager:
     
     def get_temp_path(self):
         return self.config.get('DownloaderConfig','tempPath')
+
+    def getDatabaseConnectionString(self):
+        return self.config.get('Database', 'connection')
+
         

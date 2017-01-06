@@ -9,6 +9,7 @@ from functional import seq
 from datetime import datetime
 from StringIO import StringIO
 from config_manager import ConfigManager
+from catalog_manager import CatalogManager
 
 # creates the sentinel product list.
 class ProductListManager:
@@ -114,13 +115,6 @@ class ProductListManager:
                 }
         
             productList["products"].append(product)
-    
-    def __check_downloads_in_cat(self, productIds):
-        dowloadedProductIds = ["31ed1d48-3e05-4156-9ec2-7bf17e98802e"]
-        #TODO: Implement query against catalog api
-        #catalog.get_downloadedProductIds(productIds)
-        # result would be ["31ed1d48-3e05-4156-9ec2-7bf17e98802e","05dabcc8-bb50-4645-b215-43b46a6e4bf2e"]
-        return dowloadedProductIds
 
     def __getPages(self, rawProductsData):
         root = self.__get_xml_element_tree(rawProductsData)
@@ -133,8 +127,6 @@ class ProductListManager:
             pages = int(math.ceil(totalResults / 100))
         
         return pages
-
-    
 
     def create_list(self,runDate, lastListFile, outputListFile):
         productList = json.load(lastListFile)
@@ -161,13 +153,12 @@ class ProductListManager:
             if rawProductsData = None:
                 break
 
-        productIds = (seq(productList["products"])
-                    .select(lambda x: x["uniqueId"])
-                    .distinct()).to_list()
-        
-        downloadedProductIds = self.__check_downloads_in_cat(productIds)
-        
-        #remove downloaded products from list
-        productList["products"] = [product for product in productList["products"] if product["uniqueId"] not in downloadedProductIds]
+        # remove duplicate products
+        # remove products that are already in the catalog
+        cat = CatalogManager()
+
+        productList["products"] = (seq(productList["products"])
+                                    .distinct_by(lambda x: x["uniqueId"])
+                                    .filter(lambda x: cat.exists(x["uniqueId"]))).to_list()
 
         outputListFile.write(json.dumps(productList))

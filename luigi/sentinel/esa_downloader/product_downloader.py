@@ -6,6 +6,7 @@ import boto
 import boto.s3
 
 from config_manager import ConfigManager
+from catalog_manager import CatalogManager
 
 class ProductDownloader:
     DOWNLOAD_URL_BASE = 'https://scihub.copernicus.eu/apihub/odata/v1'
@@ -93,10 +94,6 @@ class ProductDownloader:
             k.set_contents_from_filename(sourcepath, num_cb=10)
         
         return destpath
-        
-    def __add_product_to_catalog(self, product):
-        #TODO Add product metadata to catalog.
-        return true
 
     def download_products(self, productListFile):
         productList = json.load(productListFile)
@@ -104,34 +101,35 @@ class ProductDownloader:
         downloadedProductCount = None
         errorCount = 0
 
-        for product in productList["products"]:
-            # download product
-            productZipFile = None
-            try:
-                productZipFile = self.__download_product(product)
-            except Exception as e: 
-                message = e.message
-                print message
-                #TODO: log silently without fialing, downloads will frequently fail
-                continue
+        with CatalogManager() as cat:
+            for product in productList["products"]:
+                # download product
+                productZipFile = None
+                try:
+                    productZipFile = self.__download_product(product)
+                except Exception as e: 
+                    message = e.message
+                    print message
+                    #TODO: log silently without fialing, downloads will frequently fail
+                    continue
 
-            if productZipFile is None:
-                continue
-            # verify product
-            verified = self.__verify_zip_file(productZipFile)
-            if not verified:
-                #TODO: log invalid zip file.
-                continue
-            
-            # transfer to s3
-            product["location"] = self.__copy_product_to_s3(sourcepath, product["title"])
-            if product["location"] == '': 
-                continue
-            
-            # add metadata to catalog
-            self.__add_product_to_catalog(product)
+                if productZipFile is None:
+                    continue
+                # verify product
+                verified = self.__verify_zip_file(productZipFile)
+                if not verified:
+                    #TODO: log invalid zip file.
+                    continue
+                
+                # transfer to s3
+                product["location"] = self.__copy_product_to_s3(sourcepath, product["title"])
+                if product["location"] == '': 
+                    continue
+                
+                # add metadata to catalog
+                cat.addProduct(product)
 
-            downloadedProductCount = downloadedProductCount + 1
+                downloadedProductCount = downloadedProductCount + 1
 
         return downloadedProductCount
         

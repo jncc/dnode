@@ -155,10 +155,9 @@ class ProductListManager:
 
         # remove duplicate products
         # remove products that are already in the catalog
-        cat = CatalogManager()
-
-        productList["products"] = (seq(productList["products"])
-                                    .distinct_by(lambda x: x["uniqueId"])
-                                    .filter(lambda x: cat.exists(x["uniqueId"]))).to_list()
+        with CatalogManager() as cat:
+            productList["products"] = (seq(productList["products"])
+                                        .distinct_by(lambda x: x["uniqueId"])
+                                        .filter(lambda x: cat.exists(x["uniqueId"]))).to_list()
 
         outputListFile.write(json.dumps(productList))

@@ -2,6 +2,7 @@ import datetime
 import json
 import urllib
 import pycurl
+import logging
 import xml.etree.ElementTree as eTree
 
 
@@ -13,7 +14,7 @@ from catalog_manager import CatalogManager
 
 # creates the sentinel product list.
 class ProductListManager:
-    POLYGON = 'POLYGON((-3.686840 53.993196, -1.392085 53.993196, -1.392085 55.819199, -3.68684 55.819199,-3.686840 53.993196))'
+    POLYGON = 'POLYGON ((-6.604981356192942 49.438680703689379,-10.186858447403869 60.557572594302513,0.518974191882126 61.368840444480654,2.668100446608686 53.215944284612512,1.235349610124312 50.589462482174554,-6.604981356192942 49.438680703689379))'
     SEARCH_URL_BASE = 'https://scihub.copernicus.eu/apihub/search'
 
     def __init__(self):
@@ -158,6 +159,6 @@ class ProductListManager:
         with CatalogManager() as cat:
             productList["products"] = (seq(productList["products"])
                                         .distinct_by(lambda x: x["uniqueId"])
-                                        .filter(lambda x: cat.exists(x["uniqueId"]))).to_list()
+                                        .filter(lambda x: cat.exists(x["uniqueId"]) != True )).to_list()
 
         outputListFile.write(json.dumps(productList))

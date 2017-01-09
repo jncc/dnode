@@ -31,7 +31,7 @@ class CatalogManager:
 
         simple = shapely.wkt.loads(product["footprint"])
         centroid = shapely.wkt.dumps(simple.centroid)
-        cur.execute('''INSERT INTO sentinel
+        cur.execute('''INSERT INTO sentinel_l
             (uniqueId,title,ingestiondate,footprint,centroid,beginposition,endposition,orbitdirection,producttype,orbitno,relorbitno,platform)
             VALUES (%s,%s,to_date(%s,'YYYY-MM-DD'),ST_GeomFromText(%s,4326),ST_GeomFromText(%s,4326),%s,%s,%s,%s,%s,%s,%s)''',
             (product["uniqueId"],

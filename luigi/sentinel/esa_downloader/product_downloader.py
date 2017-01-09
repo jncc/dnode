@@ -63,7 +63,7 @@ class ProductDownloader:
 
         conn = boto.s3.connect_to_region('eu-west-1', is_secure=True)
 
-        bucket_name = bucketName
+        bucket_name = self.config.getAmazonBucketName()
 
         bucket = conn.get_bucket(bucket_name)
 

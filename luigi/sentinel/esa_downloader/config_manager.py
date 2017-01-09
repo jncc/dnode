@@ -27,4 +27,19 @@ class ConfigManager:
     def getDatabaseConnectionString(self):
         return self.config.get('Database', 'connection')
 
+    def getAmazonKeyId(self):
+        return self.config.get('Amazon', 'accessKeyId')
+
+    def getAmazonKeySecret(self):
+        return self.config.get('Amazon', 'accessKeySecret')
+
+    def getAmazonDestPath(self):
+        return self.config.get('Amazon', 'destPath')
+
+    def getAmazonRegion(self):
+        return self.config.get('Amazon', 'region')
+
+    def getAmazonBucketName(self):
+        return self.config.get('Amazon', 'bucketName')
+
         

@@ -8,7 +8,7 @@ from config_manager import ConfigManager
 class CatalogManager:
     DOWNLOAD_URL_BASE = 'https://scihub.copernicus.eu/apihub/odata/v1'
 
-    self.db = None
+    db = None
 
     def __init__(self):
         self.config = ConfigManager("cfg.ini")

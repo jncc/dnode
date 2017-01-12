@@ -3,6 +3,7 @@ import json
 import urllib
 import pycurl
 import logging
+import math
 import xml.etree.ElementTree as eTree
 
 
@@ -151,7 +152,7 @@ class ProductListManager:
 
             searchUrl = self.__get_search_url(lastIngestionDate, page)
             rawProductsData = self.__get_xml_data(searchUrl)
-            if rawProductsData = None:
+            if rawProductsData == None:
                 break
 
         # remove duplicate products

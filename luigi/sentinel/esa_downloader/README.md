@@ -18,3 +18,6 @@ source luigi_venv/bin/activate
 ```
 PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts --local-scheduler --runDate 2016-11-28
 ```
+## Debug flag
+Specifying the --debug flag prevents lengthy downloads, outputs the url that would have been requested only,
+NB: USE WITH CAUTION this WILL update the catalog as if the product had been downloaded

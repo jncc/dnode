@@ -4,6 +4,7 @@ import zipfile
 import pycurl
 import boto
 import boto.s3
+import logging
 
 from config_manager import ConfigManager
 from catalog_manager import CatalogManager
@@ -11,19 +12,26 @@ from catalog_manager import CatalogManager
 class ProductDownloader:
     DOWNLOAD_URL_BASE = 'https://scihub.copernicus.eu/apihub/odata/v1'
 
-    def __init__(self):
+    def __init__(self, log, debug, workPath):
         self.config = ConfigManager("cfg.ini")
+        self.log = log
+        self.debug = debug
+        self.workPath = workPath
 
-    def __download_product(self, product):
+    def __download_product(self, product, debug):
         uniqueId = product["uniqueId"]
         name = product["title"]
 
         url = "%s/Products('%s')/$value" % (self.DOWNLOAD_URL_BASE,uniqueId)
         
-        tempPath = self.config.get_temp_path()
+        tempPath = os.path.join(self.workPath, 'temp')
         zipname = "%s.zip" % name
         tempFilename = os.path.join(tempPath,zipname)
         
+        if self.debug:
+            self.log.info("DEBUG: download url: %s, would create %s", url, tempFilename)
+            continue
+
         try: 
             with open(tempFilename, 'wb') as f:
                 c = pycurl.Curl()
@@ -50,9 +58,6 @@ class ProductDownloader:
         return True
 
     def __copy_product_to_s3(self, sourcepath, filename):
-        bucketName = 'filestore-eodip'
-        AmazonDestPath = 'sentinel'
-
         #max size in bytes before uploading in parts. between 1 and 5 GB recommended
         MAX_SIZE = 5000000000
         #size of parts when uploading in parts
@@ -64,38 +69,41 @@ class ProductDownloader:
         conn = boto.s3.connect_to_region('eu-west-1', is_secure=True)
 
         bucket_name = self.config.getAmazonBucketName()
-
+        amazonDestPath = self.config.getAmazonDestPath()
         bucket = conn.get_bucket(bucket_name)
 
-        destpath = os.path.join(AmazonDestPath, filename)
+        destpath = os.path.join(amazonDestPath, filename)
 
-        if bucket.get_key(destpath) != None:
-            bucket.delete_key(destpath)
-
-        filesize = os.path.getsize(sourcepath)
-        if filesize > MAX_SIZE:
-            # if self.args.verbose:
-            #     print 'multipart upload'
-            mp = bucket.initiate_multipart_upload(destpath)
-            fp = open(sourcepath,'rb')
-            fp_num = 0
-            while (fp.tell() < filesize):
-                fp_num += 1
-                #print "uploading part %i" %fp_num
-                mp.upload_part_from_file(fp, fp_num, num_cb=10, size=PART_SIZE)
-
-            #sys.stdout.write('\n')
-            #sys.stdout.flush()
-            mp.complete_upload()
-
+        if self.debug:
+            self.log("DEBUG: Would copy %s to %s", sourcepath, amazonDestPath)
         else:
-            k = boto.s3.key.Key(bucket)
-            k.key = destpath
-            k.set_contents_from_filename(sourcepath, num_cb=10)
+            if bucket.get_key(destpath) != None:
+                bucket.delete_key(destpath)
+
+            filesize = os.path.getsize(sourcepath)
+            if filesize > MAX_SIZE:
+                # if self.args.verbose:
+                #     print 'multipart upload'
+                mp = bucket.initiate_multipart_upload(destpath)
+                fp = open(sourcepath,'rb')
+                fp_num = 0
+                while (fp.tell() < filesize):
+                    fp_num += 1
+                    #print "uploading part %i" %fp_num
+                    mp.upload_part_from_file(fp, fp_num, num_cb=10, size=PART_SIZE)
+
+                #sys.stdout.write('\n')
+                #sys.stdout.flush()
+                mp.complete_upload()
+
+            else:
+                k = boto.s3.key.Key(bucket)
+                k.key = destpath
+                k.set_contents_from_filename(sourcepath, num_cb=10)
         
         return destpath
 
-    def download_products(self, productListFile):
+    def download_products(self, productListFile, debug):
         productList = json.load(productListFile)
 
         downloadedProductCount = None
@@ -106,7 +114,7 @@ class ProductDownloader:
                 # download product
                 productZipFile = None
                 try:
-                    productZipFile = self.__download_product(product)
+                    productZipFile = self.__download_product(product, debug)
                 except Exception as e: 
                     message = e.message
                     print message

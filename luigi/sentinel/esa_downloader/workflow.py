@@ -1,5 +1,7 @@
 import luigi
 import datetime
+import log_helper
+import os
 from product_list_manager import ProductListManager
 from product_downloader import ProductDownloader
 from luigi.s3 import S3Target
@@ -10,6 +12,7 @@ from datetime import timedelta
 FILE_ROOT = '/home/felix/temp/'
 
 class LastAvailableProductsList(luigi.ExternalTask):
+    debug = luigi.BooleanParameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())
 
     def output(self):
@@ -22,29 +25,33 @@ class LastAvailableProductsList(luigi.ExternalTask):
 
 @requires(LastAvailableProductsList)
 class CreateAvailableProductsList(luigi.Task):
+    workPath = os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
+    log = log_helper.setup_logging(workPath, 'CreateAvailableProductsList')
 
     def run(self):
-        listManager = ProductListManager()
+        listManager = ProductListManager(log, debug)
         lastIngestionDate = None
 
         with self.input().open() as lastList, self.output().open('w') as productList:
             listManager.create_list(self.runDate,lastList, productList)
 
     def output(self):
-        filePath = FILE_ROOT  + self.runDate.strftime("%Y-%m-%d") + '/available.json'
+        filePath = workPath + '/available.json'
         return luigi.LocalTarget(filePath)
         #s3Path = S3_ROOT + runDate.strftime("%Y-%m-%d") + '/available.json'
         # return S3Target(s3Path)
 
 @requires(CreateAvailableProductsList)
 class DownloadAvailableProducts(luigi.Task):
+    workPath =  os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
+    log = log_helper.setup_logging(workPath, 'DownloadAvailableProducts')
     
     def run(self):
-        downloader = ProductDownloader()
+        downloader = ProductDownloader(log, debug)
         result = None
 
         with self.input().open() as productList:
-            result = downloader.download_products(productList)
+            result = downloader.download_products(productList, debug, workPath)
         
         if result is None:
             raise Exception("Download Failure")

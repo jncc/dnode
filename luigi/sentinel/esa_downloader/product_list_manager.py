@@ -4,6 +4,8 @@ import urllib
 import pycurl
 import logging
 import math
+import geojson
+import shapely
 import xml.etree.ElementTree as eTree
 
 
@@ -14,46 +16,55 @@ from config_manager import ConfigManager
 from catalog_manager import CatalogManager
 
 # creates the sentinel product list.
+
+
 class ProductListManager:
     POLYGON = 'POLYGON ((-6.604981356192942 49.438680703689379,-10.186858447403869 60.557572594302513,0.518974191882126 61.368840444480654,2.668100446608686 53.215944284612512,1.235349610124312 50.589462482174554,-6.604981356192942 49.438680703689379))'
     SEARCH_URL_BASE = 'https://scihub.copernicus.eu/apihub/search'
 
-    def __init__(self):
+    def __init__(self, log, debug):
         self.config = ConfigManager("cfg.ini")
+        self.debug = debug
+        self.log = log
 
     def __get_last_ingestion_date(self, productList):
         topDate = None
 
         for product in productList["products"]:
-            date = datetime.strptime(product["ingestionDate"], '%Y-%m-%d').date()
+            date = datetime.strptime(
+                product["ingestionDate"], '%Y-%m-%d').date()
             if topDate is None or date > topDate:
                 topDate = date
 
         return topDate
-        
+
     def __get_search_url(self, lastIngestionDate, page):
-        ingestionDateString = lastIngestionDate.strftime('%Y-%m-%d') + 'T00:00:00.000Z'
-        criteria = {'q': 'ingestiondate:[%s TO NOW] AND footprint:"Intersects(%s)"' % (ingestionDateString, ProductListManager.POLYGON)}
-        url = ProductListManager.SEARCH_URL_BASE + '?' + urllib.urlencode(criteria)
+        ingestionDateString = lastIngestionDate.strftime(
+            '%Y-%m-%d') + 'T00:00:00.000Z'
+        criteria = {'q': 'ingestiondate:[%s TO NOW] AND footprint:"Intersects(%s)"' % (
+            ingestionDateString, ProductListManager.POLYGON)}
+        url = ProductListManager.SEARCH_URL_BASE + \
+            '?' + urllib.urlencode(criteria)
 
         return url
 
     def __get_xml_data(self, url):
-        
+
         rawDataBuffer = StringIO()
 
-        try: 
+        try:
             c = pycurl.Curl()
-            c.setopt(c.URL,str(url))
-            c.setopt(c.USERPWD,self.config.get_esa_credentials())
+            c.setopt(c.URL, str(url))
+            c.setopt(c.USERPWD, self.config.get_esa_credentials())
             c.setopt(c.FOLLOWLOCATION, True)
             c.setopt(c.SSL_VERIFYPEER, False)
-            c.setopt(c.WRITEFUNCTION,rawDataBuffer.write)
+            c.setopt(c.WRITEFUNCTION, rawDataBuffer.write)
             c.perform()
             c.close()
         except pycurl.error, e:
-            msg = "Available product search failed  with error: %s" % (e.id, e.args[0]) 
-            #TODO - LOG THIS, fail the search without an exception we want to continue
+            msg = "Available product search failed  with error: %s" % (e.id, e.args[0])
+            self.log.error(msg)
+            # fail the search without an exception we want to continue
 
         return rawDataBuffer.getvalue()
 
@@ -62,9 +73,26 @@ class ProductListManager:
         try:
             root = eTree.fromstring(data)
         except eTree.ParseError:
-            raise Exception("Parse Error: %s \n %s" % (eTree.ParseError.message, data))
+            raise Exception("Parse Error: %s \n %s" %
+                            (eTree.ParseError.message, data))
 
         return root
+
+    def __getJsonFootprint(self, footprintText):
+        footprint = {}
+
+        try:
+            footprint = json.loads(footprint)
+        except ValueError, e:
+            # probably failed because footprintText is wkt
+            wkt = shapely.wkt.loads(footprintText)
+            feature = geojson.Feature(geometry=wkt)
+            footprint = g2.geometry
+
+        if not "crs" in footprint:
+            footprint["crs"] = {"type":"name","properties":{"name":"EPSG:4326"}}       
+
+        return footprint
         
     def __add_products_to_list(self, rawProductsData, productList):
         root = self.__get_xml_element_tree(rawProductsData)
@@ -102,10 +130,11 @@ class ProductListManager:
                         orbitNo = string.text
                     if string.attrib['name'] == 'relativeorbitnumber':
                         relOrbitNo = string.text
+
             product = {
                 "uniqueId" : uniqueId,
                 "title" : title,
-                "footprint" : footprint,
+                "footprint" : self.__getJsonFootprint(footprint),
                 "productType" : productType,
                 "beginPosition" : beginPosition,
                 "endPosition" : endPosition,

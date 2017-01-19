@@ -3,15 +3,32 @@ import products_list_manager
 import products_downloader
 import products_metadata
 import os
+import logging
+import time
 
 from luigi.s3 import S3Target
 from luigi.util import requires
 import datetime
 
 FILE_ROOT =  '/home/felix/temp/s1_ard'
+LOG_ROOT = '/home/felix/temp/logs'
 
 def getFilePath(filename):
     return os.path.join(os.path.join(FILE_ROOT, datetime.datetime.now().strftime('%Y-%m-%d')), filename)
+
+def getLogger(folder, name):
+    if not os.path.isdir(folder):
+        os.makedirs(folder)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+
+    fh = logging.FileHandler(os.path.join(folder, '%s-%s.log' % (name, time.strftime('%y%m%d-%H%M%S'))))
+    fh.setFormatter(formatter)
+    fh.setLevel(logging.DEBUG)
+
+    logger.addHandler(fh)    
 
 # Create new products list
 class CreateProductsList(luigi.Task):

@@ -1,5 +1,11 @@
-[DownloaderConfig]
-tempPath = /home/felix/temp/
 [EsaCredentials]
-username = USER
-password = PASSWORD
+username = eas username
+password = esa password
+[Database]
+connection = host=host name dbname=database name user=pgsql user name password=pgsql user password
+[Amazon]
+accessKeyId = access key
+accessKeySecret = secret key
+bucketName = bucket name
+destPath = bucket path
+region = aws region

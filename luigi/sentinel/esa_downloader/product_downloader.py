@@ -72,7 +72,11 @@ class ProductDownloader:
         amazon_key_Id = self.config.getAmazonKeyId()
         amazon_key_secret = self.config.getAmazonKeySecret()
 
-        conn = boto.s3.connect_to_region('eu-west-1', is_secure=True)
+        conn = boto.s3.connect_to_region('eu-west-1',
+            aws_access_key_id=amazon_key_Id,
+            aws_secret_access_key=amazon_key_secret,
+            is_secure=True
+            )
 
         bucket_name = self.config.getAmazonBucketName()
         amazonDestPath = self.config.getAmazonDestPath()

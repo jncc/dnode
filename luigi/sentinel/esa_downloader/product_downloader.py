@@ -88,18 +88,13 @@ class ProductDownloader:
 
             filesize = os.path.getsize(sourcepath)
             if filesize > MAX_SIZE:
-                # if self.args.verbose:
-                #     print 'multipart upload'
                 mp = bucket.initiate_multipart_upload(destpath)
                 fp = open(sourcepath,'rb')
                 fp_num = 0
                 while (fp.tell() < filesize):
                     fp_num += 1
-                    #print "uploading part %i" %fp_num
                     mp.upload_part_from_file(fp, fp_num, num_cb=10, size=PART_SIZE)
-
-                #sys.stdout.write('\n')
-                #sys.stdout.flush()
+                    
                 mp.complete_upload()
 
             else:

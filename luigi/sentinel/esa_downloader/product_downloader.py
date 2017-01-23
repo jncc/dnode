@@ -26,6 +26,9 @@ class ProductDownloader:
         url = "%s/Products('%s')/$value" % (self.DOWNLOAD_URL_BASE,uniqueId)
         
         tempPath = os.path.join(self.workPath, 'temp')
+        if not os.path.isdir(tempPath):
+            os.makedirs(tempPath)
+
         zipname = "%s.zip" % name
         tempFilename = os.path.join(tempPath,zipname)
         
@@ -119,8 +122,7 @@ class ProductDownloader:
                 try:
                     productZipFile = self.__download_product(product)
                 except Exception as e: 
-                    message = e.message
-                    self.log.warn("Failed to download product %s with error %s ", product["title"], message)
+                    self.log.warn("Failed to download product %s with error %s ", product["title"], e)
                     continue
 
                 if productZipFile is None and not self.debug:

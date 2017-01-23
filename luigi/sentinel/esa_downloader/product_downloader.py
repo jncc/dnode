@@ -94,7 +94,7 @@ class ProductDownloader:
                 while (fp.tell() < filesize):
                     fp_num += 1
                     mp.upload_part_from_file(fp, fp_num, num_cb=10, size=PART_SIZE)
-                    
+
                 mp.complete_upload()
 
             else:
@@ -132,7 +132,7 @@ class ProductDownloader:
                 
                 # transfer to s3
                 if not self.debug:
-                    product["location"] = self.__copy_product_to_s3(sourcepath, product["title"])
+                    product["location"] = self.__copy_product_to_s3(productZipFile, product["title"])
                     if product["location"] == '': 
                         continue
                 else:

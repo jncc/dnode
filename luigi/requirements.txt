@@ -3,7 +3,7 @@ backports.ssl-match-hostname==3.5.0.1
 boto==2.43.0
 certifi==2016.9.26
 dill==0.2.5
-docker-py==1.10.6
+docker==2.0.2
 docker-pycreds==0.2.1
 docutils==0.12
 future==0.15.2

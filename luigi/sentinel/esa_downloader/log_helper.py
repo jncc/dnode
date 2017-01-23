@@ -1,7 +1,7 @@
 import logging
 import os
 
-def setup_logging(workPath, jobName):
+def setup_logging(workPath, jobName, debug):
     """
     Sets up a logger to log to a file and the console
 
@@ -9,7 +9,10 @@ def setup_logging(workPath, jobName):
     :returns: Return a logger setup to log to the console and a file in the directory specified (path)
     """
     program = 'sentinal_downloader'
-    level = logging.INFO
+    if debug:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
 
     logger = logging.getLogger(jobName)
     logger.setLevel(level)

@@ -16,7 +16,7 @@ class ProductDownloader:
         self.config = ConfigManager("cfg.ini")
         self.debug = debug
         self.workPath = workPath
-        self.log = log_helper.setup_logging(self.workPath, 'DownloadAvailableProducts')
+        self.log = log_helper.setup_logging(self.workPath, 'DownloadAvailableProducts', self.debug)
 
 
     def __download_product(self, product):
@@ -33,7 +33,7 @@ class ProductDownloader:
         tempFilename = os.path.join(tempPath,zipname)
         
         if self.debug:
-            self.log.info("DEBUG: download url: %s, would create %s", url, tempFilename)
+            self.log.debug("download url: %s, would create %s", url, tempFilename)
             return None
 
         try: 
@@ -85,7 +85,7 @@ class ProductDownloader:
         destpath = os.path.join(amazonDestPath, filename)
 
         if self.debug:
-            self.log("DEBUG: Would copy %s to %s", sourcepath, amazonDestPath)
+            self.log.debug("S3 copy would copy %s to %s", sourcepath, amazonDestPath)
         else:
             if bucket.get_key(destpath) != None:
                 bucket.delete_key(destpath)
@@ -120,6 +120,7 @@ class ProductDownloader:
                 productZipFile = None
                 try:
                     productZipFile = self.__download_product(product)
+                    self.log.info("Downloaded product %s", product["title"])
                 except Exception as e: 
                     self.log.warn("Failed to download product %s with error %s ", product["title"], e)
                     continue
@@ -130,15 +131,20 @@ class ProductDownloader:
                 # verify product
                 if not self.debug:
                     verified = self.__verify_zip_file(productZipFile)
+                    self.log.info("Verified product %s", product["title"])
                     if not verified:
                         self.log.warn("Failed to download product %s with error invalid zip file", product["title"])
                         continue
                 
                 # transfer to s3
-                product["location"] = self.__copy_product_to_s3(productZipFile, product["title"])
-                if product["location"] == '': 
+                try:
+                    product["location"] = self.__copy_product_to_s3(productZipFile, product["title"])
+                    self.log.info("Coppied product %s to S3 bucket", product["title"])
+                except Exception as e:
+                    self.log.warn("Failed to copy product %s to S3 with error %s", product["title"], e)
                     continue
                 
+
                 # add metadata to catalog
                 cat.addProduct(product)
 

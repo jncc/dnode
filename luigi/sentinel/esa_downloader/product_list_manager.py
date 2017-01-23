@@ -30,7 +30,7 @@ class ProductListManager:
     def __init__(self, workPath, debug):
         self.config = ConfigManager("cfg.ini")
         self.debug = debug
-        self.log = log_helper.setup_logging(workPath, 'CreateAvailableProductsList')
+        self.log = log_helper.setup_logging(workPath, 'CreateAvailableProductsList', self.debug)
 
     def __get_last_ingestion_date(self, productList):
         topDate = None

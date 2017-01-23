@@ -1,7 +1,7 @@
 import psycopg2
 import logging
 import sys
-import shapely.wkt
+import json
 
 from config_manager import ConfigManager
 
@@ -29,15 +29,16 @@ class CatalogManager:
     def addProduct(self, product):
         cur = self.db.cursor()
 
-        simple = shapely.wkt.loads(product["footprint"])
-        centroid = shapely.wkt.dumps(simple.centroid)
+        centroid = json.dumps(product["centroid"])
+        footprint = json.dumps(product["footprint"])
+
         cur.execute('''INSERT INTO sentinel_l
-            (uniqueId,title,ingestiondate,footprint,centroid,beginposition,endposition,orbitdirection,producttype,orbitno,relorbitno,platform)
-            VALUES (%s,%s,to_date(%s,'YYYY-MM-DD'),ST_GeomFromText(%s,4326),ST_GeomFromText(%s,4326),%s,%s,%s,%s,%s,%s,%s)''',
+            (uniqueId,title,ingestiondate,footprint,centroid,beginposition,endposition,orbitdirection,producttype,orbitno,relorbitno,platform,location)
+            VALUES (%s,%s,to_date(%s,'YYYY-MM-DD'),ST_GeomFromGeoJSON(%s),ST_GeomFromGeoJSON(%s),%s,%s,%s,%s,%s,%s,%s,%s)''',
             (product["uniqueId"],
             product["title"],
             product["ingestionDate"],
-            product["footprint"],
+            footprint,
             centroid,
             product["beginPosition"],
             product["endPosition"],
@@ -45,6 +46,7 @@ class CatalogManager:
             product["productType"],
             product["orbitNo"],
             product["relOrbitNo"],
-            product["platform"],))
+            product["platform"],
+            product["location"]))
         self.db.commit()
 

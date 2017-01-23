@@ -7,13 +7,18 @@ import math
 import geojson
 import shapely
 import xml.etree.ElementTree as eTree
+import log_helper
+import shapely.wkt
+
 
 
 from functional import seq
 from datetime import datetime
+from dateutil import parser
 from StringIO import StringIO
 from config_manager import ConfigManager
 from catalog_manager import CatalogManager
+from shapely.geometry import shape
 
 # creates the sentinel product list.
 
@@ -22,17 +27,16 @@ class ProductListManager:
     POLYGON = 'POLYGON ((-6.604981356192942 49.438680703689379,-10.186858447403869 60.557572594302513,0.518974191882126 61.368840444480654,2.668100446608686 53.215944284612512,1.235349610124312 50.589462482174554,-6.604981356192942 49.438680703689379))'
     SEARCH_URL_BASE = 'https://scihub.copernicus.eu/apihub/search'
 
-    def __init__(self, log, debug):
+    def __init__(self, workPath, debug):
         self.config = ConfigManager("cfg.ini")
         self.debug = debug
-        self.log = log
+        self.log = log_helper.setup_logging(workPath, 'CreateAvailableProductsList')
 
     def __get_last_ingestion_date(self, productList):
         topDate = None
 
         for product in productList["products"]:
-            date = datetime.strptime(
-                product["ingestionDate"], '%Y-%m-%d').date()
+            date = parser.parse(product["ingestionDate"]).date()
             if topDate is None or date > topDate:
                 topDate = date
 
@@ -62,7 +66,7 @@ class ProductListManager:
             c.perform()
             c.close()
         except pycurl.error, e:
-            msg = "Available product search failed  with error: %s" % (e.id, e.args[0])
+            msg = "Available product search failed  with error: %s" % (e.args[0],)
             self.log.error(msg)
             # fail the search without an exception we want to continue
 
@@ -78,21 +82,35 @@ class ProductListManager:
 
         return root
 
-    def __getJsonFootprint(self, footprintText):
+    def __getGeometry(self, footprintText):
+        
         footprint = {}
+        centroid = {}
+        geom = None
 
         try:
-            footprint = json.loads(footprint)
+            feature = geojson.loads(footprintText)
+            footprint = feature.geometry
+            geom = shape(feature)
         except ValueError, e:
             # probably failed because footprintText is wkt
-            wkt = shapely.wkt.loads(footprintText)
-            feature = geojson.Feature(geometry=wkt)
-            footprint = g2.geometry
+            geom = shapely.wkt.loads(footprintText)
+            feature = geojson.Feature(geometry=geom)
+            footprint = feature.geometry
 
         if not "crs" in footprint:
-            footprint["crs"] = {"type":"name","properties":{"name":"EPSG:4326"}}       
+            footprint["crs"] = {"type":"name","properties":{"name":"EPSG:4326"}}
 
-        return footprint
+        centroidGeom = geom.centroid
+        centroidFeature = geojson.Feature(geometry=centroidGeom)
+        centroid = centroidFeature.geometry
+        centroid["crs"] = {"type":"name","properties":{"name":"EPSG:4326"}}
+
+        return {
+            "footprint": footprint,
+            "centroid" : centroid
+        }
+    
         
     def __add_products_to_list(self, rawProductsData, productList):
         root = self.__get_xml_element_tree(rawProductsData)
@@ -131,10 +149,13 @@ class ProductListManager:
                     if string.attrib['name'] == 'relativeorbitnumber':
                         relOrbitNo = string.text
 
+            geom = self.__getGeometry(footprint)
+
             product = {
                 "uniqueId" : uniqueId,
                 "title" : title,
-                "footprint" : self.__getJsonFootprint(footprint),
+                "footprint" : geom["footprint"],
+                "centroid" : geom["centroid"],
                 "productType" : productType,
                 "beginPosition" : beginPosition,
                 "endPosition" : endPosition,
@@ -159,12 +180,12 @@ class ProductListManager:
         
         return pages
 
-    def create_list(self,runDate, lastListFile, outputListFile):
+    def create_list(self,runDate, lastListFile, outputListFile, seeding):
         productList = json.load(lastListFile)
         lastIngestionDate = self.__get_last_ingestion_date(productList)
 
         # If latest record is older than 3 days, fail
-        if (runDate - lastIngestionDate).days > 3:
+        if (not seeding) and (runDate - lastIngestionDate).days > 3:
             raise Exception("Last ingestion date older then 3 days")
 
         page = 1

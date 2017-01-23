@@ -21,3 +21,6 @@ PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts --local-schedul
 ## Debug flag
 Specifying the --debug flag prevents lengthy downloads, outputs the url that would have been requested only,
 NB: USE WITH CAUTION this WILL update the catalog as if the product had been downloaded
+
+## Seeding flag
+The last ingestion date must be no more then 3 days from the current runDate. Specifying the --seeding flag prevents this check and is intended for use when the system is first run.

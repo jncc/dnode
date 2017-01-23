@@ -4,7 +4,7 @@ import zipfile
 import pycurl
 import boto
 import boto.s3
-import logging
+import log_helper
 
 from config_manager import ConfigManager
 from catalog_manager import CatalogManager
@@ -12,13 +12,14 @@ from catalog_manager import CatalogManager
 class ProductDownloader:
     DOWNLOAD_URL_BASE = 'https://scihub.copernicus.eu/apihub/odata/v1'
 
-    def __init__(self, log, debug, workPath):
+    def __init__(self, debug, workPath):
         self.config = ConfigManager("cfg.ini")
-        self.log = log
         self.debug = debug
         self.workPath = workPath
+        self.log = log_helper.setup_logging(self.workPath, 'DownloadAvailableProducts')
 
-    def __download_product(self, product, debug):
+
+    def __download_product(self, product):
         uniqueId = product["uniqueId"]
         name = product["title"]
 
@@ -30,7 +31,7 @@ class ProductDownloader:
         
         if self.debug:
             self.log.info("DEBUG: download url: %s, would create %s", url, tempFilename)
-            continue
+            return None
 
         try: 
             with open(tempFilename, 'wb') as f:
@@ -46,6 +47,8 @@ class ProductDownloader:
         except pycurl.error, e:
             msg = "%s product %s resulted in download error %s" % (downloadType, name, e.args[0])
             raise Exception(msg)
+        
+        return tempFilename
 
     def __verify_zip_file(self, productZipFile):
         if not zipfile.is_zipfile(productZipFile):
@@ -103,10 +106,10 @@ class ProductDownloader:
         
         return destpath
 
-    def download_products(self, productListFile, debug):
+    def download_products(self, productListFile):
         productList = json.load(productListFile)
 
-        downloadedProductCount = None
+        downloadedProductCount = 0
         errorCount = 0
 
         with CatalogManager() as cat:
@@ -114,25 +117,29 @@ class ProductDownloader:
                 # download product
                 productZipFile = None
                 try:
-                    productZipFile = self.__download_product(product, debug)
+                    productZipFile = self.__download_product(product)
                 except Exception as e: 
                     message = e.message
-                    print message
-                    #TODO: log silently without fialing, downloads will frequently fail
+                    self.log.warn("Failed to download product %s with error %s ", product["title"], message)
                     continue
 
-                if productZipFile is None:
+                if productZipFile is None and not self.debug:
                     continue
+
                 # verify product
-                verified = self.__verify_zip_file(productZipFile)
-                if not verified:
-                    #TODO: log invalid zip file.
-                    continue
+                if not self.debug:
+                    verified = self.__verify_zip_file(productZipFile)
+                    if not verified:
+                        self.log.warn("Failed to download product %s with error invalid zip file", product["title"])
+                        continue
                 
                 # transfer to s3
-                product["location"] = self.__copy_product_to_s3(sourcepath, product["title"])
-                if product["location"] == '': 
-                    continue
+                if not self.debug:
+                    product["location"] = self.__copy_product_to_s3(sourcepath, product["title"])
+                    if product["location"] == '': 
+                        continue
+                else:
+                    product["location"] = "DEBUG, NO PRODUCT DOWNLOADED"
                 
                 # add metadata to catalog
                 cat.addProduct(product)

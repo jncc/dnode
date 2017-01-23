@@ -16,8 +16,8 @@ def setup_logging(workPath, jobName):
     
     logPath = os.path.join(workPath, '%s-log' % (jobName))
     
-    if not os.path.isdir(logPath):
-        os.mkdir(logPath)
+    if not os.path.isdir(workPath):
+        os.makedirs(workPath)
 
     fh = logging.FileHandler(logPath)
     fh.setLevel(level)

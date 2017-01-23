@@ -1,6 +1,5 @@
 import luigi
 import datetime
-import log_helper
 import os
 from product_list_manager import ProductListManager
 from product_downloader import ProductDownloader
@@ -13,29 +12,29 @@ FILE_ROOT = '/home/felix/temp/'
 
 class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
+    seeding = luigi.BooleanParameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())
 
     def output(self):
         d = self.runDate - timedelta(days=1)
         # s3Path = S3_ROOT +  d.strftime("%Y-%m-%d") + '/available.json'
-        filePath = FILE_ROOT +  d.strftime("%Y-%m-%d") + '/available.json'
+        filePath = os.path.join(os.path.join(FILE_ROOT, d.strftime("%Y-%m-%d")), 'available.json')
 
         # return S3Target(s3Path)
         return luigi.LocalTarget(filePath)
 
 @requires(LastAvailableProductsList)
 class CreateAvailableProductsList(luigi.Task):
-    workPath = os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
-    log = log_helper.setup_logging(workPath, 'CreateAvailableProductsList')
 
     def run(self):
-        listManager = ProductListManager(log, debug)
-        lastIngestionDate = None
+        workPath = os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
 
         with self.input().open() as lastList, self.output().open('w') as productList:
-            listManager.create_list(self.runDate,lastList, productList)
+            listManager = ProductListManager(workPath, self.debug)
+            listManager.create_list(self.runDate,lastList, productList, self.seeding)
 
     def output(self):
+        workPath = os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
         filePath = workPath + '/available.json'
         return luigi.LocalTarget(filePath)
         #s3Path = S3_ROOT + runDate.strftime("%Y-%m-%d") + '/available.json'
@@ -43,24 +42,25 @@ class CreateAvailableProductsList(luigi.Task):
 
 @requires(CreateAvailableProductsList)
 class DownloadAvailableProducts(luigi.Task):
-    workPath =  os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
-    log = log_helper.setup_logging(workPath, 'DownloadAvailableProducts')
-    
+  
     def run(self):
-        downloader = ProductDownloader(log, debug)
+        workPath = os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
+
+        downloader = ProductDownloader(self.debug, workPath)
         result = None
 
         with self.input().open() as productList:
-            result = downloader.download_products(productList, debug, workPath)
-        
-        if result is None:
-            raise Exception("Download Failure")
+            result = downloader.download_products(productList)
 
         with self.output().open('w') as successFile:
-            successFile.write('Success\n')
+            if self.debug:
+                msg = "DEBUG MODE: virtual download test succeded for %s files -See DownloadAvailableProducts-log for details" % (result,)
+            else:
+                msg = "Downloaded %s products" % (result,)
+            successFile.write(msg)
 
     def output(self):
-        filePath = FILE_ROOT + self.runDate.strftime("%Y-%m-%d") + '/_success.json'
+        filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), '_success.json')
         return luigi.LocalTarget(filePath)
         # s3Path = S3_ROOT + runDate.strftime("%Y-%m-%d") + '/_success.json'
         # return S3Target(s3Path)

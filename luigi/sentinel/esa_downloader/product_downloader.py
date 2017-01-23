@@ -139,12 +139,14 @@ class ProductDownloader:
                 # transfer to s3
                 try:
                     product["location"] = self.__copy_product_to_s3(productZipFile, product["title"])
-                    self.log.info("Coppied product %s to S3 bucket", product["title"])
+                    self.log.info("Coppied product %s to S3 bucket, removing temp file", product["title"])
                 except Exception as e:
                     self.log.warn("Failed to copy product %s to S3 with error %s", product["title"], e)
                     continue
+                    
+                if not self.debug:
+                    os.remove(productZipFile)
                 
-
                 # add metadata to catalog
                 cat.addProduct(product)
 

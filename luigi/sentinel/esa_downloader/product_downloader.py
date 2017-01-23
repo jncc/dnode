@@ -69,8 +69,8 @@ class ProductDownloader:
         #size of parts when uploading in parts
         PART_SIZE = 100000000
 
-        amazon_key_Id = accessKeyId
-        amazon_key_secret = accessKeySecret
+        amazon_key_Id = self.config.getAmazonKeyId()
+        amazon_key_secret = self.config.getAmazonKeySecret()
 
         conn = boto.s3.connect_to_region('eu-west-1', is_secure=True)
 
@@ -131,12 +131,9 @@ class ProductDownloader:
                         continue
                 
                 # transfer to s3
-                if not self.debug:
-                    product["location"] = self.__copy_product_to_s3(productZipFile, product["title"])
-                    if product["location"] == '': 
-                        continue
-                else:
-                    product["location"] = "DEBUG, NO PRODUCT DOWNLOADED"
+                product["location"] = self.__copy_product_to_s3(productZipFile, product["title"])
+                if product["location"] == '': 
+                    continue
                 
                 # add metadata to catalog
                 cat.addProduct(product)

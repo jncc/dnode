@@ -7,8 +7,8 @@ from luigi.s3 import S3Target
 from luigi.util import requires
 from datetime import timedelta
 
-#S3_ROOT = 's3://jncc-data/workflows/sentinel-download/'
-FILE_ROOT = '/home/felix/temp/'
+FILE_ROOT = 's3://jncc-data/workflows/sentinel-download/'
+#FILE_ROOT = '/home/felix/temp/'
 
 class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
@@ -17,11 +17,11 @@ class LastAvailableProductsList(luigi.ExternalTask):
 
     def output(self):
         d = self.runDate - timedelta(days=1)
-        # s3Path = S3_ROOT +  d.strftime("%Y-%m-%d") + '/available.json'
         filePath = os.path.join(os.path.join(FILE_ROOT, d.strftime("%Y-%m-%d")), 'available.json')
-
-        # return S3Target(s3Path)
-        return luigi.LocalTarget(filePath)
+        
+        #return luigi.LocalTarget(filePath)
+        return S3Target(filePath)
+        
 
 @requires(LastAvailableProductsList)
 class CreateAvailableProductsList(luigi.Task):
@@ -34,11 +34,10 @@ class CreateAvailableProductsList(luigi.Task):
             listManager.create_list(self.runDate,lastList, productList, self.seeding)
 
     def output(self):
-        workPath = os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
-        filePath = workPath + '/available.json'
-        return luigi.LocalTarget(filePath)
-        #s3Path = S3_ROOT + runDate.strftime("%Y-%m-%d") + '/available.json'
-        # return S3Target(s3Path)
+        filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")),'available.json')
+        
+        #return luigi.LocalTarget(filePath)
+        return S3Target(filePath)
 
 @requires(CreateAvailableProductsList)
 class DownloadAvailableProducts(luigi.Task):
@@ -61,9 +60,9 @@ class DownloadAvailableProducts(luigi.Task):
 
     def output(self):
         filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), '_success.json')
-        return luigi.LocalTarget(filePath)
-        # s3Path = S3_ROOT + runDate.strftime("%Y-%m-%d") + '/_success.json'
-        # return S3Target(s3Path)
+        
+        #return luigi.LocalTarget(filePath)
+        return S3Target(filePath)
         
 if __name__ == '__main__':
     luigi.run()

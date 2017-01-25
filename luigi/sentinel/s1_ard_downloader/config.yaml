@@ -1,0 +1,19 @@
+database:
+    host: pg-host
+    username: pg-username
+    password: pg-password
+    dbname: pg-dbname
+    table: pg-table-name
+    collection_version_uuid: parent-collection-uuid
+dathub:
+    username: datahub-username
+    password: datahub-password
+    search_zone_id: 1
+s3:
+    username: s3-username
+    access_key: s3-access-key
+    secret_access_key: s3-secret_access_key
+    bucket: s3-bucket
+    bucket_dest_path: s3-dest-path
+    region: s3-region
+    public: true

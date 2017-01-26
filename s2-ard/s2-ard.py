@@ -5,6 +5,7 @@
 # pip install boto3
 # pip install awscli
 # pip install pyfunctional
+# pip install shapely
 # aws configure
 
 from __future__ import print_function
@@ -14,7 +15,9 @@ import pprint
 import uuid
 import json
 import re
+
 from functional import seq
+from shapely.geometry import shape
 
 s3 = boto3.resource('s3')
 pp = pprint.PrettyPrinter()
@@ -37,14 +40,23 @@ def getFootprintGeojson(orbit, row):
             return None
         else:
             return { "type": "Feature", "properties": {}, "geometry": feature["geometry"] }
+
+def getBBox(geom):
+    s = shape(geom)
+    # (minx, miny, maxx, maxy)
+    bounds = s.bounds
+    return bounds
             
 def makeProduct(result, match):
     # print(result.key)
     m = match.groupdict()
     guid = uuid.uuid4().urn[9:]
+    footprint = getFootprintGeojson(m["orbit"], m["row"])
+    bbox = getBBox(footprint["geometry"])
     return { "id"   : guid,
              "title" : m["name"],
-             "footprint": getFootprintGeojson(m["orbit"], m["row"]),
+             "footprint": footprint,
+             "bbox": bbox,
              "properties": {
                  "capturedate": m["year"] + "-" + m["month"] + "-" + m["day"]
              },

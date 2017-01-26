@@ -1,0 +1,6 @@
+GDAL==2.1.2
+boto==2.42.0
+lxml==3.7.2
+psycopg2==2.6.2
+PyYAML==3.12
+requests==2.12.3

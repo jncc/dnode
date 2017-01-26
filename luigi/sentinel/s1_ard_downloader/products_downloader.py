@@ -8,6 +8,7 @@ import zipfile
 import time
 import ogr
 import uuid
+import shutil
 from osgeo import ogr, osr
 from lxml import etree
 from datahub_client import DatahubClient
@@ -68,7 +69,10 @@ class ProductDownloader:
 
         else:
             raise RuntimeError('Config file at [%s] was not found' % config_file)
-
+    
+    """
+    Cleanup task
+    """
     def destroy(self):
         self.db_conn.close()
 
@@ -111,6 +115,9 @@ class ProductDownloader:
 
             # Extract all files from source
             with zipfile.ZipFile(filename, 'r') as product_zip:
+                # Remove existing extracted directory if it exists
+                if os.path.isdir(extracted_path):
+                    shutil.rmtree(extracted)
                 os.makedirs(extracted_path)
                 product_zip.extractall(extracted_path)
             tif_file = item['filename'].replace('.SAFE.data', '.tif')
@@ -136,7 +143,13 @@ class ProductDownloader:
                     else:
                         self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)
             else:
-                self.__write_progress_to_database(item, success=False)        
+                self.__write_progress_to_database(item, success=False)
+            
+            # Cleanup temp extrcated directory
+            shutil.rmtree(extracted)
+            # Cleanup download file
+            os.unlink(filename)
+
         self.client.logout()
         downloaded.write(json.dumps(downloaded)) 
         
@@ -238,11 +251,17 @@ class ProductDownloader:
 
         retVal = None
 
-        # Grab the UUID from the metadata if possible, if not create one
-        uuid_str = metadata['ID']
-        try:
-            val = uuid.UUID(uuid_str, version=4)
-        except ValueError:
+        if 'id' in metadata:
+            # Grab the UUID from the metadata if possible, if not create one
+            uuid_str = metadata['ID']
+            try:
+                val = uuid.UUID(uuid_str, version=4)
+            except ValueError:
+                uuid_str = str(uuid.uuid4())
+                metadata['ID'] = uuid_str
+        else:
+            # Possibly blank metadata, success is very false here so set it that way
+            success = False
             uuid_str = str(uuid.uuid4())
             metadata['ID'] = uuid_str
 

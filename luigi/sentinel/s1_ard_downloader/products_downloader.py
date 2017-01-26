@@ -105,52 +105,66 @@ class ProductDownloader:
 
         # Pass over list of available items and look for an non downloaded ID
         for item in wanted_list:
-            filename = os.path.join(self.temp, '%s.zip' % item)
-            client.download_product(item[0], filename)
+            filename = os.path.join(self.temp, '%s.zip' % item['filename'])
+            self.client.download_product(item['product_id'], filename)
 
             # Extract all files from source
             with zipfile.ZipFile(filename, 'r') as product_zip:
-                os.path.makedirs(extracted_path)
+                os.makedirs(extracted_path)
                 product_zip.extractall(extracted_path)
             tif_file = item['filename'].replace('.SAFE.data', '.tif')
             
-            remote_checksum = client.get_checksum(item[0])
+            remote_checksum = client.get_checksum(item['product_id'])
             local_checksum = calculate_checksum(tif_file)
 
             if remote_checksum == local_checksum:
                 # Extract footprints from downloaded files
-                osgb_geojson = None
-                osni_geojson = None
-                (osgb_geojson, osni_geojson) = __extract_footprints_wgs84(item, path)
-
-                # Extract Metadata for the OSGB side and a potential OSNI partition
-                osgb_metadata = xml_to_json(os.path.join(os.path.join(extracted_path, item['filename']), item['filename'].replace('.SAFE.data', '_metadata.xml')))
-                osni_metadata = None
-
-                if os.path.isfile(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml'))):
-                    osni_metadata = xml_to_json(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml')))
-                
-                # Upload all files to S3
+                (osgb_geojson, osni_geojson) = extract_footprints_wgs84(item, extracted_path)
+                # Extract Metadata
+                (osgb_metadata, osni_metadata) = extract_metadata(item, extracted_path)
+                # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
                 representations = self.__upload_dir_to_s3(extracted_path, '%s/%s' % (self.s3_conf['bucket_dest_path'], item['filename']))
                 representations = self.__extract_representations(representations, item['filename'])
                 
+                # Write the progress to the catalog table
                 id = self.__write_progress_to_database(item, metadata=osgb_metadata, representations=representations['osgb'], success=True, geom=osgb_geojson)
-
+                # If we have more tha one representation (i.e. OSNI data exists) then add an additional record to the catalog for that data
                 if len(representations['osni']) > 0:
                     if osni_geojson is None:
                         self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osgb_geojson)
                     else:
                         self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)
             else:
-                self.__write_progress_to_database(item, success=False)
-        
+                self.__write_progress_to_database(item, success=False)        
         self.client.logout()
         downloaded.write(json.dumps(downloaded)) 
         
     """
+    Extract metadata from the provided XML file(s), looks for an optional OSNI folder
+
+    :param item: The item that we are downloading (sourced from the available products list)
+    :param path: The path to base our xml paths on
+    :return: A tuple with (osgb, osni) TopCat standard metadata JSON, OSNI will be None if no OSNI folder exists on the base path
+    """
+    def extract_metadata(self, item, path):
+        osgb = xml_to_json(os.path.join(os.path.join(path, item['filename']), item['filename'].replace('.SAFE.data', '_metadata.xml')))
+        osni = None
+
+        if os.path.isfile(os.path.join(os.path.join(os.path.join(path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml'))):
+            osni = xml_to_json(os.path.join(os.path.join(os.path.join(path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml')))
+        
+        return (osgb, osni)
+
 
     """
-    def __extract_footprints_wgs84(self, item, path):
+    Extract WGS84 footprints from the given footprints, looks for an OSNI folder to extract any additional footprints from, will save the outputs as 
+    *.wgs84.geojson
+
+    :param item: The item that we are downloading (sourced from the available products list)
+    :param path: The path to base our footprint paths on
+    :return: Returns the raw GeoJSON as a tuple (osgb, osni), osni will be None if no OSNI data exists
+    """
+    def extract_footprints_wgs84(self, item, path):
         # Grab footprints and create wgs84 geojson for upload to the catalog / s3
         footprint_osgb_path = os.path.join(os.path.join(os.path.join(path, item['filename']), 'Footprint'), item['filename'].replace('.SAFE.data', '_footprint'))
         footprint_osgb_output_path = ''
@@ -172,14 +186,14 @@ class ProductDownloader:
 
         osni = None
 
-        if os.path.isfile('%s.shp' % footprint_osgb_path):
+        if os.path.isfile('%s.shp' % footprint_osni_path):
             footprint_osni_path = '%s.shp' % footprint_osni_path
             footprint_osni_output_path = footprint_osni_path.replace('.shp', 'wgs84.geojson')
             
             reproject_footprint(footprint_osni_path, footprint_osni_output_path)
 
             osni = json.load(footprint_osni_output_path)
-        elif os.path.isfile('%s.geojson' % footprint_osgb_path):
+        elif os.path.isfile('%s.geojson' % footprint_osni_path):
             footprint_osni_path = '%s.geojson' % footprint_osni_path
             footprint_osni_output_path = footprint_osni_path.replace('.geojson', 'wgs84.geojson')
             

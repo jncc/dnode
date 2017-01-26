@@ -14,9 +14,33 @@ log back in to apply
 - Outputs text file output.txt containing value of output text
 - Upload image to amazon ECR repo - http://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html
 
+# AWS ECR repo
+
+914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test
+
+To install the AWS CLI and Docker and for more information on the steps below, visit the ECR documentation page.
+1) Retrieve the docker login command that you can use to authenticate your Docker client to your registry:
+aws ecr get-login --region eu-west-1
+
+2) Run the docker login command that was returned in the previous step.
+3) Build your Docker image using the following command. For information on building a Docker file from scratch see the instructions here. You can skip this step if your image is already built:
+docker build -t process-test .
+
+4) After the build completes, tag your image so you can push the image to this repository:
+docker tag process-test:latest 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest
+
+5) Run the following command to push this image to your newly created AWS repository:
+docker push 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest
+
+# Build and run instructions
+
 Build image:
 
     docker build -t process-test .
+
+Build to aws: 
+
+    docker build -t 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test .
 
 Start image with interactive console: 
  shares the workfiles folder in home

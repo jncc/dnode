@@ -6,8 +6,10 @@ import json
 
 from luigi.util import requires
 
-#FILE_ROOT = 's3://jncc-data/workflows/sentinel-download/'
+#FILE_ROOT = 's3://jncc-data/workflows/s2ard/'
 FILE_ROOT = '/home/felix/temp/s2ard'
+DOCKER_IMAGE = 'AKIAJIXWW3NPTFVVAQDQ.dkr.ecr.eu-west-1.amazonaws.com/process-test'
+
 #Create job spec
 class CreateJobSpec(luigi.Task):
     text = luigi.Parameter()
@@ -40,7 +42,7 @@ class CreateArdProduct(luigi.Task):
         }
 
         client = docker.from_env()
-        client.containers.run("process-test", environment=environment, volumes=volumes,  detach=False)
+        client.containers.run(DOCKER_IMAGE, environment=environment, volumes=volumes,  detach=False)
         
     def output(self):
         filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), 'output.txt')

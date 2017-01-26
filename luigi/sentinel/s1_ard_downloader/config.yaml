@@ -5,10 +5,12 @@ database:
     dbname: pg-dbname
     table: pg-table-name
     collection_version_uuid: parent-collection-uuid
-dathub:
+datahub:
+    base_url: datahub-url
     username: datahub-username
     password: datahub-password
     search_zone_id: 1
+    download_chunk_size: 4096
 s3:
     username: s3-username
     access_key: s3-access-key

@@ -548,5 +548,5 @@ if __name__ == "__main__":
     with open('list.json', 'r') as available:
         with open('output.json', 'w') as output:
             downloader = ProductDownloader('config.yaml', available, None)
-            downloader.downloadProducts(available, output):  
+            downloader.downloadProducts(available, output)
             downloader.destroy()

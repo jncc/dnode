@@ -1,0 +1,16 @@
+
+# this builds a web server!
+
+FROM ubuntu:16.04
+
+RUN apt-get update && apt-get -y install python python-setuptools python-dev build-essential
+
+RUN mkdir /mnt/state
+
+WORKDIR /app
+
+COPY app/* ./
+
+RUN chmod u+x exec.sh
+
+CMD ["./exec.sh"]

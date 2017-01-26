@@ -26,9 +26,10 @@ def calculate_checksum(filename):
     return hasher.hexdigest()
 
 class ProductDownloader:
-    def __init__(self, config_file, logger):
+    def __init__(self, config_file, available, logger):
         # Setup Config from config file
         self.logger = logger
+        self.available = available
 
         # Check config file to make sure it looks sane before use
         if os.path.isfile(config_file):
@@ -66,7 +67,7 @@ class ProductDownloader:
         else:
             raise RuntimeError('Config file at [%s] was not found' % config_file)
 
-    def destroy():
+    def destroy(self):
         self.db_conn.close()
 
     """
@@ -532,5 +533,8 @@ class ProductDownloader:
         }
 
 if __name__ == "__main__":
-    downloader = ProductDownloader('config.yaml', None)
-    downloader.destroy()
+    with open('list.json', 'r') as available:
+        with open('output.json', 'w') as output:
+            downloader = ProductDownloader('config.yaml', available, None)
+            downloader.downloadProducts(available, output):  
+            downloader.destroy()

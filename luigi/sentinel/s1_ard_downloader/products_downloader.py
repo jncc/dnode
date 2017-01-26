@@ -35,6 +35,7 @@ class ProductDownloader:
         if os.path.isfile(config_file):
             with open("config.yaml", 'r') as conf:
                 self.config = yaml.load(conf)
+                self.temp = self.config.get('temp')
 
                 datahub_conf = self.config.get('datahub')
                 if datahub_conf is not None \
@@ -82,7 +83,7 @@ class ProductDownloader:
         available_product_ids = [str(item['product_id']) for item in available_list]
 
         # Compare to already aquired products
-        cur = self.conn.cursor()
+        cur = self.db_conn.cursor()
         cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' not in %s AND properties->>'downloaded' != 'true';", (tuple(available_product_ids),))
         wanted_list_rows = cur.fetchall()
         cur.close()
@@ -101,7 +102,7 @@ class ProductDownloader:
                 with zipfile.ZipFile(filename, 'r') as product_zip:
                     os.path.makedirs(extracted_path)
                     product_zip.extractall(extracted_path)
-                tif_file = item.name.replace('.SAFE.data', '.tif')
+                tif_file = item.filename.replace('.SAFE.data', '.tif')
                 
                 remote_checksum = client.get_checksum(item[0])
                 local_checksum = calculate_checksum(tif_file)
@@ -113,15 +114,15 @@ class ProductDownloader:
                     (osgb_geojson, osni_geojson) = __extract_footprints_wgs84(item, path)
 
                     # Extract Metadata for the OSGB side and a potential OSNI partition
-                    osgb_metadata = xml_to_json(os.path.join(os.path.join(extracted_path, item.name), item.name.replace('.SAFE.data', '_metadata.xml')))
+                    osgb_metadata = xml_to_json(os.path.join(os.path.join(extracted_path, item.filename), item.filename.replace('.SAFE.data', '_metadata.xml')))
                     osni_metadata = None
 
-                    if os.path.isfile(os.path.join(os.path.join(os.path.join(extracted_path, item.name), 'OSNI1952'), item.name.replace('.SAFE.data', '_metadata.xml'))):
-                        osni_metadata = xml_to_json(os.path.join(os.path.join(os.path.join(extracted_path, item.name), 'OSNI1952'), item.name.replace('.SAFE.data', '_metadata.xml')))
+                    if os.path.isfile(os.path.join(os.path.join(os.path.join(extracted_path, item.filename), 'OSNI1952'), item.filename.replace('.SAFE.data', '_metadata.xml'))):
+                        osni_metadata = xml_to_json(os.path.join(os.path.join(os.path.join(extracted_path, item.filename), 'OSNI1952'), item.filename.replace('.SAFE.data', '_metadata.xml')))
                     
                     # Upload all files to S3
-                    representations = self.__upload_dir_to_s3(extracted_path, '%s/%s' % (self.s3_conf['bucket_dest_path'], item.name))
-                    representations = self.__extract_representations(representations, item.name)
+                    representations = self.__upload_dir_to_s3(extracted_path, '%s/%s' % (self.s3_conf['bucket_dest_path'], item.filename))
+                    representations = self.__extract_representations(representations, item.filename)
                     
                     id = self.__write_progress_to_database(item, metadata=osgb_metadata, representations=representations['osgb'], success=True, geom=osgb_geojson)
 
@@ -144,7 +145,7 @@ class ProductDownloader:
     """
     def __extract_footprints_wgs84(self, item, path):
         # Grab footprints and create wgs84 geojson for upload to the catalog / s3
-        footprint_osgb_path = os.path.join(os.path.join(os.path.join(path, item.name), 'Footprint'), item.name.replace('.SAFE.data', '_footprint'))
+        footprint_osgb_path = os.path.join(os.path.join(os.path.join(path, item.filename), 'Footprint'), item.filename.replace('.SAFE.data', '_footprint'))
         footprint_osgb_output_path = ''
 
         if os.path.isfile('%s.shp' % footprint_osgb_path):
@@ -154,12 +155,12 @@ class ProductDownloader:
             footprint_osgb_path = '%s.geojson' % footprint_osgb_path
             footprint_osgb_output_path = footprint_osgb_path.replace('.geojson', 'wgs84.geojson')
         else:
-            raise RuntimeError('No footprint found for %s, halting' % item.name)
+            raise RuntimeError('No footprint found for %s, halting' % item.filename)
         
         reproject_footprint(footprint_osgb_path, footprint_osgb_output_path)
         osgb = json.load(footprint_osgb_output_path)
 
-        footprint_osni_path = os.path.join(os.path.join(os.path.join(os.path.join(path, item.name), 'OSNI1952'), 'Footprint'), item.name.replace('.SAFE.data', '_OSNI1952_footprint'))
+        footprint_osni_path = os.path.join(os.path.join(os.path.join(os.path.join(path, item.filename), 'OSNI1952'), 'Footprint'), item.filename.replace('.SAFE.data', '_OSNI1952_footprint'))
         footprint_osni_output_path = ''
 
         osni = None
@@ -179,7 +180,7 @@ class ProductDownloader:
 
             osni = json.load(footprint_osni_output_path)
         else:
-            raise RuntimeError('No footprint found for %s, halting' % item.name)        
+            raise RuntimeError('No footprint found for %s, halting' % item.filename)        
         
 
         return (osgb, osni)
@@ -208,7 +209,7 @@ class ProductDownloader:
     :param success:
     """
     def __write_progress_to_database(self, item, metadata={}, representations={}, success=True, additional=None, geom=None):
-        cur = self.conn.cursor()
+        cur = self.db_conn.cursor()
         cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' = %s;", ((item.product_id)),)
         existing = cur.fetchone()
 
@@ -262,7 +263,7 @@ class ProductDownloader:
                 "downloaded": success,
                 "attempts": 1,
                 "product_id": item.product_id,
-                "name": item.name
+                "name": item.filename
             }
 
             if geom is None:

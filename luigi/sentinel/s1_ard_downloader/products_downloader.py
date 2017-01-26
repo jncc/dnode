@@ -79,7 +79,7 @@ class ProductDownloader:
     """
     def downloadProducts(self, available, downloaded):  
         available_list = json.load(available)
-        available_product_ids = [str(item.product_id) for item in available_list['available_products']]
+        available_product_ids = [str(item['product_id']) for item in available_list]
 
         # Compare to already aquired products
         cur = self.conn.cursor()

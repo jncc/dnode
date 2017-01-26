@@ -77,7 +77,7 @@ class DatahubClient:
         parsed_json = response.json()
 
         url = parsed_json['url']
-        with open(filename, 'w+') as file_handle:
+        with open(filename, 'wb+') as file_handle:
             # Download the full product archive
             stream = requests.get(url, stream=True)
             for chunk in stream.iter_content(chunk_size=4096):

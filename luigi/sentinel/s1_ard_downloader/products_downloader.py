@@ -41,15 +41,17 @@ class ProductDownloader:
                 if datahub_conf is not None \
                     and 'search_zone_id' in datahub_conf \
                     and 'username' in datahub_conf \
-                    and 'password' in datahub_conf 
-                    self.client = new new DatahubClient(datahub_conf['search_zone_id'], datahub_conf['username'], datahub_conf['password'], None)
+                    and 'password' in datahub_conf \
+                    and 'base_url' in datahub_conf \
+                    and 'download_chunk_size' in datahub_conf: 
+                    self.client = DatahubClient(datahub_conf['base_url'], datahub_conf['download_chunk_size'], datahub_conf['search_zone_id'], datahub_conf['username'], datahub_conf['password'], None)
                 else:
                     raise RuntimeError('Config file has invalid datahub entries')
 
                 self.s3_conf = self.config.get('s3')
-                if !(self.s3_conf is not None \
+                if not (self.s3_conf is not None \
                     and 'access_key' in self.s3_conf \
-                    and 'secret_access_key' in self.s3_conf)
+                    and 'secret_access_key' in self.s3_conf):
                     raise RuntimeError('Config file has invalid s3 entries')
                 
                 self.database_conf = self.config.get('database')
@@ -58,8 +60,8 @@ class ProductDownloader:
                     and 'dbname' in database_conf \
                     and 'username' in database_conf \
                     and 'password' in database_conf \
-                    and 'table' in database_conf
-                    self.db_conn = psycopg2.connect(host=database_conf['host'] dbname=database_conf['dbname'] user=database_conf['username'] password=database_conf['password'])
+                    and 'table' in database_conf:
+                    self.db_conn = psycopg2.connect(host=database_conf['host'], dbname=database_conf['dbname'], user=database_conf['username'], password=database_conf['password'])
                 else:
                     raise RuntimeError('Config file has missing database config entires')
 
@@ -79,7 +81,7 @@ class ProductDownloader:
 
         # Compare to already aquired products
         cur = self.conn.cursor()
-        cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' not in %s AND properties->>'downloaded' != 'true';", (tuple(available_product_ids),)))
+        cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' not in %s AND properties->>'downloaded' != 'true';", (tuple(available_product_ids),))
         wanted_list_rows = cur.fetchall()
         cur.close()
         wanted_list = [item[0] for item in wanted_list_rows]
@@ -205,7 +207,7 @@ class ProductDownloader:
     """
     def __write_progress_to_database(self, item, metadata={}, representations={}, success=True, additional=None, geom=None):
         cur = self.conn.cursor()
-        cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' = %s;", ((item.product_id)),))))
+        cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' = %s;", ((item.product_id)),)
         existing = cur.fetchone()
 
         retVal = None
@@ -244,8 +246,8 @@ class ProductDownloader:
                 if additional is not None:
                     # If we are adding an extra record with the same ID i.e. OSNI projection
                     props['relatedTo'] = additional['relatedTo']
-                    cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_GeomFromGeoJSON(%s)) RETURNS id", (uuid_str
-                        self.database_conf.collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
+                    cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_GeomFromGeoJSON(%s)) RETURNS id", (uuid_str, 
+                        self.database_conf['collection_version_uuid'], json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
                     retVal = cur.fetchone()[0]
                 else:
                     cur.execute("UPDATE sentinel_ard_backscatter SET properties = %s, representations = %s, footprint = ST_GeomFromGeoJSON(%s) WHERE id = %s", (
@@ -291,8 +293,8 @@ class ProductDownloader:
                 representations['s3'].append({
                     'bucket': self.s3_conf.bucket,
                     'region': self.s3_conf.region,
-                    'path': path
-                    'url': 'https://s3-%s.amazonaws.com/%s/%s' % (self.s3_conf.region, self.s3_conf.bucket, path)
+                    'path': path,
+                    'url': 'https://s3-%s.amazonaws.com/%s/%s' % (self.s3_conf.region, self.s3_conf.bucket, path),
                     'type': self.__get_file_type(os.path.splitext(item))
                 })
         return representations
@@ -306,7 +308,7 @@ class ProductDownloader:
         if ext == '.tif':
             return 'data'
         elif ext == '.geojson':
-            return 'footprint''
+            return 'footprint'
         elif ext == '.xml':
             return 'metadata'
         elif ext == '.jpeg':
@@ -527,3 +529,6 @@ class ProductDownloader:
             },
             'RawMetadata': etree.tostring(etree.XML(etree.tostring(r), stripParser))
         }
+
+if __name__ == "__main__":
+    downloader = ProductDownloader('config.yaml', None)

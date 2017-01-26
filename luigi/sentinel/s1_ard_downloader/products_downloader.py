@@ -124,7 +124,7 @@ class ProductDownloader:
                 # Extract Metadata
                 (osgb_metadata, osni_metadata) = self.extract_metadata(item, extracted_path)
                 # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
-                representations = self.upload_dir_to_s3(extracted_path, '%s/%s' % (self.s3_conf['bucket_dest_path'], item['filename']))
+                representations = self.upload_dir_to_s3(extracted_path, '%s' % (self.s3_conf['bucket_dest_path']))
                 representations = self.extract_representations(representations, item['filename'])
                 
                 # Write the progress to the catalog table
@@ -172,10 +172,10 @@ class ProductDownloader:
 
         if os.path.isfile('%s.shp' % footprint_osgb_path):
             footprint_osgb_path = '%s.shp' % footprint_osgb_path
-            footprint_osgb_output_path = footprint_osgb_path.replace('.shp', 'wgs84.geojson')
+            footprint_osgb_output_path = footprint_osgb_path.replace('.shp', '_wgs84.geojson')
         elif os.path.isfile('%s.geojson' % footprint_osgb_path):
             footprint_osgb_path = '%s.geojson' % footprint_osgb_path
-            footprint_osgb_output_path = footprint_osgb_path.replace('.geojson', 'wgs84.geojson')
+            footprint_osgb_output_path = footprint_osgb_path.replace('.geojson', '_wgs84.geojson')
         else:
             raise RuntimeError('No footprint found for %s, halting' % item['filename'])
         
@@ -216,7 +216,7 @@ class ProductDownloader:
             'osni': []
         }
         for r in representations:
-            if r.path.startswith('%s/%s/OSNI1952' % (name, self.s3_conf['bucket_dest_path'])):
+            if r['path'].startswith('%s/%s/OSNI1952' % (self.s3_conf['bucket_dest_path'], name)):
                 outputs['osni'].append(r)
             else:
                 outputs['osgb'].append(r)
@@ -318,11 +318,11 @@ class ProductDownloader:
                 path = '%s/%s' % (destpath, item)
                 self.__copy_file_to_s3(item_path, path)
                 representations['s3'].append({
-                    'bucket': self.s3_conf.bucket,
-                    'region': self.s3_conf.region,
+                    'bucket': self.s3_conf['bucket'],
+                    'region': self.s3_conf['region'],
                     'path': path,
-                    'url': 'https://s3-%s.amazonaws.com/%s/%s' % (self.s3_conf.region, self.s3_conf.bucket, path),
-                    'type': self.__get_file_type(os.path.splitext(item))
+                    'url': 'https://s3-%s.amazonaws.com/%s%s' % (self.s3_conf['region'], self.s3_conf['bucket'], path),
+                    'type': self.__get_file_type(os.path.splitext(item)[1])
                 })
         return representations
 
@@ -367,7 +367,7 @@ class ProductDownloader:
         bucket = conn.get_bucket(bucket_name)
 
         destpath = os.path.join(amazonDestPath, filename)
-
+        
         metadata = {'md5': calculate_checksum(sourcepath), 'uploaded': time.strftime('%Y-%m-%dT%H:%M:%SZ')}
 
         if self.debug:

@@ -183,28 +183,23 @@ class ProductDownloader:
         with open(footprint_osgb_output_path) as osgb_output:
             osgb = json.load(osgb_output)
 
+        # Attempt to extract any potential OSNI geometry
         footprint_osni_path = os.path.join(os.path.join(os.path.join(os.path.join(path, item['filename']), 'OSNI1952'), 'Footprint'), item['filename'].replace('.SAFE.data', '_OSNI1952_footprint'))
-        footprint_osni_output_path = ''
-
+        footprint_osni_output_path = None
         osni = None
 
         if os.path.isfile('%s.shp' % footprint_osni_path):
             footprint_osni_path = '%s.shp' % footprint_osni_path
-            footprint_osni_output_path = footprint_osni_path.replace('.shp', 'wgs84.geojson')
-            
+            footprint_osni_output_path = footprint_osni_path.replace('.shp', '_wgs84.geojson')
             self.reproject_footprint(footprint_osni_path, footprint_osni_output_path)
-
-            osni = json.load(footprint_osni_output_path)
         elif os.path.isfile('%s.geojson' % footprint_osni_path):
             footprint_osni_path = '%s.geojson' % footprint_osni_path
-            footprint_osni_output_path = footprint_osni_path.replace('.geojson', 'wgs84.geojson')
-            
+            footprint_osni_output_path = footprint_osni_path.replace('.geojson', '_wgs84.geojson')            
             self.reproject_footprint(footprint_osni_path, footprint_osni_output_path)
-
-            osni = json.load(footprint_osni_output_path)
-        else:
-            ## No OSNI data found
         
+        if footprint_osni_output_path is not None:
+            with open(footprint_osni_output_path) as osni_out:
+                osni = json.load(osni_out)
 
         return (osgb, osni)
 
@@ -403,7 +398,7 @@ class ProductDownloader:
     :param outFile: Path to the output file
     :param toProjection: EPSG number to reproject to (defualt: 4326 [WGS84])
     """
-    def reproject_footprint(inFile, outFile, toProjection=4326):
+    def reproject_footprint(self, inFile, outFile, toProjection=4326):
         outDriver = ogr.GetDriverByName('GeoJSON')
 
         if os.path.splitext(outFile)[1] == '.shp':

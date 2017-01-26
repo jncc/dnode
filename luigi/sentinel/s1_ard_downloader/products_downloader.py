@@ -54,17 +54,20 @@ class ProductDownloader:
                 
                 self.database_conf = self.config.get('database')
                 if self.database_conf is not None \
-                    and 'host' in database_conf \
-                    and 'dbname' in database_conf \
-                    and 'username' in database_conf \
-                    and 'password' in database_conf \
-                    and 'table' in database_conf:
-                    self.db_conn = psycopg2.connect(host=database_conf['host'], dbname=database_conf['dbname'], user=database_conf['username'], password=database_conf['password'])
+                    and 'host' in self.database_conf \
+                    and 'dbname' in self.database_conf \
+                    and 'username' in self.database_conf \
+                    and 'password' in self.database_conf \
+                    and 'table' in self.database_conf:
+                    self.db_conn = psycopg2.connect(host=self.database_conf['host'], dbname=self.database_conf['dbname'], user=self.database_conf['username'], password=self.database_conf['password'])
                 else:
                     raise RuntimeError('Config file has missing database config entires')
 
         else:
             raise RuntimeError('Config file at [%s] was not found' % config_file)
+
+    def destroy():
+        self.db_conn.close()
 
     """
     Download from the supplied list of available products, upload the results to S3 and write the progress to a
@@ -530,3 +533,4 @@ class ProductDownloader:
 
 if __name__ == "__main__":
     downloader = ProductDownloader('config.yaml', None)
+    downloader.destroy()

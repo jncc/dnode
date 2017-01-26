@@ -8,7 +8,7 @@ from luigi.util import requires
 
 #FILE_ROOT = 's3://jncc-data/workflows/s2ard/'
 FILE_ROOT = '/home/felix/temp/s2ard'
-DOCKER_IMAGE = 'AKIAJIXWW3NPTFVVAQDQ.dkr.ecr.eu-west-1.amazonaws.com/process-test'
+DOCKER_IMAGE = '914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test'
 
 #Create job spec
 class CreateJobSpec(luigi.Task):

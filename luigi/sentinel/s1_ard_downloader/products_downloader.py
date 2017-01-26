@@ -30,8 +30,6 @@ class ProductDownloader:
         # Setup Config from config file
         self.logger = logger
 
-        self.ProductMeta
-
         # Check config file to make sure it looks sane before use
         if os.path.isfile(config_file):
             with open("config.yaml", 'r') as conf:

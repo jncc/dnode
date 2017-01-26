@@ -104,7 +104,7 @@ class ProductDownloader:
         downloaded = []
 
         # Pass over list of available items and look for an non downloaded ID
-        for item in available_list['available_products']:
+        for item in available_list:
             if item['product_id'] in wanted_list:
                 filename = os.path.join(self.temp, '%s.zip' % item)
                 client.download_product(item[0], filename)

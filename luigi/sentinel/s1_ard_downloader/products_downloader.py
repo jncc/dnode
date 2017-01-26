@@ -20,7 +20,7 @@ def calculate_checksum(filename):
     :return: The checksum of the file specifed by the filename
     """
     hasher = hashlib.md5()
-    with open(filename, 'r') as stream:
+    with open(filename, 'rb') as stream:
         for chunk in iter(lambda: stream.read(4096), b""):
             hasher.update(chunk)
     return hasher.hexdigest()
@@ -119,9 +119,9 @@ class ProductDownloader:
 
             if remote_checksum == local_checksum:
                 # Extract footprints from downloaded files
-                (osgb_geojson, osni_geojson) = extract_footprints_wgs84(item, extracted_path)
+                (osgb_geojson, osni_geojson) = self.extract_footprints_wgs84(item, extracted_path)
                 # Extract Metadata
-                (osgb_metadata, osni_metadata) = extract_metadata(item, extracted_path)
+                (osgb_metadata, osni_metadata) = self.extract_metadata(item, extracted_path)
                 # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
                 representations = self.__upload_dir_to_s3(extracted_path, '%s/%s' % (self.s3_conf['bucket_dest_path'], item['filename']))
                 representations = self.__extract_representations(representations, item['filename'])
@@ -359,7 +359,7 @@ class ProductDownloader:
         amazon_key_Id = self.s3_conf['access_key']
         amazon_key_secret = self.s3_conf['secret_access_key']
 
-        conn = boto.s3.connect_to_region(self.s3_conf['region'], is_secure=True)
+        conn = boto.s3.connect_to_region(self.s3_conf['region'], aws_access_key_id=amazon_key_Id, aws_secret_access_key=amazon_key_secret, is_secure=True)
 
         bucket_name = self.s3_conf['bucket']
         amazonDestPath = self.s3_conf['bucket_dest_path']
@@ -367,7 +367,7 @@ class ProductDownloader:
 
         destpath = os.path.join(amazonDestPath, filename)
 
-        metadata = {'md5': calculate_checksum(sourcepath), 'uploaded': time.strftime('%Y-%m-%d %H:%M')}
+        metadata = {'md5': calculate_checksum(sourcepath), 'uploaded': time.strftime('%Y-%m-%dT%H:%M:%SZ')}
 
         if self.debug:
             self.log("DEBUG: Would copy %s to %s", sourcepath, amazonDestPath)
@@ -395,7 +395,8 @@ class ProductDownloader:
             else:
                 k = boto.s3.key.Key(bucket)
                 k.key = destpath
-                k.setMetadata(metadata)
+                k.set_metadata('md5', metadata['md5'])
+                k.set_metadata('uploaded': metadata['uploaded'])
                 if self.s3_conf['public']:
                     k.set_acl('public-read')
                 k.set_contents_from_filename(sourcepath, num_cb=10)

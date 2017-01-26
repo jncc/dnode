@@ -43,3 +43,8 @@ Requires - GenerateJob
 Outputs - output.txt
 ### Nice to haves 
 - Stream logs (stdout, stderr) to local log file
+
+#run test job
+    source ../../luigi_venv/bin/activate
+    PYTHONPATH='.' luigi --module workflow CreateArdProduct --local-scheduler --text "this is a test" --runDate=2017-01-26
+

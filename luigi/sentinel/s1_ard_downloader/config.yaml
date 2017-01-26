@@ -1,3 +1,4 @@
+temp: ./temp
 database:
     host: pg-host
     username: pg-username

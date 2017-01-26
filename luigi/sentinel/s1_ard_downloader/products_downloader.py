@@ -147,11 +147,11 @@ class ProductDownloader:
     :return: A tuple with (osgb, osni) TopCat standard metadata JSON, OSNI will be None if no OSNI folder exists on the base path
     """
     def extract_metadata(self, item, path):
-        osgb = xml_to_json(os.path.join(os.path.join(path, item['filename']), item['filename'].replace('.SAFE.data', '_metadata.xml')))
+        osgb = self.xml_to_json(os.path.join(os.path.join(path, item['filename']), item['filename'].replace('.SAFE.data', '_metadata.xml')))
         osni = None
 
         if os.path.isfile(os.path.join(os.path.join(os.path.join(path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml'))):
-            osni = xml_to_json(os.path.join(os.path.join(os.path.join(path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml')))
+            osni = self.xml_to_json(os.path.join(os.path.join(os.path.join(path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml')))
         
         return (osgb, osni)
 
@@ -178,8 +178,10 @@ class ProductDownloader:
         else:
             raise RuntimeError('No footprint found for %s, halting' % item['filename'])
         
-        reproject_footprint(footprint_osgb_path, footprint_osgb_output_path)
-        osgb = json.load(footprint_osgb_output_path)
+        self.reproject_footprint(footprint_osgb_path, footprint_osgb_output_path)
+
+        with open(footprint_osgb_output_path) as osgb_output:
+            osgb = json.load(osgb_output)
 
         footprint_osni_path = os.path.join(os.path.join(os.path.join(os.path.join(path, item['filename']), 'OSNI1952'), 'Footprint'), item['filename'].replace('.SAFE.data', '_OSNI1952_footprint'))
         footprint_osni_output_path = ''
@@ -190,18 +192,18 @@ class ProductDownloader:
             footprint_osni_path = '%s.shp' % footprint_osni_path
             footprint_osni_output_path = footprint_osni_path.replace('.shp', 'wgs84.geojson')
             
-            reproject_footprint(footprint_osni_path, footprint_osni_output_path)
+            self.reproject_footprint(footprint_osni_path, footprint_osni_output_path)
 
             osni = json.load(footprint_osni_output_path)
         elif os.path.isfile('%s.geojson' % footprint_osni_path):
             footprint_osni_path = '%s.geojson' % footprint_osni_path
             footprint_osni_output_path = footprint_osni_path.replace('.geojson', 'wgs84.geojson')
             
-            reproject_footprint(footprint_osni_path, footprint_osni_output_path)
+            self.reproject_footprint(footprint_osni_path, footprint_osni_output_path)
 
             osni = json.load(footprint_osni_output_path)
         else:
-            raise RuntimeError('No footprint found for %s, halting' % item['filename'])        
+            ## No OSNI data found
         
 
         return (osgb, osni)
@@ -427,7 +429,7 @@ class ProductDownloader:
         if os.path.exists(outFile):
             outDriver.DeleteDataSource(outFile)
         outDataSet = outDriver.CreateDataSource(outFile)
-        outLayer = outDataSet.CreateLayer('footprint_4326', geom_type=ogr.wkbMultiPolygon)
+        outLayer = outDataSet.CreateLayer('footprint_4326', outSpatialRef, geom_type=ogr.wkbMultiPolygon)
 
         # add fields
         inLayerDefn = inLayer.GetLayerDefn()
@@ -474,17 +476,17 @@ class ProductDownloader:
         characterString = '{%s}%s' % (r.nsmap['gco'], 'CharacterString')
         dateTimeString = '{%s}%s' % (r.nsmap['gco'], 'DateTime')
         dateString = '{%s}%s' % (r.nsmap['gco'], 'Date')
-        distanceString = '{%}s%s' % (r.nsmap['gco'], 'Distance')
+        distanceString = '{%s}%s' % (r.nsmap['gco'], 'Distance')
         decimalString = '{%s}%s' % (r.nsmap['gco'], 'Decimal')
 
         limitationsOnPublicAccess = ''
         useConstraints = ''
 
-        for c in r.find('%s%s', (r.nsmap['gmd'], 'identificationInfo')).find('%s%s', (r.nsmap['gmd'], 'MD_DataIdentification')).findall('%s%s', (r.nsmap['gmd'], 'resourceConstraints')):
-            if c.find('%s%s', (r.nsmap['gmd'], 'MD_LegalConstraints')) is not None:
-                limitationsOnPublicAccess = c.find('%s%s', (r.nsmap['gmd'], 'MD_LegalConstraints')).find('%s%s', (r.nsmap['gmd'], 'otherConstraints')).find(characterString).text
-            elif c.find('%s%s', (r.nsmap['gmd'], 'MD_Constraints')) is not None:
-                useConstraints = c.find('%s%s', (r.nsmap['gmd'], 'MD_Constraints')).find('%s%s', (r.nsmap['gmd'], 'useLimitation')).find(characterString).text
+        for c in r.find('{%s}%s' % (r.nsmap['gmd'], 'identificationInfo')).find('{%s}%s' % (r.nsmap['gmd'], 'MD_DataIdentification')).findall('{%s}%s' % (r.nsmap['gmd'], 'resourceConstraints')):
+            if c.find('{%s}%s' % (r.nsmap['gmd'], 'MD_LegalConstraints')) is not None:
+                limitationsOnPublicAccess = c.find('{%s}%s' % (r.nsmap['gmd'], 'MD_LegalConstraints')).find('{%s}%s' % (r.nsmap['gmd'], 'otherConstraints')).find(characterString).text
+            elif c.find('{%s}%s' % (r.nsmap['gmd'], 'MD_Constraints')) is not None:
+                useConstraints = c.find('{%s}%s' % (r.nsmap['gmd'], 'MD_Constraints')).find('{%s}%s' % (r.nsmap['gmd'], 'useLimitation')).find(characterString).text
 
         stripParser = etree.XMLParser(remove_blank_text=True)  
         

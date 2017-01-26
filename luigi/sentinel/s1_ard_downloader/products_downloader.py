@@ -82,14 +82,25 @@ class ProductDownloader:
         available_list = json.load(available)
         available_product_ids = [str(item['product_id']) for item in available_list]
 
+        extracted_path = os.path.join(self.temp, 'extracted')
+
         # Compare to already aquired products
         cur = self.db_conn.cursor()
-        cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' not in %s AND properties->>'downloaded' != 'true';", (tuple(available_product_ids),))
-        wanted_list_rows = cur.fetchall()
+        
+        ## Get products which we know about that are in the available list and have downloaded
+        cur.execute("SELECT (properties->>'product_id')::integer AS id, (properties->>'downloaded')::boolean FROM sentinel_ard_backscatter WHERE properties->>'product_id' in %s AND properties->>'downloaded' = 'true' ORDER BY id;", (tuple(available_product_ids),))
+        known_list = [int(item(0)) for item in cur.fetchall()]
         cur.close()
-        wanted_list = [item[0] for item in wanted_list_rows]
 
-        extracted_path = os.path.join(self.temp, 'extracted')
+        wanted_list = []
+
+        for item in available_list:
+            downloaded = False
+            if item['product_id'] in known_list:
+                downloaded = True                    
+            if not downloaded:
+                wanted_list.append(item)
+        
         downloaded = []
 
         # Pass over list of available items and look for an non downloaded ID

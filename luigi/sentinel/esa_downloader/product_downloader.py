@@ -34,7 +34,7 @@ class ProductDownloader:
         
         if self.debug:
             self.log.debug("download url: %s, would create %s", url, tempFilename)
-            return None
+            return tempFilename
 
         try: 
             with open(tempFilename, 'wb') as f:

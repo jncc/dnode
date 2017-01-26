@@ -4,7 +4,7 @@
 - Modify FILE_ROOT in workflow.py to point to this location
 
 ## Create a seed status file
-- Copy available.json into this location.
+- Copy ./seed/available.json into this location.
 - Create a folder in this location with yesterdays date. ie ~/temp/2016-12-11
 - Copy available.json into this folder
 - Modify the copy of available.json, change one of the ingestionDate values to yesterdays date. 

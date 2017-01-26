@@ -1,3 +1,12 @@
+# Docker host setup
+## Configure  to run as non root user
+
+    sudo groupadd docker  
+    sudo gpasswd -a ${USER} docker 
+    sudo service docker restart 
+
+log back in to apply
+
 # Docker image
 - Runs python script processor.py
 - Takes in job.json
@@ -6,16 +15,18 @@
 - Upload image to amazon ECR repo - http://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html
 
 Build image:
- docker build -t process-test .
+
+    docker build -t process-test .
 
 Start image with interactive console: 
  shares the workfiles folder in home
  sets user id and group id
 
- docker run -i -t -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID process-test /bin/bash
+    docker run -i -t -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID process-test /bin/bash
 
 Just run it:
- docker run -d -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID process-test
+
+    docker run -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID process-test
 
 
 # Create workflow

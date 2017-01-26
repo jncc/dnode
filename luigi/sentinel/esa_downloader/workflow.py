@@ -7,8 +7,8 @@ from luigi.s3 import S3Target
 from luigi.util import requires
 from datetime import timedelta
 
-FILE_ROOT = 's3://jncc-data/workflows/sentinel-download/'
-#FILE_ROOT = '/home/felix/temp/'
+#FILE_ROOT = 's3://jncc-data/workflows/sentinel-download/'
+FILE_ROOT = '/home/felix/temp/esadownloader'
 
 class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
@@ -19,8 +19,8 @@ class LastAvailableProductsList(luigi.ExternalTask):
         d = self.runDate - timedelta(days=1)
         filePath = os.path.join(os.path.join(FILE_ROOT, d.strftime("%Y-%m-%d")), 'available.json')
         
-        #return luigi.LocalTarget(filePath)
-        return S3Target(filePath)
+        return luigi.LocalTarget(filePath)
+        #return S3Target(filePath)
         
 
 @requires(LastAvailableProductsList)
@@ -36,8 +36,8 @@ class CreateAvailableProductsList(luigi.Task):
     def output(self):
         filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")),'available.json')
         
-        #return luigi.LocalTarget(filePath)
-        return S3Target(filePath)
+        return luigi.LocalTarget(filePath)
+        #return S3Target(filePath)
 
 @requires(CreateAvailableProductsList)
 class DownloadAvailableProducts(luigi.Task):
@@ -61,8 +61,8 @@ class DownloadAvailableProducts(luigi.Task):
     def output(self):
         filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), '_success.json')
         
-        #return luigi.LocalTarget(filePath)
-        return S3Target(filePath)
+        return luigi.LocalTarget(filePath)
+        #return S3Target(filePath)
         
 if __name__ == '__main__':
     luigi.run()

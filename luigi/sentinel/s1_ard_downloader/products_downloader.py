@@ -104,48 +104,44 @@ class ProductDownloader:
         downloaded = []
 
         # Pass over list of available items and look for an non downloaded ID
-        for item in available_list:
-            if item['product_id'] in wanted_list:
-                filename = os.path.join(self.temp, '%s.zip' % item)
-                client.download_product(item[0], filename)
+        for item in wanted_list:
+            filename = os.path.join(self.temp, '%s.zip' % item)
+            client.download_product(item[0], filename)
 
-                # Extract all files from source
-                with zipfile.ZipFile(filename, 'r') as product_zip:
-                    os.path.makedirs(extracted_path)
-                    product_zip.extractall(extracted_path)
-                tif_file = item['filename'].replace('.SAFE.data', '.tif')
+            # Extract all files from source
+            with zipfile.ZipFile(filename, 'r') as product_zip:
+                os.path.makedirs(extracted_path)
+                product_zip.extractall(extracted_path)
+            tif_file = item['filename'].replace('.SAFE.data', '.tif')
+            
+            remote_checksum = client.get_checksum(item[0])
+            local_checksum = calculate_checksum(tif_file)
+
+            if remote_checksum == local_checksum:
+                # Extract footprints from downloaded files
+                osgb_geojson = None
+                osni_geojson = None
+                (osgb_geojson, osni_geojson) = __extract_footprints_wgs84(item, path)
+
+                # Extract Metadata for the OSGB side and a potential OSNI partition
+                osgb_metadata = xml_to_json(os.path.join(os.path.join(extracted_path, item['filename']), item['filename'].replace('.SAFE.data', '_metadata.xml')))
+                osni_metadata = None
+
+                if os.path.isfile(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml'))):
+                    osni_metadata = xml_to_json(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml')))
                 
-                remote_checksum = client.get_checksum(item[0])
-                local_checksum = calculate_checksum(tif_file)
+                # Upload all files to S3
+                representations = self.__upload_dir_to_s3(extracted_path, '%s/%s' % (self.s3_conf['bucket_dest_path'], item['filename']))
+                representations = self.__extract_representations(representations, item['filename'])
+                
+                id = self.__write_progress_to_database(item, metadata=osgb_metadata, representations=representations['osgb'], success=True, geom=osgb_geojson)
 
-                if remote_checksum == local_checksum:
-                    # Extract footprints from downloaded files
-                    osgb_geojson = None
-                    osni_geojson = None
-                    (osgb_geojson, osni_geojson) = __extract_footprints_wgs84(item, path)
-
-                    # Extract Metadata for the OSGB side and a potential OSNI partition
-                    osgb_metadata = xml_to_json(os.path.join(os.path.join(extracted_path, item['filename']), item['filename'].replace('.SAFE.data', '_metadata.xml')))
-                    osni_metadata = None
-
-                    if os.path.isfile(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml'))):
-                        osni_metadata = xml_to_json(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), item['filename'].replace('.SAFE.data', '_metadata.xml')))
-                    
-                    # Upload all files to S3
-                    representations = self.__upload_dir_to_s3(extracted_path, '%s/%s' % (self.s3_conf['bucket_dest_path'], item['filename']))
-                    representations = self.__extract_representations(representations, item['filename'])
-                    
-                    id = self.__write_progress_to_database(item, metadata=osgb_metadata, representations=representations['osgb'], success=True, geom=osgb_geojson)
-
-                    if len(representations['osni']) > 0:
-                        if osni_geojson is None:
-                            self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osgb_geojson)
-                        else:
-                            self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)
-                else:
-                    self.__write_progress_to_database(item, success=False)
+                if len(representations['osni']) > 0:
+                    if osni_geojson is None:
+                        self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osgb_geojson)
+                    else:
+                        self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)
             else:
-                ## TODO: Increment attempt record / error recovery
                 self.__write_progress_to_database(item, success=False)
         
         self.client.logout()
@@ -221,7 +217,7 @@ class ProductDownloader:
     """
     def __write_progress_to_database(self, item, metadata={}, representations={}, success=True, additional=None, geom=None):
         cur = self.db_conn.cursor()
-        cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' = %s;", ((item['product_id'])),)
+        cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' = %s;", ((str(item['product_id']))),)
         existing = cur.fetchone()
 
         retVal = None

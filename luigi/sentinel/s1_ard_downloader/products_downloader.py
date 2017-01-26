@@ -337,9 +337,11 @@ class ProductDownloader:
             return 'data'
         elif ext == '.geojson':
             return 'footprint'
+        elif ext == '.cpg' or ext == '.dbf' or ext == '.prj' or ext =='.qpj' or ext == '.shp' or ext == '.shx':
+            return 'footprint-shapefile'
         elif ext == '.xml':
             return 'metadata'
-        elif ext == '.jpeg':
+        elif ext == '.jpeg' or ext == '.jpg' or ext == '.png':
             return 'preview'
         else:
             return 'unknown'

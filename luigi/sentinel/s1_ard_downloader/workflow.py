@@ -62,6 +62,15 @@ class CreateProductsList(luigi.Task):
                 and 'secret_access_key' in s3_conf):
                 runtimeErrorLog('Config file has invalid s3 entries')        
 
+            database_conf = config.get('database')
+            if not (database_conf is not None \
+                and 'host' in database_conf \
+                and 'dbname' in database_conf \
+                and 'username' in database_conf \
+                and 'password' in database_conf \
+                and 'table' in database_conf):
+                runtimeErrorLog(logger, 'Config file has missing database config entires')                
+
             with self.output().open('w') as output:
                 products_list_manager = ProductsListManager(config, logger, output)
                 products_list_manager.getDownloadableProductsFromDataCatalog()

@@ -42,7 +42,7 @@ class CreateProductsList(luigi.Task):
     config = luigi.Parameter(default='config.yaml')
     
     def run(self):
-        with open("config.yaml", 'r') as conf:
+        with open(self.config, 'r') as conf:
             config = yaml.load(conf)
             logger = getLogger(config.get('log_dir'), 'CreateProductsList')
             working_dir = getFilePath(config.get('working_dir'), 'working')
@@ -67,7 +67,7 @@ class CreateProductsList(luigi.Task):
                 products_list_manager.getDownloadableProductsFromDataCatalog()
 
     def output(self):
-        with open("config.yaml", 'r') as conf:
+        with open(self.config, 'r') as conf:
             config = yaml.load(conf)
             filePath = getFilePath(config.get('working_dir'))
 
@@ -81,7 +81,7 @@ class DownloadProducts(luigi.Task):
         return CreateProductsList()
 
     def run(self):
-        with open("config.yaml", 'r') as conf:
+        with open(self.config, 'r') as conf:
             config = yaml.load(conf)
             working_dir = getFilePath(config.get('working_dir'), 'working')
             logger = getLogger(cnf.get('log_dir'), 'DownloadProducts')
@@ -118,7 +118,7 @@ class DownloadProducts(luigi.Task):
                     runtimeErrorLog(logger, 'Config file at [%s] was not found' % config_file)
 
     def output(self):
-        with open("config.yaml", 'r') as conf:
+        with open(self.config, 'r') as conf:
             config = yaml.load(conf)
             working_dir = getFilePath(config.get('working_dir'), 'working')        
             return luigi.LocalTarget(getFilePath(working_dir, 'downloaded.json'))

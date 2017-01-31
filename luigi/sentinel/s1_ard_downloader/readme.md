@@ -6,8 +6,11 @@ This workflow determines what products are available from a remote repository of
 
 I recommend that you install the python-gdal (or python3-gdal) packages rather than rely on pip installing the GDAL bindings so installation should go something like;
 
- - virtualenv -p python3 --system-site-packages venv
- - pip install -r requirements.txt
+```
+virtualenv -p python3 --system-site-packages venv
+source ./venv/bin/activate
+pip install -r requirements.txt
+```
  
 ## Running
 

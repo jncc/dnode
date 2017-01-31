@@ -39,8 +39,7 @@ class ProductDownloader:
         self.s3_conf = self.config.get('s3')
 
         self.database_conf = self.config.get('database')
-        self.db_conn = psycopg2.connect(host=self.database_conf['host'], dbname=self.database_conf['dbname'], user=self.database_conf['username'], password=self.database_conf['password'])
-    
+        self.db_conn = psycopg2.connect(host=self.database_conf['host'], dbname=self.database_conf['dbname'], user=self.database_conf['username'], password=self.database_conf['password']) 
     """
     Cleanup task
     """
@@ -57,6 +56,7 @@ class ProductDownloader:
     def downloadProducts(self, available, downloaded):  
         available_list = json.load(available)
         downloaded = []
+        extracted_path = os.path.join(self.temp, 'extracted')
 
         # Pass over list of available items and look for an non downloaded ID
         for item in available_list:

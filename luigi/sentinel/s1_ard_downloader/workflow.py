@@ -69,7 +69,7 @@ class CreateProductsList(luigi.Task):
     def output(self):
         with open(self.config, 'r') as conf:
             config = yaml.load(conf)
-            filePath = getFilePath(config.get('working_dir'))
+            return luigi.LocalTarget(getFilePath(config.get('working_dir'), 'available.json'))
 
 # Download new products
 class DownloadProducts(luigi.Task):
@@ -120,8 +120,7 @@ class DownloadProducts(luigi.Task):
     def output(self):
         with open(self.config, 'r') as conf:
             config = yaml.load(conf)
-            working_dir = getFilePath(config.get('working_dir'), 'working')        
-            return luigi.LocalTarget(getFilePath(working_dir, 'downloaded.json'))
+            return luigi.LocalTarget(getFilePath(config.get('working_dir'), '_success.json'))
 
 if __name__ == '__main__':
     luigi.run()

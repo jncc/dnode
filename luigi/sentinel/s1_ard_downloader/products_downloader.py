@@ -390,7 +390,7 @@ class ProductDownloader:
                 k = boto.s3.key.Key(bucket)
                 k.key = destpath
                 k.set_metadata('md5', metadata['md5'])
-                k.set_metadata('uploaded': metadata['uploaded'])
+                k.set_metadata('uploaded', metadata['uploaded'])
                 if self.s3_conf['public']:
                     k.set_acl('public-read')
                 k.set_contents_from_filename(sourcepath, num_cb=10)

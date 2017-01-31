@@ -63,7 +63,7 @@ class CreateProductsList(luigi.Task):
                 runtimeErrorLog('Config file has invalid s3 entries')        
 
             with self.output().open('w') as output:
-                products_list_manager = ProductsListManager(config_file, logger, output)
+                products_list_manager = ProductsListManager(config, logger, output)
                 products_list_manager.getDownloadableProductsFromDataCatalog()
 
     def output(self):

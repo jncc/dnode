@@ -27,48 +27,19 @@ def calculate_checksum(filename):
     return hasher.hexdigest()
 
 class ProductDownloader:
-    def __init__(self, config_file, available, logger):
-        # Setup Config from config file
+    def __init__(self, config, logger, tempdir):
+        self.config = config
         self.logger = logger
-        self.available = available
 
-        # Check config file to make sure it looks sane before use
-        if os.path.isfile(config_file):
-            with open("config.yaml", 'r') as conf:
-                self.config = yaml.load(conf)
-                self.temp = self.config.get('temp')
-                self.debug = False
+        self.temp = tempdir
+        self.debug = self.config.get('debug')
 
-                datahub_conf = self.config.get('datahub')
-                if datahub_conf is not None \
-                    and 'search_zone_id' in datahub_conf \
-                    and 'username' in datahub_conf \
-                    and 'password' in datahub_conf \
-                    and 'base_url' in datahub_conf \
-                    and 'download_chunk_size' in datahub_conf: 
-                    self.client = DatahubClient(datahub_conf['base_url'], datahub_conf['download_chunk_size'], datahub_conf['search_zone_id'], datahub_conf['username'], datahub_conf['password'], None)
-                else:
-                    raise RuntimeError('Config file has invalid datahub entries')
+        datahub_conf = self.config.get('datahub')
+        self.client = DatahubClient(datahub_conf['base_url'], datahub_conf['download_chunk_size'], datahub_conf['search_zone_id'], datahub_conf['username'], datahub_conf['password'], None)
+        self.s3_conf = self.config.get('s3')
 
-                self.s3_conf = self.config.get('s3')
-                if not (self.s3_conf is not None \
-                    and 'access_key' in self.s3_conf \
-                    and 'secret_access_key' in self.s3_conf):
-                    raise RuntimeError('Config file has invalid s3 entries')
-                
-                self.database_conf = self.config.get('database')
-                if self.database_conf is not None \
-                    and 'host' in self.database_conf \
-                    and 'dbname' in self.database_conf \
-                    and 'username' in self.database_conf \
-                    and 'password' in self.database_conf \
-                    and 'table' in self.database_conf:
-                    self.db_conn = psycopg2.connect(host=self.database_conf['host'], dbname=self.database_conf['dbname'], user=self.database_conf['username'], password=self.database_conf['password'])
-                else:
-                    raise RuntimeError('Config file has missing database config entires')
-
-        else:
-            raise RuntimeError('Config file at [%s] was not found' % config_file)
+        self.database_conf = self.config.get('database')
+        self.db_conn = psycopg2.connect(host=self.database_conf['host'], dbname=self.database_conf['dbname'], user=self.database_conf['username'], password=self.database_conf['password'])
     
     """
     Cleanup task
@@ -145,12 +116,13 @@ class ProductDownloader:
             else:
                 self.__write_progress_to_database(item, success=False)
             
-            # Cleanup temp extrcated directory
+            # Cleanup temp extracted directory
             shutil.rmtree(extracted)
             # Cleanup download file
             os.unlink(filename)
 
         self.client.logout()
+        # Dump out the downloaded update
         downloaded.write(json.dumps(downloaded)) 
         
     """

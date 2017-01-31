@@ -4,7 +4,7 @@ import psycopg2
 import yaml
 from datahub_client import DatahubClient
 
-class createList:
+class ProductsListManager:
     # - Log into the api
     # - Get Products list from api list_products
     # - Check list against catalog 

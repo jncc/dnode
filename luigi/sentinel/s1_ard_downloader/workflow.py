@@ -47,7 +47,7 @@ class CreateProductsList(luigi.Task):
             logger = getLogger(config.get('log_dir'), 'CreateProductsList')
             working_dir = getFilePath(config.get('working_dir'), 'working')
 
-            datahub_conf = self.config.get('datahub')
+            datahub_conf = config.get('datahub')
             if not (datahub_conf is not None \
                 and 'search_zone_id' in datahub_conf \
                 and 'username' in datahub_conf \

@@ -40,9 +40,6 @@ class CreateProductsList(luigi.Task):
     debug = luigi.BooleanParameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     config = luigi.Parameter(default='config.yaml')
-
-    cnf = yaml.load(config)
-    logger = getLogger(cnf.get('log_dir'), 'CreateProductsList')
     
     def output(self):
         d = self.runDate - timedelta(days=1)
@@ -51,6 +48,7 @@ class CreateProductsList(luigi.Task):
     def run(self):
         with open("config.yaml", 'r') as conf:
             config = yaml.load(conf)
+            logger = getLogger(config.get('log_dir'), 'CreateProductsList')
             working_dir = getFilePath(config.get('working_dir'), 'working')
 
             datahub_conf = self.config.get('datahub')

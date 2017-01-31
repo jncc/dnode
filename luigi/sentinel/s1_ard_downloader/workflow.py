@@ -41,10 +41,6 @@ class CreateProductsList(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     config = luigi.Parameter(default='config.yaml')
     
-    def output(self, working_dir):
-        d = self.runDate - timedelta(days=1)
-        filePath = os.path.join(os.path.join(working_dir, d.strftime("%Y-%m-%d")), 'available.json')
-
     def run(self):
         with open("config.yaml", 'r') as conf:
             config = yaml.load(conf)
@@ -66,13 +62,14 @@ class CreateProductsList(luigi.Task):
                 and 'secret_access_key' in s3_conf):
                 runtimeErrorLog('Config file has invalid s3 entries')        
 
-            with self.output(config.get('working_dir')).open('w') as output:
+            with self.output().open('w') as output:
                 products_list_manager = ProductsListManager(config_file, logger, output)
                 products_list_manager.getDownloadableProductsFromDataCatalog()
 
     def output(self):
-        return luigi.LocalTarget(getFilePath('available.json'))
-
+        with open("config.yaml", 'r') as conf:
+            config = yaml.load(conf)
+            filePath = getFilePath(config.get('working_dir'))
 
 # Download new products
 class DownloadProducts(luigi.Task):
@@ -89,7 +86,7 @@ class DownloadProducts(luigi.Task):
             working_dir = getFilePath(config.get('working_dir'), 'working')
             logger = getLogger(cnf.get('log_dir'), 'DownloadProducts')
 
-            with self.input().open() as available, self.output(working_dir).open('w') as downloaded:
+            with self.input().open() as available, self.output().open('w') as downloaded:
                 if os.path.isfile(config):
                     datahub_conf = config.get('datahub')
                     if not (datahub_conf is not None \
@@ -120,8 +117,11 @@ class DownloadProducts(luigi.Task):
                 else:
                     runtimeErrorLog(logger, 'Config file at [%s] was not found' % config_file)
 
-    def output(self, working_dir):
-        return luigi.LocalTarget(getFilePath(working_dir, 'downloaded.json'))
+    def output(self):
+        with open("config.yaml", 'r') as conf:
+            config = yaml.load(conf)
+            working_dir = getFilePath(config.get('working_dir'), 'working')        
+            return luigi.LocalTarget(getFilePath(working_dir, 'downloaded.json'))
 
 if __name__ == '__main__':
     luigi.run()

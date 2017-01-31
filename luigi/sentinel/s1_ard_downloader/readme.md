@@ -1,6 +1,6 @@
 # Sentinel 1 ARD Backscatter Product downloader
 
-This workflow determines what products are available from a remote repository of processed Sentinel-1 ARD (Backscatter) products provided by Environment Systems
+This workflow determines what products are available from a remote repository of processed Sentinel-1 ARD (Backscatter) products
 
 ## Workflow Diagrams
 

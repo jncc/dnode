@@ -11,6 +11,9 @@ from luigi.s3 import S3Target
 from luigi.util import requires
 import datetime
 
+from products_list_manager import ProductsListManager
+from products_downloader import ProductDownloader
+
 def getFilePath(root, filename):
     return os.path.join(os.path.join(root, datetime.datetime.now().strftime('%Y-%m-%d')), filename)
 
@@ -87,7 +90,7 @@ class DownloadProducts(luigi.Task):
             config = yaml.load(conf)
             working_dir = getFilePath(config.get('working_dir'), 'working')
             logger = getLogger(cnf.get('log_dir'), 'DownloadProducts')
-            
+
             with self.input().open() as available, self.output(working_dir).open('w') as downloaded:
                 if os.path.isfile(config):
                     datahub_conf = config.get('datahub')

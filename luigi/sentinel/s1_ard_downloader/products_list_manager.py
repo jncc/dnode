@@ -10,14 +10,14 @@ class ProductsListManager:
     # - Check list against catalog 
     # - Subtract downloded products from list
     # - Create todays-date/available.json in lugi s3 folder
-    def __init__(self, config_file, logger, outputfile):
+    def __init__(self, config, logger, outputfile):
         # Setup Config from config file
         self.logger = logger
         self.outputFile = outputfile
 
-        datahub_conf = self.config.get('datahub')
+        datahub_conf = config.get('datahub')
         self.client = DatahubClient(datahub_conf['base_url'], datahub_conf['download_chunk_size'], datahub_conf['search_zone_id'], datahub_conf['username'], datahub_conf['password'], None)
-        self.s3_conf = self.config.get('s3')
+        self.s3_conf = config.get('s3')
 
     def getDownloadableProductsFromDataCatalog(self):
         productList = self.client.get_product_list()

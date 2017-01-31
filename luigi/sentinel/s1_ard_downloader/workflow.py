@@ -41,9 +41,9 @@ class CreateProductsList(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     config = luigi.Parameter(default='config.yaml')
     
-    def output(self):
+    def output(self, working_dir):
         d = self.runDate - timedelta(days=1)
-        filePath = os.path.join(os.path.join(cnf.get('working_dir'), d.strftime("%Y-%m-%d")), 'available.json')
+        filePath = os.path.join(os.path.join(working_dir, d.strftime("%Y-%m-%d")), 'available.json')
 
     def run(self):
         with open("config.yaml", 'r') as conf:
@@ -66,7 +66,7 @@ class CreateProductsList(luigi.Task):
                 and 'secret_access_key' in s3_conf):
                 runtimeErrorLog('Config file has invalid s3 entries')        
 
-            with self.output().open('w') as output:
+            with self.output(config.get('working_dir')).open('w') as output:
                 products_list_manager = ProductsListManager(config_file, logger, output)
                 products_list_manager.getDownloadableProductsFromDataCatalog()
 

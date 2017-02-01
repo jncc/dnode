@@ -416,24 +416,6 @@
       <data key="d5"/>
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="736.2427616039777" y="55.09311622905943"/>
-          <y:Fill color="#FFCC00" transparent="false"/>
-          <y:BorderStyle color="#000000" raised="false" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="19.26953125" x="5.365234375" y="6.015625">25<y:LabelModel>
-              <y:SmartNodeLabelModel distance="4.0"/>
-            </y:LabelModel>
-            <y:ModelParameter>
-              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
-            </y:ModelParameter>
-          </y:NodeLabel>
-          <y:Shape type="rectangle"/>
-        </y:ShapeNode>
-      </data>
-    </node>
-    <node id="n25">
-      <data key="d5"/>
-      <data key="d6">
-        <y:ShapeNode>
           <y:Geometry height="30.0" width="259.83439175257735" x="-439.9905154639173" y="-68.53467464024914"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle color="#000000" raised="false" type="line" width="1.0"/>
@@ -448,7 +430,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n26">
+    <node id="n25">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.decision">
           <y:Geometry height="56.0" width="214.0" x="-62.0" y="840.1149256335914"/>
@@ -472,7 +454,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n27">
+    <node id="n26">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="252.0" x="-81.0" y="764.4482589669246"/>
@@ -489,7 +471,7 @@ process has completed successfully<y:LabelModel>
         </y:GenericNode>
       </data>
     </node>
-    <node id="n28">
+    <node id="n27">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.terminator">
           <y:Geometry height="40.0" width="267.0" x="-417.02474226804105" y="848.1149256335914"/>
@@ -792,7 +774,7 @@ process has completed successfully<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e23" source="n21" target="n27">
+    <edge id="e23" source="n21" target="n26">
       <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
@@ -803,7 +785,7 @@ process has completed successfully<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e24" source="n27" target="n26">
+    <edge id="e24" source="n26" target="n25">
       <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
@@ -814,7 +796,7 @@ process has completed successfully<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e25" source="n26" target="n10">
+    <edge id="e25" source="n25" target="n10">
       <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
@@ -833,7 +815,7 @@ process has completed successfully<y:LabelModel>
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e26" source="n26" target="n28">
+    <edge id="e26" source="n25" target="n27">
       <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>

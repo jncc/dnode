@@ -84,7 +84,7 @@ class ProductDownloader:
                 product_zip.extractall(extracted_path)
             tif_file = item['filename'].replace('.SAFE.data', '.tif')
             
-            remote_checksum = client.get_checksum(item['product_id'])
+            remote_checksum = self.client.get_checksum(item['product_id'])
             local_checksum = calculate_checksum(os.path.join(os.path.join(extracted_path, item['filename']), tif_file))
 
             if self.debug:

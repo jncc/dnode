@@ -118,9 +118,9 @@ class ProductDownloader:
                             self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)                    
                 except RuntimeError as ex:
                     logger.error(repr(ex))
-                    __attach_failure(failed, item, repr(ex))    
+                    self.__attach_failure(failed, item, repr(ex))    
             else:
-                __attach_failure(failed, item, 'Remote Checksum did not match Local Checksum')
+                self.__attach_failure(failed, item, 'Remote Checksum did not match Local Checksum')
             
             # Cleanup temp extracted directory
             shutil.rmtree(extracted)

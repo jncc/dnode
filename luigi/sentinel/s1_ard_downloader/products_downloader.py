@@ -131,7 +131,7 @@ class ProductDownloader:
             os.unlink(filename)
 
         # Dump out failures if any exist
-        if len(failed) > 1:
+        if len(failed) > 0:
             failures.write(json.dumps(failed))
         else:
             ## TODO Should remove failures if empty

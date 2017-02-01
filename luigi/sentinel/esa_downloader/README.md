@@ -1,13 +1,12 @@
 # Running the downloader 
-## Create a job status folder
-- Create a working folder ie ~/temp
+## Create a job status folder in S3
+- Create a working folder in an S3 bucket
 - Modify FILE_ROOT in workflow.py to point to this location
 
 ## Create a seed status file
 - Copy ./seed/available.json into this location.
-- Create a folder in this location with yesterdays date. ie ~/temp/2016-12-11
+- Create a folder in this location with yesterdays date. ie  S3bucket/workflow/2016-12-11
 - Copy available.json into this folder
-- Modify the copy of available.json, change one of the ingestionDate values to yesterdays date. 
 
 ## Execute the job
 - Ensure the luigi environment is sourced from the parent folder

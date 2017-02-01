@@ -91,7 +91,7 @@ class ProductDownloader:
                 self.logger.debug('Remote Checksum is %s | Local Checksum is %s | Checksums %s' % (remote_checksum, local_checksum, 'Match' if remote_checksum == local_checksum else 'Don\'t Match'))
 
             if remote_checksum == local_checksum:
-                try 
+                try:
                     # Extract footprints from downloaded files
                     (osgb_geojson, osni_geojson) = self.extract_footprints_wgs84(item, extracted_path)
                     # Extract Metadata
@@ -116,7 +116,7 @@ class ProductDownloader:
                             self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osgb_geojson)
                         else:
                             self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)                    
-                except RuntimeError ex:
+                except RuntimeError as ex:
                     logger.error(repr(ex))
                     __attach_failure(failed, item, repr(ex))    
             else:
@@ -575,10 +575,13 @@ class ProductDownloader:
             },
             'RawMetadata': etree.tostring(etree.XML(etree.tostring(r), stripParser))
         }
-
 if __name__ == "__main__":
-    with open('list.json', 'r') as available:
-        with open('output.json', 'w') as output:
-            downloader = ProductDownloader('config.yaml', available, None)
-            downloader.downloadProducts(available, output)
+    import logging
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger('products_downloader_main')
+    logger.setLevel(logging.DEBUG)
+
+    with open('config.yaml', 'r') as config, open('list.json', 'r') as available, open('output.json', 'w') as output, open('_failures.json', 'w') as failures:
+            downloader = ProductDownloader(yaml.load(config), logger, './temp')
+            downloader.downloadProducts(available, output, failures)
             downloader.destroy()

@@ -79,7 +79,7 @@ class ProductDownloader:
             with zipfile.ZipFile(filename, 'r') as product_zip:
                 # Remove existing extracted directory if it exists
                 if os.path.isdir(extracted_path):
-                    shutil.rmtree(extracted)
+                    shutil.rmtree(extracted_path)
                 os.makedirs(extracted_path)
                 product_zip.extractall(extracted_path)
             tif_file = item['filename'].replace('.SAFE.data', '.tif')

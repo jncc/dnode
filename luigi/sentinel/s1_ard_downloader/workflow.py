@@ -95,7 +95,7 @@ class DownloadProducts(luigi.Task):
             working_dir = getFilePath(config.get('working_dir'), 'working')
             logger = getLogger(cnf.get('log_dir'), 'DownloadProducts')
 
-            with self.input().open() as available, self.output().open('w') as downloaded:
+            with self.input().open() as available, self.output().open('w') as downloaded, self.failures().open('w') as failures:
                 if os.path.isfile(config):
                     datahub_conf = config.get('datahub')
                     if not (datahub_conf is not None \
@@ -122,9 +122,12 @@ class DownloadProducts(luigi.Task):
                         runtimeErrorLog(logger, 'Config file has missing database config entires')
 
                     downloader = ProductDownloader(config, logger, working_dir)
-                    products_downloader.downloadProducts(available, downloaded)
+                    products_downloader.downloadProducts(available, downloaded, failures)
                 else:
                     runtimeErrorLog(logger, 'Config file at [%s] was not found' % config_file)
+
+    def failures(self, working_dir):
+        return luigi.LocalTarget(getFilePath(working_dir, '_failures.json'))
 
     def output(self):
         with open(self.config, 'r') as conf:

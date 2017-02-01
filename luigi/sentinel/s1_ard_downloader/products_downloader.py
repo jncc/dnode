@@ -40,6 +40,7 @@ class ProductDownloader:
 
         self.database_conf = self.config.get('database')
         self.db_conn = psycopg2.connect(host=self.database_conf['host'], dbname=self.database_conf['dbname'], user=self.database_conf['username'], password=self.database_conf['password']) 
+    
     """
     Cleanup task
     """
@@ -53,16 +54,20 @@ class ProductDownloader:
     :param available: JSON list of available products for download
     :param downloaded: Ouput file stream to record completed downloads to
     """
-    def downloadProducts(self, available, downloaded):  
+    def downloadProducts(self, available, downloaded, failures):
         available_list = json.load(available)
         downloaded = []
+        failed = []
         extracted_path = os.path.join(self.temp, 'extracted')
 
         # Pass over list of available items and look for an non downloaded ID
         for item in available_list:
+            # Download item from the remote repo
             filename = os.path.join(self.temp, '%s.zip' % item['filename'])
+            logger.info('Downloading %s from API' % filename)
             self.client.download_product(item['product_id'], filename)
 
+            logger.info('Extracting downloaded file %s' % filename)
             # Extract all files from source
             with zipfile.ZipFile(filename, 'r') as product_zip:
                 # Remove existing extracted directory if it exists
@@ -75,25 +80,37 @@ class ProductDownloader:
             remote_checksum = client.get_checksum(item['product_id'])
             local_checksum = calculate_checksum(tif_file)
 
+            if self.debug:
+                logger.debug('Remote Checksum is %s | Local Checksum is %s | Checksums %s' % (remote_checksum, local_checksum, 'Match' if remote_checksum == local_checksum else 'Don\'t Match'))
+
             if remote_checksum == local_checksum:
                 # Extract footprints from downloaded files
                 (osgb_geojson, osni_geojson) = self.extract_footprints_wgs84(item, extracted_path)
                 # Extract Metadata
                 (osgb_metadata, osni_metadata) = self.extract_metadata(item, extracted_path)
                 # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
-                representations = self.upload_dir_to_s3(extracted_path, '%s' % (self.s3_conf['bucket_dest_path']))
+
+                beginStamp = time.strptime(osgb_metadata['TemporalExtent']['Begin'], '%Y-%m-%dT%H:%M:%s')
+
+                destPath = '%d/%02d/%s' % (beginStamp.tm_year, beginStamp.tm_mon, self.s3_conf['bucket_dest_path'])
+
+                representations = self.upload_dir_to_s3(extracted_path, destPath)
                 representations = self.extract_representations(representations, item['filename'])
                 
                 # Write the progress to the catalog table
                 id = self.__write_progress_to_database(item, metadata=osgb_metadata, representations=representations['osgb'], success=True, geom=osgb_geojson)
                 # If we have more tha one representation (i.e. OSNI data exists) then add an additional record to the catalog for that data
                 if len(representations['osni']) > 0:
+                    if self.debug:
+                        logger.debug('OSNI representation exists for %s' % item['filename'])
+                        
                     if osni_geojson is None:
                         self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osgb_geojson)
                     else:
                         self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)
             else:
-                self.__write_progress_to_database(item, success=False)
+                item['reason'] = 'Remote Checksum did not match Local Checksum'
+                failed.append(item)
             
             # Cleanup temp extracted directory
             shutil.rmtree(extracted)
@@ -101,6 +118,9 @@ class ProductDownloader:
             os.unlink(filename)
 
         self.client.logout()
+
+        # Dump out failures if any exist
+        failures.write(json.dumps(failed))
         # Dump out the downloaded update
         downloaded.write(json.dumps(downloaded)) 
         
@@ -225,8 +245,6 @@ class ProductDownloader:
         if existing is not None or additional is not None:
             # Entry exists
             props = json.loads(existing[3])
-            props['downloaded'] = success
-            props['attempts'] = int(props['attempts']) + 1 if props['attempts'] else 1
 
             if geom is None:
                 if additional is not None:
@@ -253,18 +271,16 @@ class ProductDownloader:
         else:
             # Entry does not exist
             props = {
-                "downloaded": success,
-                "attempts": 1,
                 "product_id": item['product_id'],
                 "name": item['filename']
             }
 
             if geom is None:
-                cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, '{}', %s, %s, null) RETURNS id", (uuid_str,
-                    self.database_conf.collection_version_uuid, json.dumps(props), json.dumps(representations), geom, ))
+                cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, null) RETURNS id", (uuid_str,
+                    self.database_conf.collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), ))
             else:
-                cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, '{}', %s, %s, ST_GeomFromGeoJSON(%s)) RETURNS id", (uuid_str,
-                    self.database_conf.collection_version_uuid, json.dumps(props), json.dumps(representations), geom, ))
+                cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_GeomFromGeoJSON(%s)) RETURNS id", (uuid_str,
+                    self.database_conf.collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
             
             retVal = cur.fetchone()[0]
         
@@ -279,14 +295,13 @@ class ProductDownloader:
     :param representations: A list of files that have been uploaded, where they are and what sort of type that file is
     :return: The generated list of the represenations from this upload
     """
-    def upload_dir_to_s3(self, sourcedir, destpath, representations={'s3': []}):
+    def upload_dir_to_s3(self, sourcedir, destpath, representations={'s3': []}, additionalMetadata=None):
         for item in os.listdir(sourcedir):
             item_path = os.path.join(sourcedir, item)
             if os.path.isdir(item_path):
                 representations = self.upload_dir_to_s3(item_path, '%s/%s' % (destpath, item), representations)
             else:
                 path = '%s/%s' % (destpath, item)
-                self.__copy_file_to_s3(item_path, path)
                 representations['s3'].append({
                     'bucket': self.s3_conf['bucket'],
                     'region': self.s3_conf['region'],
@@ -294,6 +309,13 @@ class ProductDownloader:
                     'url': 'https://s3-%s.amazonaws.com/%s%s' % (self.s3_conf['region'], self.s3_conf['bucket'], path),
                     'type': self.__get_file_type(os.path.splitext(item)[1])
                 })
+
+                # If we aren't in debug mode, upload file to S3
+                if not self.debug:
+                    self.__copy_file_to_s3(item_path, path, additionalMetadata)
+                else:
+                    self.logger.debug('Would upload %s to %s' % (item_path, path))
+
         return representations
 
     """
@@ -323,7 +345,7 @@ class ProductDownloader:
     :param sourcepath: The source path of the file to upload
     :param filename: The destination path of the file being uploaded
     """
-    def __copy_file_to_s3(self, sourcepath, filename):
+    def __copy_file_to_s3(self, sourcepath, filename, additionalMetadata=None):
         #max size in bytes before uploading in parts. between 1 and 5 GB recommended
         MAX_SIZE = 5000000000
         #size of parts when uploading in parts
@@ -340,7 +362,13 @@ class ProductDownloader:
 
         destpath = os.path.join(amazonDestPath, filename)
         
-        metadata = {'md5': calculate_checksum(sourcepath), 'uploaded': time.strftime('%Y-%m-%dT%H:%M:%SZ')}
+        if additionalMetadata is not None:
+            metadata = additionalMetadata
+        else:
+            metadata = {}
+
+        metadata['md5'] = calculate_checksum(sourcepath)
+        metadata['uploaded'] = time.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         if self.debug:
             self.log("DEBUG: Would copy %s to %s", sourcepath, amazonDestPath)

@@ -303,7 +303,7 @@ available.json<y:LabelModel>
     <node id="n17">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="259.83439175257735" x="-439.9905154639173" y="-402.8064432989691"/>
+          <y:Geometry height="30.0" width="259.83439175257735" x="-439.9905154639173" y="-411.48479381443303"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle color="#000000" raised="false" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="254.564453125" x="2.6349693137887016" y="6.015625">Step 1:  CreateAvailableProductsList Task<y:LabelModel>

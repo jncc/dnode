@@ -50,7 +50,7 @@ class ProductDownloader:
     """
     Attaches a failure message to the failure output stream
     """
-    def __attach_failure(failures, item, reason):
+    def __attach_failure(self, failures, item, reason):
         item['reason'] = reason
         failures.append(item)
 
@@ -123,7 +123,7 @@ class ProductDownloader:
                 self.__attach_failure(failed, item, 'Remote Checksum did not match Local Checksum')
             
             # Cleanup temp extracted directory
-            shutil.rmtree(extracted)
+            shutil.rmtree(extracted_path)
             # Cleanup download file
             os.unlink(filename)
 

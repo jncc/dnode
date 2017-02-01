@@ -27,10 +27,10 @@ class ProductListManager:
     POLYGON = 'POLYGON ((-6.604981356192942 49.438680703689379,-10.186858447403869 60.557572594302513,0.518974191882126 61.368840444480654,2.668100446608686 53.215944284612512,1.235349610124312 50.589462482174554,-6.604981356192942 49.438680703689379))'
     SEARCH_URL_BASE = 'https://scihub.copernicus.eu/apihub/search'
 
-    def __init__(self, workPath, debug):
+    def __init__(self, debug):
         self.config = ConfigManager("cfg.ini")
         self.debug = debug
-        self.log = log_helper.setup_logging(workPath, 'CreateAvailableProductsList', self.debug)
+        self.log = log_helper.setup_logging('CreateAvailableProductsList', self.debug)
 
     def __get_last_ingestion_date(self, productList):
         topDate = None

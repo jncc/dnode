@@ -11,12 +11,13 @@ from catalog_manager import CatalogManager
 
 class ProductDownloader:
     DOWNLOAD_URL_BASE = 'https://scihub.copernicus.eu/apihub/odata/v1'
+    TEMP_FILE_ROOT = '/tmp/luigi/esadownloader'
 
-    def __init__(self, debug, workPath):
+    def __init__(self, debug, runDate):
         self.config = ConfigManager("cfg.ini")
         self.debug = debug
-        self.workPath = workPath
-        self.log = log_helper.setup_logging(self.workPath, 'DownloadAvailableProducts', self.debug)
+        self.log = log_helper.setup_logging('DownloadAvailableProducts', self.debug)
+        self.runDate = runDate
 
 
     def __download_product(self, product):
@@ -25,7 +26,8 @@ class ProductDownloader:
 
         url = "%s/Products('%s')/$value" % (self.DOWNLOAD_URL_BASE,uniqueId)
         
-        tempPath = os.path.join(self.workPath, 'temp')
+        tempPath = os.path.join(TEMP_FILE_ROOT, self.runDate.strftime("%Y-%m-%d")
+
         if not os.path.isdir(tempPath):
             os.makedirs(tempPath)
 

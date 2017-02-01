@@ -52,7 +52,6 @@ Just run it:
 
     docker run -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID process-test
 
-
 # Create workflow
 ## GenerateJob
 - Creates job.json

@@ -1,7 +1,7 @@
 import logging
 import os
 
-def setup_logging(workPath, jobName, debug):
+def setup_logging(jobName, debug):
     """
     Sets up a logger to log to a file and the console
 
@@ -17,22 +17,22 @@ def setup_logging(workPath, jobName, debug):
     logger = logging.getLogger(jobName)
     logger.setLevel(level)
     
-    logPath = os.path.join(workPath, '%s-log' % (jobName))
-    
-    if not os.path.isdir(workPath):
-        os.makedirs(workPath)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-    fh = logging.FileHandler(logPath)
-    fh.setLevel(level)
-
+    # configure console logging
     ch = logging.StreamHandler()
     ch.setLevel(level)
-
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
     ch.setFormatter(formatter)
-
-    logger.addHandler(fh)
     logger.addHandler(ch)
+
+    # Configure file logging
+    # logPath = os.path.join(workPath, '%s-log' % (jobName))  
+    # if not os.path.isdir(workPath):
+    #     os.makedirs(workPath)
+    # fh = logging.FileHandler(logPath)
+    # fh.setLevel(level)
+    # fh.setFormatter(formatter)  
+    # logger.addHandler(fh)
+
 
     return logger

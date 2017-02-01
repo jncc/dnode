@@ -48,6 +48,13 @@ class ProductDownloader:
         self.db_conn.close()
 
     """
+    Attaches a failure message to the failure output stream
+    """
+    def __attach_failure(failures, item, reason):
+        item['reason'] = reason
+        failures.append(item)
+
+    """
     Download from the supplied list of available products, upload the results to S3 and write the progress to a
     database table
 
@@ -64,10 +71,10 @@ class ProductDownloader:
         for item in available_list:
             # Download item from the remote repo
             filename = os.path.join(self.temp, '%s.zip' % item['filename'])
-            logger.info('Downloading %s from API' % filename)
+            self.logger.info('Downloading %s from API' % filename)
             self.client.download_product(item['product_id'], filename)
 
-            logger.info('Extracting downloaded file %s' % filename)
+            self.logger.info('Extracting downloaded file %s' % filename)
             # Extract all files from source
             with zipfile.ZipFile(filename, 'r') as product_zip:
                 # Remove existing extracted directory if it exists
@@ -78,39 +85,42 @@ class ProductDownloader:
             tif_file = item['filename'].replace('.SAFE.data', '.tif')
             
             remote_checksum = client.get_checksum(item['product_id'])
-            local_checksum = calculate_checksum(tif_file)
+            local_checksum = calculate_checksum(os.path.join(os.path.join(extracted_path, item['filename']), tif_file))
 
             if self.debug:
-                logger.debug('Remote Checksum is %s | Local Checksum is %s | Checksums %s' % (remote_checksum, local_checksum, 'Match' if remote_checksum == local_checksum else 'Don\'t Match'))
+                self.logger.debug('Remote Checksum is %s | Local Checksum is %s | Checksums %s' % (remote_checksum, local_checksum, 'Match' if remote_checksum == local_checksum else 'Don\'t Match'))
 
             if remote_checksum == local_checksum:
-                # Extract footprints from downloaded files
-                (osgb_geojson, osni_geojson) = self.extract_footprints_wgs84(item, extracted_path)
-                # Extract Metadata
-                (osgb_metadata, osni_metadata) = self.extract_metadata(item, extracted_path)
-                # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
+                try 
+                    # Extract footprints from downloaded files
+                    (osgb_geojson, osni_geojson) = self.extract_footprints_wgs84(item, extracted_path)
+                    # Extract Metadata
+                    (osgb_metadata, osni_metadata) = self.extract_metadata(item, extracted_path)
+                    # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
 
-                beginStamp = time.strptime(osgb_metadata['TemporalExtent']['Begin'], '%Y-%m-%dT%H:%M:%s')
+                    beginStamp = time.strptime(osgb_metadata['TemporalExtent']['Begin'], '%Y-%m-%dT%H:%M:%s')
 
-                destPath = '%d/%02d/%s' % (beginStamp.tm_year, beginStamp.tm_mon, self.s3_conf['bucket_dest_path'])
+                    destPath = '%d/%02d/%s' % (beginStamp.tm_year, beginStamp.tm_mon, self.s3_conf['bucket_dest_path'])
 
-                representations = self.upload_dir_to_s3(extracted_path, destPath)
-                representations = self.extract_representations(representations, item['filename'])
-                
-                # Write the progress to the catalog table
-                id = self.__write_progress_to_database(item, metadata=osgb_metadata, representations=representations['osgb'], success=True, geom=osgb_geojson)
-                # If we have more tha one representation (i.e. OSNI data exists) then add an additional record to the catalog for that data
-                if len(representations['osni']) > 0:
-                    if self.debug:
-                        logger.debug('OSNI representation exists for %s' % item['filename'])
-                        
-                    if osni_geojson is None:
-                        self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osgb_geojson)
-                    else:
-                        self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)
+                    representations = self.upload_dir_to_s3(extracted_path, destPath)
+                    representations = self.extract_representations(representations, item['filename'])
+                    
+                    # Write the progress to the catalog table
+                    id = self.__write_progress_to_database(item, metadata=osgb_metadata, representations=representations['osgb'], success=True, geom=osgb_geojson)
+                    # If we have more tha one representation (i.e. OSNI data exists) then add an additional record to the catalog for that data
+                    if len(representations['osni']) > 0:
+                        if self.debug:
+                            self.logger.debug('OSNI representation exists for %s' % item['filename'])
+                            
+                        if osni_geojson is None:
+                            self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osgb_geojson)
+                        else:
+                            self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)                    
+                except RuntimeError ex:
+                    logger.error(repr(ex))
+                    __attach_failure(failed, item, repr(ex))    
             else:
-                item['reason'] = 'Remote Checksum did not match Local Checksum'
-                failed.append(item)
+                __attach_failure(failed, item, 'Remote Checksum did not match Local Checksum')
             
             # Cleanup temp extracted directory
             shutil.rmtree(extracted)
@@ -120,7 +130,11 @@ class ProductDownloader:
         self.client.logout()
 
         # Dump out failures if any exist
-        failures.write(json.dumps(failed))
+        if len(failed) > 1:
+            failures.write(json.dumps(failed))
+        else:
+            ## TODO Should remove failures if empty
+            failures.close()
         # Dump out the downloaded update
         downloaded.write(json.dumps(downloaded)) 
         

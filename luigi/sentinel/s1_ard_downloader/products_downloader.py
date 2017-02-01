@@ -63,7 +63,7 @@ class ProductDownloader:
     """
     def downloadProducts(self, available, downloaded, failures):
         available_list = json.load(available)
-        downloaded = []
+        downloaded_list = []
         failed = []
         extracted_path = os.path.join(self.temp, 'extracted')
 
@@ -115,7 +115,10 @@ class ProductDownloader:
                         if osni_geojson is None:
                             self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osgb_geojson)
                         else:
-                            self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)                    
+                            self.__write_progress_to_database(item, metadata=osni_metadata, representations=representations['osni'], success=True, additional={'relatedTo': id}, geom=osni_geojson)
+                    
+                    item['representations'] = representations
+                    downloaded_list.append(item)
                 except RuntimeError as ex:
                     logger.error(repr(ex))
                     self.__attach_failure(failed, item, repr(ex))    
@@ -127,8 +130,6 @@ class ProductDownloader:
             # Cleanup download file
             os.unlink(filename)
 
-        self.client.logout()
-
         # Dump out failures if any exist
         if len(failed) > 1:
             failures.write(json.dumps(failed))
@@ -136,7 +137,7 @@ class ProductDownloader:
             ## TODO Should remove failures if empty
             failures.close()
         # Dump out the downloaded update
-        downloaded.write(json.dumps(downloaded)) 
+        downloaded.write(json.dumps(downloaded_list)) 
         
     """
     Extract metadata from the provided XML file(s), looks for an optional OSNI folder

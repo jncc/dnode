@@ -180,13 +180,21 @@ class ProductListManager:
         
         return pages
 
-    def create_list(self,runDate, lastListFile, outputListFile, seeding):
-        productList = json.load(lastListFile)
-        lastIngestionDate = self.__get_last_ingestion_date(productList)
+    def create_list(self,runDate, productList, outputListFile, seedDate):
+        lastIngestionDate = None
 
-        # If latest record is older than 3 days, fail
-        if (not seeding) and (runDate - lastIngestionDate).days > 3:
-            raise Exception("Last ingestion date older then 3 days")
+        if not seeding:
+            lastIngestionDate = self.__get_last_ingestion_date(productList)
+            # If latest record is older than 3 days, fail
+            if lastIngestionDate is None:
+                raise Exception("Unable to determine last ingestion date")
+            if runDate - lastIngestionDate).days > 3:
+                raise Exception("Last ingestion date older then 3 days")
+        else:
+            lastIngestionDate = seedDate
+
+        if lastIngestionDate is None
+            raise Exception("Unable to determine last ingestion date")
 
         page = 1
         pages = 1

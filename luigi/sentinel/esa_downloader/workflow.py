@@ -12,7 +12,7 @@ FILE_ROOT = 's3://jncc-data/luigi/sentinel/esa_downloader'
 def getWorkPath(date):
     return os.path.join(FILE_ROOT, date.strftime("%Y-%m-%d"))
 
-class parameters(luigi.Config)
+class parameters(luigi.Config):
     debug = luigi.BooleanParameter()
     seedDate = luigi.DateParameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())

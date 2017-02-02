@@ -13,23 +13,24 @@ class ProductDownloader:
     DOWNLOAD_URL_BASE = 'https://scihub.copernicus.eu/apihub/odata/v1'
     TEMP_FILE_ROOT = '/tmp/luigi/esadownloader'
 
-    def __init__(self, debug, runDate):
+    def __init__(self, debug):
         self.config = ConfigManager("cfg.ini")
         self.debug = debug
         self.log = log_helper.setup_logging('DownloadAvailableProducts', self.debug)
-        self.runDate = runDate
 
-
-    def __download_product(self, product):
-        uniqueId = product["uniqueId"]
-        name = product["title"]
-
-        url = "%s/Products('%s')/$value" % (self.DOWNLOAD_URL_BASE,uniqueId)
-        
+    def __createTempPath(self, runDate):
         tempPath = os.path.join(TEMP_FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
 
         if not os.path.isdir(tempPath):
             os.makedirs(tempPath)
+
+        return tempPath
+
+    def __download_product(self, product, tempPath):
+        uniqueId = product["uniqueId"]
+        name = product["title"]
+
+        url = "%s/Products('%s')/$value" % (self.DOWNLOAD_URL_BASE,uniqueId)
 
         zipname = "%s.zip" % name
         tempFilename = os.path.join(tempPath,zipname)
@@ -60,7 +61,7 @@ class ProductDownloader:
             return False
 
         with zipfile.ZipFile(productZipFile, 'r') as archive:
-            if archive.testzip() is not None:
+            if archive.testzip() is         self.runDate = runDatenot None:
                 return False
 
         return True
@@ -110,18 +111,20 @@ class ProductDownloader:
         
         return destpath
 
-    def download_products(self, productListFile):
+    def download_products(self, productListFile, runDate):
         productList = json.load(productListFile)
 
         downloadedProductCount = 0
         errorCount = 0
+
+        tempPath = __createTempPath(runDate)
 
         with CatalogManager() as cat:
             for product in productList["products"]:
                 # download product
                 productZipFile = None
                 try:
-                    productZipFile = self.__download_product(product)
+                    productZipFile = self.__download_product(product, tempPath)
                     self.log.info("Downloaded product %s", product["title"])
                 except Exception as e: 
                     self.log.warn("Failed to download product %s with error %s ", product["title"], e)

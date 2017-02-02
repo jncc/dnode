@@ -53,11 +53,11 @@ class DownloadAvailableProducts(luigi.Task):
 
     def run(self):
 
-        downloader = ProductDownloader(self.debug, runDate)
+        downloader = ProductDownloader(self.debug)
         result = None
 
         with self.input().open() as productList: 
-            result = downloader.download_products(productList)
+            result = downloader.download_products(productList, self.runDate)
 
         if not result is None:
             with self.output().open('w') as successFile:

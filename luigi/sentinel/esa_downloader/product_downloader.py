@@ -19,7 +19,7 @@ class ProductDownloader:
         self.log = log_helper.setup_logging('DownloadAvailableProducts', self.debug)
 
     def __createTempPath(self, runDate):
-        tempPath = os.path.join(self.TEMP_FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
+        tempPath = os.path.join(self.TEMP_FILE_ROOT, runDate.strftime("%Y-%m-%d"))
 
         if not os.path.isdir(tempPath):
             os.makedirs(tempPath)

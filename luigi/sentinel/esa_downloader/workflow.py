@@ -29,7 +29,7 @@ class LastAvailableProductsList(luigi.ExternalTask):
 class CreateAvailableProductsList(luigi.Task):
 
     def run(self):
-        lastList = {}
+        lastList = {"products":[]}
         workPath = getWorkPath(self.runDate)
 
         # If not seeding get last ingestion list from LastAvailableProductsList task

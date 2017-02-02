@@ -61,7 +61,7 @@ class ProductDownloader:
             return False
 
         with zipfile.ZipFile(productZipFile, 'r') as archive:
-            if archive.testzip() is         self.runDate = runDatenot None:
+            if archive.testzip() is not None:
                 return False
 
         return True

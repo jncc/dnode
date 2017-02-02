@@ -183,7 +183,7 @@ class ProductListManager:
     def create_list(self,runDate, productList, outputListFile, seedDate):
         lastIngestionDate = None
 
-        if not seeding:
+        if seedDate is None:
             lastIngestionDate = self.__get_last_ingestion_date(productList)
             # If latest record is older than 3 days, fail
             if lastIngestionDate is None:

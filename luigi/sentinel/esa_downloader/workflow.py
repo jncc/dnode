@@ -4,6 +4,8 @@ import os
 import json
 from product_list_manager import ProductListManager
 from product_downloader import ProductDownloader
+from luigi.util import inherits
+from luigi.util import requires
 from luigi.s3 import S3Target
 from datetime import timedelta
 
@@ -12,12 +14,10 @@ FILE_ROOT = 's3://jncc-data/luigi/sentinel/esa_downloader'
 def getWorkPath(date):
     return os.path.join(FILE_ROOT, date.strftime("%Y-%m-%d"))
 
-class parameters(luigi.Config):
+class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
     seedDate = luigi.DateParameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())
-
-class LastAvailableProductsList(parameters, luigi.ExternalTask):
 
     def output(self):
         d = self.runDate - timedelta(days=1)
@@ -25,15 +25,15 @@ class LastAvailableProductsList(parameters, luigi.ExternalTask):
         
         return S3Target(filePath)
         
-
-class CreateAvailableProductsList(parameters, luigi.Task):
+@inherits(LastAvailableProductsList)
+class CreateAvailableProductsList(luigi.Task):
 
     def run(self):
         lastList = {}
         workPath = getWorkPath(self.runDate)
 
-        # If not seeding get last ingestion list
-        if seedDate is None:
+        # If not seeding get last ingestion list from LastAvailableProductsList task
+        if self.seedDate is None:
             lastListTarget = yield LastAvailableProductsList()
             with self.input().open() as l:
                 lastList = json.load(l)
@@ -48,11 +48,8 @@ class CreateAvailableProductsList(parameters, luigi.Task):
         
         return S3Target(filePath)
 
-
-class DownloadAvailableProducts(parameters, luigi.Task):
-  
-    def requires(self):
-        return CreateAvailableProductsList()
+@requires(CreateAvailableProductsList)
+class DownloadAvailableProducts(luigi.Task):
 
     def run(self):
 

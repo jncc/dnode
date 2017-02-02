@@ -26,7 +26,7 @@ class ProductDownloader:
 
         url = "%s/Products('%s')/$value" % (self.DOWNLOAD_URL_BASE,uniqueId)
         
-        tempPath = os.path.join(TEMP_FILE_ROOT, self.runDate.strftime("%Y-%m-%d")
+        tempPath = os.path.join(TEMP_FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
 
         if not os.path.isdir(tempPath):
             os.makedirs(tempPath)

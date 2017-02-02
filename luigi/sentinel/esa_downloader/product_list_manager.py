@@ -188,12 +188,12 @@ class ProductListManager:
             # If latest record is older than 3 days, fail
             if lastIngestionDate is None:
                 raise Exception("Unable to determine last ingestion date")
-            if runDate - lastIngestionDate).days > 3:
+            if (runDate - lastIngestionDate).days > 3:
                 raise Exception("Last ingestion date older then 3 days")
         else:
             lastIngestionDate = seedDate
 
-        if lastIngestionDate is None
+        if lastIngestionDate is None:
             raise Exception("Unable to determine last ingestion date")
 
         page = 1

@@ -16,13 +16,12 @@ class parameters(luigi.Config):
     debug = luigi.BooleanParameter()
     seedDate = luigi.DateParameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())
-    workPath = getWorkPath(runDate)
 
 class LastAvailableProductsList(parameters, luigi.ExternalTask):
 
     def output(self):
         d = self.runDate - timedelta(days=1)
-        filePath = os.path.join(os.path.join(getWorkPath(d), 'available.json')
+        filePath = os.path.join(getWorkPath(d), 'available.json')
         
         return S3Target(filePath)
         
@@ -31,6 +30,7 @@ class CreateAvailableProductsList(parameters, luigi.Task):
 
     def run(self):
         lastList = {}
+        workPath = getWorkPath(self.runDate)
 
         # If not seeding get last ingestion list
         if seedDate is None:
@@ -40,10 +40,11 @@ class CreateAvailableProductsList(parameters, luigi.Task):
 
         with self.output().open('w') as productList:
             listManager = ProductListManager(self.debug)
-            listManager.create_list(self.workPath,lastList, productList, self.seeding)
+            listManager.create_list(workPath,lastList, productList, self.seeding)
 
     def output(self):
-        filePath = os.path.join(self.workPath,'available.json')
+        workPath = getWorkPath(self.runDate)
+        filePath = os.path.join(workPath,'available.json')
         
         return S3Target(filePath)
 
@@ -51,7 +52,7 @@ class CreateAvailableProductsList(parameters, luigi.Task):
 class DownloadAvailableProducts(parameters, luigi.Task):
   
     def requires(self):
-            return CreateAvailableProductsList()
+        return CreateAvailableProductsList()
 
     def run(self):
 
@@ -70,7 +71,8 @@ class DownloadAvailableProducts(parameters, luigi.Task):
                 successFile.write(msg)
 
     def output(self):
-        filePath = os.path.join(self.workPath, '_success.json')
+        workPath = getWorkPath(self.runDate)
+        filePath = os.path.join(workPath, '_success.json')
         
         return S3Target(filePath)
         

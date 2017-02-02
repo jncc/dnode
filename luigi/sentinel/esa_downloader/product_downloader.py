@@ -117,7 +117,7 @@ class ProductDownloader:
         downloadedProductCount = 0
         errorCount = 0
 
-        tempPath = __createTempPath(runDate)
+        tempPath = self.__createTempPath(runDate)
 
         with CatalogManager() as cat:
             for product in productList["products"]:

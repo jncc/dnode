@@ -11,10 +11,14 @@ Write the progress of this download to the database (i.e. failure, etc...)
 :param additional: Any additional metadata that we need (realtedTo uuid for OSNI uploads)
 :param geom: GeoJSON represenation of the footprint of the data we are recording progress against
 """
-def write_progress_to_database(db_conn, collection_version_uuid, item, metadata={}, representations={}, success=True, additional=None, geom=None):
+def write_progress_to_database(db_conn, collection_version_uuid, item, metadata, representations, geom, additional=None):
     cur = db_conn.cursor()
-    cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' = %s;", (product_id),)
-    existing = cur.fetchone()
+
+    # if product_id in item:
+    #     cur.execute("SELECT properties->>'product_id' FROM sentinel_ard_backscatter WHERE properties->>'product_id' = %s;", (item['product_id']),)
+    #     existing = cur.fetchone()
+    # else:
+    #     existing = None
 
     retVal = None
 
@@ -34,48 +38,50 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata=
 
     # If UUID is equal to the optionally provided relatedTo UUID then generate a new one and replace the 
     # one in the metadata with it 
-    if metadata['ID'] == additional['realtedTo']:
+    if additional is not None and metadata['ID'] == additional['relatedTo']:
         uuid_str = str(uuid.uuid4())
         metadata['ID'] = uuid_str
+        props['relatedTo'] = additional['relatedTo']
 
-    if existing is not None or additional is not None:
-        # Entry exists
-        props = json.loads(existing[3])
+    # if existing is not None or additional is not None:
+    #     # Entry exists
+    #     if existing is not None:
+    #         props = json.loads(existing[3])
+    #     else:
+    #         props = {}
 
-        if geom is None:
-            if additional is not None:
-                # If we are adding an extra record with the same ID i.e. OSNI projection
-                props['relatedTo'] = additional['relatedTo']
-                cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, null) RETURNS id", (uuid_str,
-                    collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
-                retVal = cur.fetchone()[0]
-            else:
-                cur.execute("UPDATE sentinel_ard_backscatter SET properties = %s, representations = %s, footprint = null WHERE id = %s", (
-                    json.dumps(props), json.dumps(representations), geom, existing(0), ))
-        else:
-            if additional is not None:
-                # If we are adding an extra record with the same ID i.e. OSNI projection
-                props['relatedTo'] = additional['relatedTo']
-                cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_GeomFromGeoJSON(%s)) RETURNS id", (uuid_str, 
-                    collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
-                retVal = cur.fetchone()[0]
-            else:
-                cur.execute("UPDATE sentinel_ard_backscatter SET properties = %s, representations = %s, footprint = ST_GeomFromGeoJSON(%s) WHERE id = %s", (
-                    json.dumps(props), json.dumps(representations), geom, existing(0), ))
+    #     if geom is None:
+    #         if additional is not None:
+    #             # If we are adding an extra record with the same ID i.e. OSNI projection
+    #             props['relatedTo'] = additional['relatedTo']
+    #             cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, null)", (uuid_str,
+    #                 collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
+    #             retVal = cur.fetchone()[0]
+    #         else:
+    #             cur.execute("UPDATE sentinel_ard_backscatter SET properties = %s, representations = %s, footprint = null WHERE id = %s", (
+    #                 json.dumps(props), json.dumps(representations), geom, existing(0), ))
+    #     else:
+    #         if additional is not None:
+    #             # If we are adding an extra record with the same ID i.e. OSNI projection
+    #             props['relatedTo'] = additional['relatedTo']
+    #             cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_Multi(ST_GeomFromGeoJSON(%s)))", (uuid_str, 
+    #                 collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
+    #             retVal = cur.fetchone()[0]
+    #         else:
+    #             cur.execute("UPDATE sentinel_ard_backscatter SET properties = %s, representations = %s, footprint = ST_GeomFromGeoJSON(%s) WHERE id = %s", (
+    #                 json.dumps(props), json.dumps(representations), geom, existing(0), ))
                 
-                retVal = existing(0)
-    else:
-        # Entry does not exist
-        props = item
+    #             retVal = existing(0)
+    # else:
+    # Entry does not exist
+    props = item
 
-        if geom is None:
-            cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, null) RETURNS id", (uuid_str,
-                collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), ))
-        else:
-            cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_GeomFromGeoJSON(%s)) RETURNS id", (uuid_str,
-                collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
-        
-        retVal = cur.fetchone()[0]
+    if geom is None:
+        cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, null)", (uuid_str,
+            collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), ))
+    else:
+        cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_Multi(ST_GeomFromGeoJSON(%s)))", (uuid_str,
+            collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
     
     cur.close()
-    return retVal
+    return uuid_str

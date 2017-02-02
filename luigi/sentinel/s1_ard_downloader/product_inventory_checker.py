@@ -48,48 +48,86 @@ class ProductInventoryChecker:
         osni_exp = exp = re.compile('%s\/(20[0-9]{2}\/[0-9]{2}\/.*\.SAFE\.data)\/OSNI1952\/(.*)' % re.escape(path))
 
         for key in groups.keys():
-            fkeys = group[key]
+            fkeys = groups[key]
             representations = {'s3': []}
             osni_representations = {'s3': []}
 
             (footprint_osgb, footprint_osni) = (None, None)
             (metadata_osgb, metadata_osni) = (None, None)
+            
+            found_data = {
+                'osgb': {
+                    'data': False,
+                    'metadata': False,
+                    'quicklook': False,
+                    'footprint': False
+                },
+                'osni': {
+                    'data': False,
+                    'metadata': False,
+                    'quicklook': False,
+                    'footprint': False
+                }                
+            }
 
             for fkey in fkeys:
-                if osni.exp.match(fkey.key) is not None:
+                if osni_exp.match(fkey.key) is not None:
                     # Process OSNI data
                     if fkey.key.endswith('.shp') or fkey.key.endswith('.shx') or fkey.key.endswith('prj') or fkey.key.endswith('dbf'):
                         # Deal with shapefiles (move to Footprint folder or delete?)
+                        x = 1
                     elif fkey.key.endswith('.json'):
                         # Deal with geojson file (move to Footprint folder and rename to .geojson)
                         footprint_osni = json.loads(fkey.get_contents_as_string())
+                        footprint_osni['crs'] = { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
+                        found_data['osni']['footprint'] = True
                     elif fkey.key.endswith('_metadata.xml'):
                         # Deal with metadata file
-                        with open(os.path.join(self.tempdir, 'metadata_osni.xml'), 'w') as metadata:
+                        with open(os.path.join(self.temp, 'metadata_osni.xml'), 'wb') as metadata:
                             fkey.get_contents_to_file(metadata)
+                        with open(os.path.join(self.temp, 'metadata_osni.xml'), 'r') as metadata:
                             metadata_osni = metadataHelper.xml_to_json(metadata)
+                            found_data['osni']['metadata'] = True
+                    elif fkey.key.endswith('.tif'):
+                        # Found data file
+                        found_data['osni']['data'] = True
+                    elif fkey.key.endswith('_quicklook.jpg'):
+                        # Found quicklook
+                        found_data['osni']['quicklook'] = True                            
 
                     # Extract represenation of the file
-                    osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey, s3Helper.get_file_type(os.path.splitext(fkey)[1])))
+                    osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                 else:
                     # Process OSGB data
                     if fkey.key.endswith('.json'):
                         # Deal with geojson file (rename to .geojson)
                         footprint_osgb = json.loads(fkey.get_contents_as_string())
+                        footprint_osgb['crs'] = { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
+                        found_data['osgb']['footprint'] = True
                     elif fkey.key.endswith('_metadata.xml'):
                         # Deal with metadata file
-                        with open(os.path.join(self.tempdir, 'metadata_osni.xml'), 'w') as metadata:
+                        with open(os.path.join(self.temp, 'metadata_osgb.xml'), 'wb') as metadata:
                             fkey.get_contents_to_file(metadata)
+                        with open(os.path.join(self.temp, 'metadata_osgb.xml'), 'r') as metadata:                            
                             metadata_osgb = metadataHelper.xml_to_json(metadata)                        
+                            found_data['osgb']['metadata'] = True
+                    elif fkey.key.endswith('.tif'):
+                        # Found data file
+                        found_data['osgb']['data'] = True
+                    elif fkey.key.endswith('_quicklook.jpg'):
+                        # Found quicklook
+                        found_data['osgb']['quicklook'] = True
                     
                     # Extract represenation of the file
-                    representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey, s3Helper.get_file_type(os.path.splitext(fkey)[1])))
-                       
-            # Deal with OSGB product
-            print(osgb_metadata)
+                    representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
+                          # Deal with OSGB product
 
-            if footprint_osni is not None and metadata_osni is not None:
-                print(osni_metdata)
+            # Deal with OSGB product
+            if found_data['osgb']['data'] and found_data['osgb']['metadata'] and found_data['osgb']['quicklook'] and found_data['osgb']['footprint']:
+                databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True}, metadata_osgb, representations, footprint_osgb)
+
+            if found_data['osni']['data'] and found_data['osni']['metadata'] and found_data['osni']['quicklook'] and found_data['osni']['footprint']:
+               databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True}, metadata_osni, osni_representations, footprint_osni, additional={'relatedTo': metadata_osgb['ID']})
 
 if __name__ == '__main__':
     import logging

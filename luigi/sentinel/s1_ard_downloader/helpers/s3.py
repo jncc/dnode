@@ -29,9 +29,9 @@ Get a representation of a file in S3, with all the relevant data needed to acces
 """
 def get_representation(bucket, region, path, file_type):
     return {
-        'bucket': self.s3_conf['bucket'],
-        'region': self.s3_conf['region'],
+        'bucket': bucket,
+        'region': region,
         'path': path,
-        'url': 'https://s3-%s.amazonaws.com/%s%s' % (self.s3_conf['region'], self.s3_conf['bucket'], path),
+        'url': 'https://s3-%s.amazonaws.com/%s%s' % (bucket, region, path),
         'type': file_type
     }

@@ -14,6 +14,8 @@ Run 2
 PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts  --runDate=2017-02-03 --debug
 
 ## luigi s2 ard process
+start 2 terminals to see container fire up
 
+PYTHONPATH='.' luigi --module workflow CreateArdProduct --text "this is mega fun" --runDate=2017-02-03
 
-
+docker ps 

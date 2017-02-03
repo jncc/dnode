@@ -36,7 +36,7 @@ class CreateAvailableProductsList(luigi.Task):
         # If not seeding get last ingestion list from LastAvailableProductsList task
         if self.seedDate == DEFAULT_DATE:
             lastListTarget = yield LastAvailableProductsList()
-            with self.input().open() as l:
+            with lastListTarget.open() as l:
                 lastList = json.load(l)
 
         with self.output().open('w') as productList:

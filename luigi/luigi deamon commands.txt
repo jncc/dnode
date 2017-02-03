@@ -1,0 +1,19 @@
+Run luigi d
+luigid --background --pidfile /var/run/luigi.pid --logdir /var/log/luigi --state-path /var/lib/luigi/luigi-state.pickle
+
+## luigi esa downloader
+
+Delete aws state
+aws s3 rm s3://jncc-data/luigi/sentinel/esa_downloader/2017-02-02 --recursive
+aws s3 rm s3://jncc-data/luigi/sentinel/esa_downloader/2017-02-03 --recursive
+
+Run seed
+PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts  --runDate=2017-02-02 --seedDate=2017-01-01  --debug
+
+Run 2
+PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts  --runDate=2017-02-03 --debug
+
+## luigi s2 ard process
+
+
+

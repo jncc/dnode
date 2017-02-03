@@ -7,7 +7,7 @@ import json
 from luigi.util import requires
 
 #FILE_ROOT = 's3://jncc-data/workflows/s2ard/'
-FILE_ROOT = '/home/felix/temp/s2ard'
+FILE_ROOT = '/tmp/s2ard'
 DOCKER_IMAGE = '914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test'
 
 #Create job spec

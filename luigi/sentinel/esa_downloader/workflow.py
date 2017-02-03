@@ -41,7 +41,7 @@ class CreateAvailableProductsList(luigi.Task):
 
         with self.output().open('w') as productList:
             listManager = ProductListManager(self.debug)
-            listManager.create_list(workPath,lastList, productList, self.seedDate)
+            listManager.create_list(self.runDate ,lastList, productList, self.seedDate)
 
     def output(self):
         workPath = getWorkPath(self.runDate)

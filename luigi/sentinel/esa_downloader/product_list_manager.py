@@ -9,6 +9,7 @@ import shapely
 import xml.etree.ElementTree as eTree
 import log_helper
 import shapely.wkt
+import constants
 
 
 
@@ -183,7 +184,7 @@ class ProductListManager:
     def create_list(self,runDate, productList, outputListFile, seedDate):
         lastIngestionDate = None
 
-        if seedDate is None:
+        if seedDate == DEFAULT_DATE:
             lastIngestionDate = self.__get_last_ingestion_date(productList)
             # If latest record is older than 3 days, fail
             if lastIngestionDate is None:

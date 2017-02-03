@@ -2,6 +2,7 @@ import luigi
 import datetime
 import os
 import json
+import constants
 from product_list_manager import ProductListManager
 from product_downloader import ProductDownloader
 from luigi.util import inherits
@@ -16,7 +17,7 @@ def getWorkPath(date):
 
 class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
-    seedDate = luigi.DateParameter()
+    seedDate = luigi.DateParameter(default=DEFAULT_DATE)
     runDate = luigi.DateParameter(default=datetime.datetime.now())
 
     def output(self):
@@ -33,7 +34,7 @@ class CreateAvailableProductsList(luigi.Task):
         workPath = getWorkPath(self.runDate)
 
         # If not seeding get last ingestion list from LastAvailableProductsList task
-        if self.seedDate is None:
+        if self.seedDate == DEFAULT_DATE:
             lastListTarget = yield LastAvailableProductsList()
             with self.input().open() as l:
                 lastList = json.load(l)

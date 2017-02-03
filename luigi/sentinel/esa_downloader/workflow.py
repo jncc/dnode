@@ -17,7 +17,7 @@ def getWorkPath(date):
 
 class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
-    seedDate = luigi.DateParameter(default=DEFAULT_DATE)
+    seedDate = luigi.DateParameter(default=constants.DEFAULT_DATE)
     runDate = luigi.DateParameter(default=datetime.datetime.now())
 
     def output(self):
@@ -34,7 +34,7 @@ class CreateAvailableProductsList(luigi.Task):
         workPath = getWorkPath(self.runDate)
 
         # If not seeding get last ingestion list from LastAvailableProductsList task
-        if self.seedDate == DEFAULT_DATE:
+        if self.seedDate == constants.DEFAULT_DATE:
             lastListTarget = yield LastAvailableProductsList()
             with lastListTarget.open() as l:
                 lastList = json.load(l)

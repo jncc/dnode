@@ -184,7 +184,7 @@ class ProductListManager:
     def create_list(self,runDate, productList, outputListFile, seedDate):
         lastIngestionDate = None
 
-        if seedDate == DEFAULT_DATE:
+        if seedDate == constants.DEFAULT_DATE:
             lastIngestionDate = self.__get_last_ingestion_date(productList)
             # If latest record is older than 3 days, fail
             if lastIngestionDate is None:

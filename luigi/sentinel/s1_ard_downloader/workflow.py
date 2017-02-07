@@ -30,6 +30,7 @@ def getLogger(folder, name):
     fh.setLevel(logging.DEBUG)
 
     logger.addHandler(fh)    
+    return logger
 
 def runtimeErrorLog(logger, message):
     logger.severe(message)
@@ -40,12 +41,13 @@ class CreateProductsList(luigi.Task):
     debug = luigi.BooleanParameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     config = luigi.Parameter(default='config.yaml')
+    working_dir = ''
     
     def run(self):
         with open(self.config, 'r') as conf:
             config = yaml.load(conf)
             logger = getLogger(config.get('log_dir'), 'CreateProductsList')
-            working_dir = getFilePath(config.get('working_dir'), 'working')
+            self.working_dir = config.get('working_dir')
 
             datahub_conf = config.get('datahub')
             if not (datahub_conf is not None \
@@ -76,15 +78,14 @@ class CreateProductsList(luigi.Task):
                 products_list_manager.getDownloadableProductsFromDataCatalog()
 
     def output(self):
-        with open(self.config, 'r') as conf:
-            config = yaml.load(conf)
-            return luigi.LocalTarget(getFilePath(config.get('working_dir'), 'available.json'))
+        return luigi.LocalTarget(getFilePath(self.working_dir, 'available.json'))
 
 # Download new products
 class DownloadProducts(luigi.Task):
     debug = luigi.BooleanParameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     config = luigi.Parameter(default='config.yaml')
+    working_dir = ''
 
     def requires(self):
         return CreateProductsList()
@@ -92,8 +93,8 @@ class DownloadProducts(luigi.Task):
     def run(self):
         with open(self.config, 'r') as conf:
             config = yaml.load(conf)
-            working_dir = getFilePath(config.get('working_dir'), 'working')
-            logger = getLogger(cnf.get('log_dir'), 'DownloadProducts')
+            self.working_dir = config.get('working_dir')
+            logger = getLogger(conf.get('log_dir'), 'DownloadProducts')
 
             with self.input().open() as available, self.output().open('w') as downloaded, self.failures().open('w') as failures:
                 if os.path.isfile(config):
@@ -121,18 +122,20 @@ class DownloadProducts(luigi.Task):
                         and 'table' in database_conf):
                         runtimeErrorLog(logger, 'Config file has missing database config entires')
 
-                    downloader = ProductDownloader(config, logger, working_dir)
-                    products_downloader.downloadProducts(available, downloaded, failures)
+                    tempdir = os.path.join(self.working_dir, 'temp')
+                    if not os.path.isdir(tempdir):
+                        os.makedirs(tempdir)
+
+                    downloader = ProductDownloader(config, logger, tempdir)
+                    downloader.downloadProducts(available, downloaded, failures)
                 else:
                     runtimeErrorLog(logger, 'Config file at [%s] was not found' % config_file)
 
-    def failures(self, working_dir):
-        return luigi.LocalTarget(getFilePath(working_dir, '_failures.json'))
+    def failures(self):
+        return luigi.LocalTarget(getFilePath(self.working_dir, '_failures.json'))
 
     def output(self):
-        with open(self.config, 'r') as conf:
-            config = yaml.load(conf)
-            return luigi.LocalTarget(getFilePath(config.get('working_dir'), '_success.json'))
+        return luigi.LocalTarget(getFilePath(self.working_dir, '_success.json'))
 
 if __name__ == '__main__':
     luigi.run()

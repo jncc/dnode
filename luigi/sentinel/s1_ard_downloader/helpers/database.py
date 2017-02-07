@@ -38,7 +38,7 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
 
     # If UUID is equal to the optionally provided relatedTo UUID then generate a new one and replace the 
     # one in the metadata with it 
-    if additional is not None 
+    if additional is not None:
         props['relatedTo'] = additional['relatedTo']
         # Catch to replace non unique uuid's
         if metadata['ID'] == additional['relatedTo']:

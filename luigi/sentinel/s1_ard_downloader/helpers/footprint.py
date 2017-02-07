@@ -76,7 +76,8 @@ Extract WGS84 footprints from the given footprints, looks for an OSNI folder to 
 """
 def extract_footprints_wgs84(item, path):
     # Grab footprints and create wgs84 geojson for upload to the catalog / s3
-    footprint_osgb_path = os.path.join(os.path.join(os.path.join(path, item['filename']), 'Footprint'), item['filename'].replace('.SAFE.data', '_footprint'))
+    std_osgb_path = os.path.join(os.path.join(os.path.join(path, item['filename']), 'Footprint'), item['filename'].replace('.SAFE.data', '_footprint'))
+    footprint_osgb_path = std_osgb_path
     footprint_osgb_output_path = ''
     osgb = None
 
@@ -92,13 +93,11 @@ def extract_footprints_wgs84(item, path):
         footprint_osgb_path = '%s.geojson' % footprint_osgb_path
         footprint_osgb_output_path = footprint_osgb_path
 
-    with open(footprint_osgb_path, 'r') as osgb_input:
-        osgb = json.load(osgb_output)
-
     osgb = rewrite_outputs(footprint_osgb_path, footprint_osgb_output_path)        
 
     # Attempt to extract any potential OSNI geometry
-    footprint_osni_path = os.path.join(os.path.join(path, item['filename'], 'OSNI1952'), item['filename'].replace('.SAFE.data', '_OSNI1952_footprint'))
+    std_osni_path = os.path.join(os.path.join(path, item['filename'], 'OSNI1952'), item['filename'].replace('.SAFE.data', '_OSNI1952_footprint'))
+    footprint_osni_path = std_osni_path
     footprint_osni_output_path = os.path.join(os.path.join(os.path.join(path, item['filename'], 'OSNI1952'), 'Footprint'), item['filename'].replace('.SAFE.data', '_OSNI1952_footprint.geojson'))
     osni = None
     found_osni = False
@@ -116,9 +115,31 @@ def extract_footprints_wgs84(item, path):
         footprint_osni_path = '%s.geojson' % footprint_osni_path
 
     if found_osni:
+        if not os.path.isdir(os.path.join(os.path.join(path, item['filename'], 'OSNI1952'), 'Footprint')):
+            os.makedirs(os.path.join(os.path.join(path, item['filename'], 'OSNI1952'), 'Footprint'))
         osni = rewrite_outputs(footprint_osni_path, footprint_osni_output_path)
 
+    # Remove extra uneeded files
+    remove_file('%s.dbf' % std_osgb_path)
+    remove_file('%s.prj' % std_osgb_path)
+    remove_file('%s.shp' % std_osgb_path)
+    remove_file('%s.shx' % std_osgb_path)
+    remove_file('%s.json' % std_osgb_path)
+    if found_osni:
+        remove_file('%s.dbf' % std_osni_path)
+        remove_file('%s.prj' % std_osni_path)
+        remove_file('%s.shp' % std_osni_path)
+        remove_file('%s.shx' % std_osni_path)
+        remove_file('%s.json' % std_osni_path)
+
     return (osgb, osni)
+
+"""
+
+"""
+def remove_file(filepath):
+    if os.path.isfile(filepath):
+        os.unlink(filepath) 
 
 """
 Opens a GeoJSON file, optionally reprojects it if there is a CRS (non WGS84, so assume if CRS block exists then need
@@ -131,8 +152,9 @@ def rewrite_outputs(input_path, output_path):
     with open(input_path, 'r') as input_file:
         data = json.load(input_file)
 
-    if data['crs'] is not None:
-        splitext os.path.splitext(output_path)
+    if 'crs' in data:
+        # If a CRS block exsists, assume this is not a WGS84 block and reproject, saving the original
+        splitext = os.path.splitext(output_path)
         
         with open('%s.original.geojson' % splitext[0], 'w') as output_file:
             json.dump(data, output_file)
@@ -144,6 +166,7 @@ def rewrite_outputs(input_path, output_path):
 
     elif input_path != output_path:
         with open(output_path, 'w') as output:
-            json.dump(data)
+            json.dump(data, output)
     
     return data
+

@@ -68,7 +68,7 @@ def reproject_footprint(inFile, outFile, toProjection=4326):
 
 """
 Extract WGS84 footprints from the given footprints, looks for an OSNI folder to extract any additional footprints from, will save the outputs as 
-*.wgs84.geojson
+*.geojson
 
 :param item: The item that we are downloading (sourced from the available products list)
 :param path: The path to base our footprint paths on
@@ -78,37 +78,72 @@ def extract_footprints_wgs84(item, path):
     # Grab footprints and create wgs84 geojson for upload to the catalog / s3
     footprint_osgb_path = os.path.join(os.path.join(os.path.join(path, item['filename']), 'Footprint'), item['filename'].replace('.SAFE.data', '_footprint'))
     footprint_osgb_output_path = ''
+    osgb = None
 
-    if os.path.isfile('%s.shp' % footprint_osgb_path):
-        footprint_osgb_path = '%s.shp' % footprint_osgb_path
-        footprint_osgb_output_path = footprint_osgb_path.replace('.shp', '_wgs84.geojson')
+    # if os.path.isfile('%s.shp' % footprint_osgb_path):
+    #     footprint_osgb_path = '%s.shp' % footprint_osgb_path
+    #     footprint_osgb_output_path = footprint_osgb_path.replace('.shp', '.geojson')
+    #     # TODO: Turn into geojson
+
+    if os.path.isfile('%s.json' % footprint_osgb_path):
+        footprint_osgb_path = '%s.json' % footprint_osgb_path
+        footprint_osgb_output_path = footprint_osgb_path.replace('.json', '.geojson')
     elif os.path.isfile('%s.geojson' % footprint_osgb_path):
         footprint_osgb_path = '%s.geojson' % footprint_osgb_path
-        footprint_osgb_output_path = footprint_osgb_path.replace('.geojson', '_wgs84.geojson')
-    else:
-        raise RuntimeError('No footprint found for %s, halting' % item['filename'])
-    
-    reproject_footprint(footprint_osgb_path, footprint_osgb_output_path)
+        footprint_osgb_output_path = footprint_osgb_path
 
-    with open(footprint_osgb_output_path) as osgb_output:
+    with open(footprint_osgb_path, 'r') as osgb_input:
         osgb = json.load(osgb_output)
 
+    osgb = rewrite_outputs(footprint_osgb_path, footprint_osgb_output_path)        
+
     # Attempt to extract any potential OSNI geometry
-    footprint_osni_path = os.path.join(os.path.join(os.path.join(os.path.join(path, item['filename']), 'OSNI1952'), 'Footprint'), item['filename'].replace('.SAFE.data', '_OSNI1952_footprint'))
-    footprint_osni_output_path = None
+    footprint_osni_path = os.path.join(os.path.join(path, item['filename'], 'OSNI1952'), item['filename'].replace('.SAFE.data', '_OSNI1952_footprint'))
+    footprint_osni_output_path = os.path.join(os.path.join(os.path.join(path, item['filename'], 'OSNI1952'), 'Footprint'), item['filename'].replace('.SAFE.data', '_OSNI1952_footprint.geojson'))
     osni = None
+    found_osni = False
 
-    if os.path.isfile('%s.shp' % footprint_osni_path):
-        footprint_osni_path = '%s.shp' % footprint_osni_path
-        footprint_osni_output_path = footprint_osni_path.replace('.shp', '_wgs84.geojson')
-        reproject_footprint(footprint_osni_path, footprint_osni_output_path)
+    # if os.path.isfile('%s.shp' % footprint_osni_path):
+    #     footprint_osni_path = '%s.shp' % footprint_osni_path
+    #     footprint_osni_output_path = footprint_osni_path.replace('.shp', '.geojson')
+    #     # TODO Write to geojson
+
+    if os.path.isfile('%s.json' % footprint_osni_path):
+        found_osni = True
+        footprint_osni_path = '%s.json' % footprint_osni_path
     elif os.path.isfile('%s.geojson' % footprint_osni_path):
+        found_osni = True
         footprint_osni_path = '%s.geojson' % footprint_osni_path
-        footprint_osni_output_path = footprint_osni_path.replace('.geojson', '_wgs84.geojson')            
-        reproject_footprint(footprint_osni_path, footprint_osni_output_path)
-    
-    if footprint_osni_output_path is not None:
-        with open(footprint_osni_output_path) as osni_out:
-            osni = json.load(osni_out)
 
-    return (osgb, osni)    
+    if found_osni:
+        osni = rewrite_outputs(footprint_osni_path, footprint_osni_output_path)
+
+    return (osgb, osni)
+
+"""
+Opens a GeoJSON file, optionally reprojects it if there is a CRS (non WGS84, so assume if CRS block exists then need
+to reproject) and returns the content of that file (or the reprojected one)
+
+:param input_path: The path to an input GeoJSON file
+:param output_path: The path to the output GeoJSON file
+"""
+def rewrite_outputs(input_path, output_path):
+    with open(input_path, 'r') as input_file:
+        data = json.load(input_file)
+
+    if data['crs'] is not None:
+        splitext os.path.splitext(output_path)
+        
+        with open('%s.original.geojson' % splitext[0], 'w') as output_file:
+            json.dump(data, output_file)
+
+        reproject_footprint('%s.original.geojson' % splitext[0], output_path)
+
+        with open(output_path) as output_final:
+            data = json.load(output_final)
+
+    elif input_path != output_path:
+        with open(output_path, 'w') as output:
+            json.dump(data)
+    
+    return data

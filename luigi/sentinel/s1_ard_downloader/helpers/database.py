@@ -22,7 +22,7 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
 
     retVal = None
 
-    if 'id' in metadata:
+    if 'ID' in metadata:
         # Grab the UUID from the metadata if possible, if not create one
         uuid_str = metadata['ID']
         try:
@@ -38,10 +38,12 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
 
     # If UUID is equal to the optionally provided relatedTo UUID then generate a new one and replace the 
     # one in the metadata with it 
-    if additional is not None and metadata['ID'] == additional['relatedTo']:
-        uuid_str = str(uuid.uuid4())
-        metadata['ID'] = uuid_str
+    if additional is not None 
         props['relatedTo'] = additional['relatedTo']
+        # Catch to replace non unique uuid's
+        if metadata['ID'] == additional['relatedTo']:
+            uuid_str = str(uuid.uuid4())
+            metadata['ID'] = uuid_str
 
     # if existing is not None or additional is not None:
     #     # Entry exists
@@ -72,7 +74,7 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
     #                 json.dumps(props), json.dumps(representations), geom, existing(0), ))
                 
     #             retVal = existing(0)
-    # else:
+
     # Entry does not exist
     props = item
 
@@ -81,7 +83,10 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
             collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), ))
     else:
         cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_Multi(ST_GeomFromGeoJSON(%s)))", (uuid_str,
-            collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
+            collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), json.dumps(geom), ))
     
+    # Commit
+    db_conn.commit()
+
     cur.close()
     return uuid_str

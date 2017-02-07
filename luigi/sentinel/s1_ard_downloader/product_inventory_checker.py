@@ -37,7 +37,7 @@ class ProductInventoryChecker:
         groups = {}
 
         for key in keys:
-            res = exp.findall(key.key)[0]
+            res = exp.findall(key.key)
             if len(res) > 0:
                 name = res[0][0]
                 if name in groups:
@@ -78,7 +78,7 @@ class ProductInventoryChecker:
                         x = 1
                     elif fkey.key.endswith('.json'):
                         # Deal with geojson file (move to Footprint folder and rename to .geojson)
-                        footprint_osni = json.loads(fkey.get_contents_as_string())
+                        footprint_osni = json.loads(fkey.get_contents_as_string().decode('utf-8'))
                         footprint_osni['crs'] = { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
                         found_data['osni']['footprint'] = True
                     elif fkey.key.endswith('_metadata.xml'):
@@ -101,7 +101,7 @@ class ProductInventoryChecker:
                     # Process OSGB data
                     if fkey.key.endswith('.json'):
                         # Deal with geojson file (rename to .geojson)
-                        footprint_osgb = json.loads(fkey.get_contents_as_string())
+                        footprint_osgb = json.loads(fkey.get_contents_as_string().decode('utf-8'))
                         footprint_osgb['crs'] = { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
                         found_data['osgb']['footprint'] = True
                     elif fkey.key.endswith('_metadata.xml'):
@@ -137,4 +137,4 @@ if __name__ == '__main__':
 
     with open('config.yaml', 'r') as config:
             checker = ProductInventoryChecker(yaml.load(config), logger, './temp')
-            checker.getS3Contents()
+            checker.getS3Contents('')

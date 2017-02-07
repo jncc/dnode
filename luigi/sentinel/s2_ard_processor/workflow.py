@@ -42,6 +42,7 @@ class CreateArdProduct(luigi.Task):
         }
 
         client = docker.from_env()
+        client.images.pull(DOCKER_IMAGE)
         client.containers.run(DOCKER_IMAGE, environment=environment, volumes=volumes,  detach=False)
         
     def output(self):

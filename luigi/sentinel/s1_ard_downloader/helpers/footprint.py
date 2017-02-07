@@ -127,7 +127,7 @@ to reproject) and returns the content of that file (or the reprojected one)
 :param input_path: The path to an input GeoJSON file
 :param output_path: The path to the output GeoJSON file
 """
-def rewrite_outputs(input_path, output_path)
+def rewrite_outputs(input_path, output_path):
     with open(input_path, 'r') as input_file:
         data = json.load(input_file)
 

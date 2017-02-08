@@ -79,16 +79,16 @@ class ProductDownloader:
 
             self.logger.debug('Remote Checksum is %s | Local Checksum is %s | Checksums %s' % (remote_checksum, local_checksum, 'Match' if remote_checksum == local_checksum else 'Don\'t Match'))
 
-            if remote_checksum == local_checksum:
-                try:
+            try:
+                if remote_checksum == local_checksum:
                     # Extract footprints from downloaded files
                     (osgb_geojson, osni_geojson) = footprintHelper.extract_footprints_wgs84(item, extracted_path)
                     # Extract Metadata
                     (osgb_metadata, osni_metadata) = metadataHelper.extract_metadata(item, extracted_path)
                    
                     # Remove some known unwanted files before upload, i.e. aux.xml file from quicklook
-                    if os.path.isfile(os.path.join(os.path.join(extracted_path, item['filename']), '%s_quicklook.jpg.aux.xml' % item['filename'])):
-                        os.unlink(os.path.join(os.path.join(extracted_path, item['filename']), '%s_quicklook.jpg.aux.xml' % item['filename']))
+                    if os.path.isfile(os.path.join(os.path.join(extracted_path, item['filename']), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml'))):
+                        os.unlink(os.path.join(os.path.join(extracted_path, item['filename']), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml')))
                     
                     # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
                     beginStamp = time.strptime(osgb_metadata['TemporalExtent']['Begin'], '%Y-%m-%dT%H:%M:%S')
@@ -117,16 +117,16 @@ class ProductDownloader:
                     item['representations'] = representations['region_split']
                     
                     downloaded_list.append(item)
-                except RuntimeError as ex:
-                    logger.error(repr(ex))
-                    self.__attach_failure(failed, item, repr(ex))
-            else:
-                self.__attach_failure(failed, item, 'Remote Checksum did not match Local Checksum')
-            
-            # Cleanup temp extracted directory
-            shutil.rmtree(extracted_path)
-            # Cleanup download file
-            os.unlink(filename)
+                else:
+                    self.__attach_failure(failed, item, 'Remote Checksum did not match Local Checksum')                    
+            except RuntimeError as ex:
+                logger.error(repr(ex))
+                self.__attach_failure(failed, item, repr(ex))
+            finally:                
+                # Cleanup temp extracted directory
+                shutil.rmtree(extracted_path)
+                # Cleanup download file
+                os.unlink(filename)
 
         # Dump out failures if any exist
         if len(failed) > 0:

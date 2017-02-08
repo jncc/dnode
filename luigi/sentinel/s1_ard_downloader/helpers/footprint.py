@@ -169,4 +169,4 @@ def rewrite_outputs(input_path, output_path):
             json.dump(data, output)
     
     return data
-
+    

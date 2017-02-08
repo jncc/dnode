@@ -85,32 +85,37 @@ class ProductDownloader:
                     (osgb_geojson, osni_geojson) = footprintHelper.extract_footprints_wgs84(item, extracted_path)
                     # Extract Metadata
                     (osgb_metadata, osni_metadata) = metadataHelper.extract_metadata(item, extracted_path)
+                   
+                    # Remove some known unwanted files before upload, i.e. aux.xml file from quicklook
+                    if os.path.isfile(os.path.join(extracted_path, '%s_quicklook.jpg.aux.xml' % item['filename'])):
+                        os.unlink(os.path.join(extracted_path, '%s_quicklook.jpg.aux.xml' % item['filename']))
+                    
                     # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
-
-                    beginStamp = time.strptime(osgb_metadata['TemporalExtent']['Begin'], '%Y-%m-%dT%H:%M:%s')
+                    beginStamp = time.strptime(osgb_metadata['TemporalExtent']['Begin'], '%Y-%m-%dT%H:%M:%S')
 
                     destPath = '%s/%d/%02d/%s' % (self.s3_conf['bucket_dest_path'], beginStamp.tm_year, beginStamp.tm_mon, item['filename'])
                     
-                    self.logger.debug('Uploading to destination path: %s' %destPath)
+                    self.logger.debug('Uploading to destination path: %s' % destPath)
 
                     representations = self.upload_dir_to_s3(extracted_path, destPath)
-                    representations = self.extract_representations(representations, item['filename'])
+                    representations['region_split'] = self.extract_representations(representations['s3'], destPath)
 
                     self.logger.debug('Uploaded to destination path, writing progress to database')
                     
                     # Write the progress to the catalog table
-                    id = databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osgb_metadata, representations['osgb'], osgb_geojson)
+                    id = databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osgb_metadata, representations['region_split']['osgb'], osgb_geojson)
                     # If we have more tha one representation (i.e. OSNI data exists) then add an additional record to the catalog for that data
-                    if len(representations['osni']) > 0:
+                    if len(representations['region_split']['osni']['s3']) > 0:
                         if self.debug:
                             self.logger.debug('OSNI representation exists for %s' % item['filename'])
                             
                         if osni_geojson is None:
-                            databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osni_metadata, representations['osni'], osgb_geojson, additional={'relatedTo': id})
+                            databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osni_metadata, representations['region_split']['osni'], osgb_geojson, additional={'relatedTo': id})
                         else:
-                            databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osni_metadata, representations['osni'], osni_geojson, additional={'relatedTo': id})
+                            databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osni_metadata, representations['region_split']['osni'], osni_geojson, additional={'relatedTo': id})
                     
-                    item['representations'] = representations
+                    item['representations'] = representations['region_split']
+                    
                     downloaded_list.append(item)
                 except RuntimeError as ex:
                     logger.error(repr(ex))
@@ -140,14 +145,18 @@ class ProductDownloader:
     """
     def extract_representations(self, representations, destpath):
         outputs = {
-            'osgb': [],
-            'osni': []
+            'osgb': {
+                's3': []
+            },
+            'osni': {
+                's3': []
+            }
         }
         for r in representations:
             if r['path'].startswith('%s/OSNI1952' % (destpath)):
-                outputs['osni'].append(r)
+                outputs['osni']['s3'].append(r)
             else:
-                outputs['osgb'].append(r)
+                outputs['osgb']['s3'].append(r)
         return outputs
 
     """

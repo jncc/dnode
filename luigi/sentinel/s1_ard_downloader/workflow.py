@@ -94,7 +94,7 @@ class DownloadProducts(luigi.Task):
         with open(self.config, 'r') as conf:
             config = yaml.load(conf)
             self.working_dir = config.get('working_dir')
-            logger = getLogger(conf.get('log_dir'), 'DownloadProducts')
+            logger = getLogger(config.get('log_dir'), 'DownloadProducts')
 
             with self.input().open() as available, self.output().open('w') as downloaded, self.failures().open('w') as failures:
                 if os.path.isfile(config):

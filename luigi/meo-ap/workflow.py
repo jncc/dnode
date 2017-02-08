@@ -5,7 +5,7 @@ import os
 import json
 
 from ftplib import FTP
-
+from config_manager import ConfigManager
 from luigi.util import requires
 
 #FILE_ROOT = 's3://jncc-data/workflows/s2ard/'
@@ -32,8 +32,9 @@ class CreateJobSpec(luigi.Task):
 
 class CreateFTPDump(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
-    ftp = FTP('ftp.rsg.pml.ac.uk')
-    ftp.login('oc-cci-data', 'ELaiWai8ae')
+    config = ConfigManager('cfg.ini')
+    ftp = FTP(config.getFtpHostname())
+    ftp.login(config.getFtpUsername(), config.getFtpPassword())
 
     def run(self):
         with self.output().open('w') as wddump:

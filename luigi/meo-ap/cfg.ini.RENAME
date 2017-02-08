@@ -1,0 +1,12 @@
+[FTP]
+hostname = ftp site
+username = ftp username
+password = ftp password
+[Database]
+connection = host=host name dbname=database name user=pgsql user name password=pgsql user password
+[Amazon]
+accessKeyId = access key
+accessKeySecret = secret key
+bucketName = bucket name
+destPath = bucket path
+region = aws region

@@ -82,6 +82,9 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
         cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, null)", (uuid_str,
             collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), ))
     else:
+        if 'crs' not in geom:
+            ## Add a CRS to the data if none exists, so assume 4326
+            geom['crs'] = { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
         cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_Multi(ST_GeomFromGeoJSON(%s)))", (uuid_str,
             collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), json.dumps(geom), ))
     

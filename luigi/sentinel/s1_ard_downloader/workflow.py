@@ -93,43 +93,41 @@ class DownloadProducts(luigi.Task):
     def run(self):
         with open(self.config, 'r') as conf:
             config = yaml.load(conf)
-            self.working_dir = config.get('working_dir')
-            logger = getLogger(config.get('log_dir'), 'DownloadProducts')
+            
+        self.working_dir = config.get('working_dir')
+        logger = getLogger(config.get('log_dir'), 'DownloadProducts')
 
-            with self.input().open() as available, self.output().open('w') as downloaded, self.failures().open('w') as failures:
-                if os.path.isfile(config):
-                    datahub_conf = config.get('datahub')
-                    if not (datahub_conf is not None \
-                        and 'search_zone_id' in datahub_conf \
-                        and 'username' in datahub_conf \
-                        and 'password' in datahub_conf \
-                        and 'base_url' in datahub_conf \
-                        and 'download_chunk_size' in datahub_conf): 
-                        runtimeErrorLog(logger, 'Config file has invalid datahub entries')
+        with self.input().open() as available, self.output().open('w') as downloaded, self.failures().open('w') as failures:
+            datahub_conf = config.get('datahub')
+            if not (datahub_conf is not None \
+                and 'search_zone_id' in datahub_conf \
+                and 'username' in datahub_conf \
+                and 'password' in datahub_conf \
+                and 'base_url' in datahub_conf \
+                and 'download_chunk_size' in datahub_conf): 
+                runtimeErrorLog(logger, 'Config file has invalid datahub entries')
 
-                    s3_conf = config.get('s3')
-                    if not (s3_conf is not None \
-                        and 'access_key' in s3_conf \
-                        and 'secret_access_key' in s3_conf):
-                        runtimeErrorLog(logger, 'Config file has invalid s3 entries')
-                    
-                    database_conf = config.get('database')
-                    if not (database_conf is not None \
-                        and 'host' in database_conf \
-                        and 'dbname' in database_conf \
-                        and 'username' in database_conf \
-                        and 'password' in database_conf \
-                        and 'table' in database_conf):
-                        runtimeErrorLog(logger, 'Config file has missing database config entires')
+            s3_conf = config.get('s3')
+            if not (s3_conf is not None \
+                and 'access_key' in s3_conf \
+                and 'secret_access_key' in s3_conf):
+                runtimeErrorLog(logger, 'Config file has invalid s3 entries')
+            
+            database_conf = config.get('database')
+            if not (database_conf is not None \
+                and 'host' in database_conf \
+                and 'dbname' in database_conf \
+                and 'username' in database_conf \
+                and 'password' in database_conf \
+                and 'table' in database_conf):
+                runtimeErrorLog(logger, 'Config file has missing database config entires')
 
-                    tempdir = os.path.join(self.working_dir, 'temp')
-                    if not os.path.isdir(tempdir):
-                        os.makedirs(tempdir)
+            tempdir = os.path.join(self.working_dir, 'temp')
+            if not os.path.isdir(tempdir):
+                os.makedirs(tempdir)
 
-                    downloader = ProductDownloader(config, logger, tempdir)
-                    downloader.downloadProducts(available, downloaded, failures)
-                else:
-                    runtimeErrorLog(logger, 'Config file at [%s] was not found' % config_file)
+            downloader = ProductDownloader(config, logger, tempdir)
+            downloader.downloadProducts(available, downloaded, failures)
 
     def failures(self):
         return luigi.LocalTarget(getFilePath(self.working_dir, '_failures.json'))

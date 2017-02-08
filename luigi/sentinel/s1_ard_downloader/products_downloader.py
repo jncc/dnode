@@ -61,6 +61,7 @@ class ProductDownloader:
         for item in available_list:
             # Download item from the remote repo
             filename = os.path.join(self.temp, '%s.zip' % item['filename'])
+            self.logger.info('-----------------------------------')
             self.logger.info('Downloading %s from API' % filename)
             self.client.download_product(item['product_id'], filename)
 
@@ -77,7 +78,8 @@ class ProductDownloader:
             remote_checksum = self.client.get_checksum(item['product_id'])
             local_checksum = verificationHelper.calculate_checksum(os.path.join(os.path.join(extracted_path, item['filename']), tif_file))
 
-            self.logger.debug('Remote Checksum is %s | Local Checksum is %s | Checksums %s' % (remote_checksum, local_checksum, 'Match' if remote_checksum == local_checksum else 'Don\'t Match'))
+            if self.debug:
+                self.logger.debug('Remote Checksum is %s | Local Checksum is %s | Checksums %s' % (remote_checksum, local_checksum, 'Match' if remote_checksum == local_checksum else 'Don\'t Match'))
 
             try:
                 if remote_checksum == local_checksum:
@@ -94,13 +96,14 @@ class ProductDownloader:
                     beginStamp = time.strptime(osgb_metadata['TemporalExtent']['Begin'], '%Y-%m-%dT%H:%M:%S')
 
                     destPath = '%s/%d/%02d' % (self.s3_conf['bucket_dest_path'], beginStamp.tm_year, beginStamp.tm_mon)
-                    
-                    self.logger.debug('Uploading to destination path: %s' % destPath)
+
+                    if self.debug:                    
+                        self.logger.debug('Uploading to destination path: %s' % destPath)
 
                     representations = self.upload_dir_to_s3(extracted_path, destPath)
                     representations['region_split'] = self.extract_representations(representations['s3'], destPath)
 
-                    self.logger.debug('Uploaded to destination path, writing progress to database')
+                    self.logger.info('Uploaded to destination path, writing progress to database')
                     
                     # Write the progress to the catalog table
                     id = databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osgb_metadata, representations['region_split']['osgb'], osgb_geojson)
@@ -127,6 +130,10 @@ class ProductDownloader:
                 shutil.rmtree(extracted_path)
                 # Cleanup download file
                 os.unlink(filename)
+        
+        self.logger.info('-----------------------------------')
+        self.logger.info('Reached end of supplied products list, downloaded %d of %d [%d failures]' % (len(downloaded_list), len(available_list), len(failed)))
+        self.logger.info('-----------------------------------')
 
         # Dump out failures if any exist
         if len(failed) > 0:

@@ -45,36 +45,6 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
             uuid_str = str(uuid.uuid4())
             metadata['ID'] = uuid_str
 
-    # if existing is not None or additional is not None:
-    #     # Entry exists
-    #     if existing is not None:
-    #         props = json.loads(existing[3])
-    #     else:
-    #         props = {}
-
-    #     if geom is None:
-    #         if additional is not None:
-    #             # If we are adding an extra record with the same ID i.e. OSNI projection
-    #             props['relatedTo'] = additional['relatedTo']
-    #             cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, null)", (uuid_str,
-    #                 collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
-    #             retVal = cur.fetchone()[0]
-    #         else:
-    #             cur.execute("UPDATE sentinel_ard_backscatter SET properties = %s, representations = %s, footprint = null WHERE id = %s", (
-    #                 json.dumps(props), json.dumps(representations), geom, existing(0), ))
-    #     else:
-    #         if additional is not None:
-    #             # If we are adding an extra record with the same ID i.e. OSNI projection
-    #             props['relatedTo'] = additional['relatedTo']
-    #             cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, ST_Multi(ST_GeomFromGeoJSON(%s)))", (uuid_str, 
-    #                 collection_version_uuid, json.dumps(metadata), json.dumps(props), json.dumps(representations), geom, ))
-    #             retVal = cur.fetchone()[0]
-    #         else:
-    #             cur.execute("UPDATE sentinel_ard_backscatter SET properties = %s, representations = %s, footprint = ST_GeomFromGeoJSON(%s) WHERE id = %s", (
-    #                 json.dumps(props), json.dumps(representations), geom, existing(0), ))
-                
-    #             retVal = existing(0)
-
     # Entry does not exist
     props = item
 

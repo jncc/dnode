@@ -1,5 +1,5 @@
 log_dir: ./logs
-work_dir: ./working
+working_dir: ./working
 s3_working_path: 's3://bucket/path'
 database:
     host: pg-host

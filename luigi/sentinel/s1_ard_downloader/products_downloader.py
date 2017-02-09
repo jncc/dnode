@@ -95,7 +95,7 @@ class ProductDownloader:
                     # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
                     beginStamp = time.strptime(osgb_metadata['TemporalExtent']['Begin'], '%Y-%m-%dT%H:%M:%S')
 
-                    destPath = '%s/%d/%02d' % (self.s3_conf['bucket_dest_path'], beginStamp.tm_year, beginStamp.tm_mon)
+                    destPath = os.path.join(self.s3_conf['bucket_dest_path'], '%d/%02d' % (beginStamp.tm_year, beginStamp.tm_mon))
 
                     self.logger.info('Uploading to destination path: %s' % destPath)
 

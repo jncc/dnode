@@ -87,8 +87,10 @@ def copy_file_to_s3(logger, access_key, secret_access_key, region, bucket, bucke
     else:
         k = boto.s3.key.Key(bucket)
         k.key = destpath
-        k.set_metadata('md5', metadata['md5'])
-        k.set_metadata('uploaded', metadata['uploaded'])
+
+        for mkey in metadata:
+            k.set_metadata(mkey, metadata[mkey])
+
         k.set_contents_from_filename(sourcepath, num_cb=10)
         
         if public:

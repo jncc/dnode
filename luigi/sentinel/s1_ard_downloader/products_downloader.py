@@ -99,7 +99,7 @@ class ProductDownloader:
 
                     self.logger.info('Uploading to destination path: %s' % destPath)
 
-                    representations = self.upload_dir_to_s3(extracted_path, destPath, additionalMetadata={'remote_product_id': item['product_id']})
+                    representations = self.upload_dir_to_s3(extracted_path, destPath, {'s3': []}, {'remote_product_id': item['product_id']})
                     representations['region_split'] = self.extract_representations(representations['s3'], destPath)
 
                     self.logger.info('Uploaded to destination path, writing progress to database')
@@ -173,7 +173,7 @@ class ProductDownloader:
     :param representations: A list of files that have been uploaded, where they are and what sort of type that file is
     :return: The generated list of the represenations from this upload
     """
-    def upload_dir_to_s3(self, sourcedir, destpath, representations={'s3': []}, additionalMetadata=None):
+    def upload_dir_to_s3(self, sourcedir, destpath, representations, additionalMetadata):
         for item in os.listdir(sourcedir):
             item_path = os.path.join(sourcedir, item)
             if os.path.isdir(item_path):

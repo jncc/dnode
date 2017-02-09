@@ -49,7 +49,7 @@ calculate md5 checksums and upload with the file
 :param sourcepath: The source path of the file to upload
 :param filename: The destination path of the file being uploaded
 """
-def copy_file_to_s3(logger, access_key, secret_access_key, region, bucket, bucket_dest_path, sourcepath, filename, public, additionalMetadata=None, debug=False):
+def copy_file_to_s3(logger, access_key, secret_access_key, region, bucket, bucket_dest_path, sourcepath, filename, public, additionalMetadata):
     #max size in bytes before uploading in parts. between 1 and 5 GB recommended
     MAX_SIZE = 5000000000
     #size of parts when uploading in parts
@@ -67,32 +67,29 @@ def copy_file_to_s3(logger, access_key, secret_access_key, region, bucket, bucke
     metadata['md5'] = verificationHelper.calculate_checksum(sourcepath)
     metadata['uploaded'] = time.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    if debug:
-        logger.debug("DEBUG: Would copy %s to %s", sourcepath, destpath)
-    else:
-        if bucket.get_key(destpath) != None:
-            bucket.delete_key(destpath)            
+    if bucket.get_key(destpath) != None:
+        bucket.delete_key(destpath)            
 
-        filesize = os.path.getsize(sourcepath)
-        if filesize > MAX_SIZE:
-            if public:
-                mp = bucket.initiate_multipart_upload(destpath, metadata=metadata, policy='public-read')
-            else:
-                mp = bucket.initiate_multipart_upload(destpath, metadata=metadata)  
-
-            fp = open(sourcepath,'rb')
-            fp_num = 0
-            while (fp.tell() < filesize):
-                fp_num += 1
-                mp.upload_part_from_file(fp, fp_num, num_cb=10, size=PART_SIZE)
-
-            mp.complete_upload()          
+    filesize = os.path.getsize(sourcepath)
+    if filesize > MAX_SIZE:
+        if public:
+            mp = bucket.initiate_multipart_upload(destpath, metadata=metadata, policy='public-read')
         else:
-            k = boto.s3.key.Key(bucket)
-            k.key = destpath
-            k.set_metadata('md5', metadata['md5'])
-            k.set_metadata('uploaded', metadata['uploaded'])
-            k.set_contents_from_filename(sourcepath, num_cb=10)
-            
-            if public:
-                k.set_acl('public-read')
+            mp = bucket.initiate_multipart_upload(destpath, metadata=metadata)  
+
+        fp = open(sourcepath,'rb')
+        fp_num = 0
+        while (fp.tell() < filesize):
+            fp_num += 1
+            mp.upload_part_from_file(fp, fp_num, num_cb=10, size=PART_SIZE)
+
+        mp.complete_upload()          
+    else:
+        k = boto.s3.key.Key(bucket)
+        k.key = destpath
+        k.set_metadata('md5', metadata['md5'])
+        k.set_metadata('uploaded', metadata['uploaded'])
+        k.set_contents_from_filename(sourcepath, num_cb=10)
+        
+        if public:
+            k.set_acl('public-read')

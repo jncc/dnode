@@ -80,11 +80,13 @@ class CreateProductsList(luigi.ExternalTask):
                 products_list_manager.getDownloadableProductsFromDataCatalog()
 
     def output(self):
+        with open(self.config, 'r') as conf:
+            config = yaml.load(conf)
         # Local Target
         #return luigi.LocalTarget(getFilePath(self.working_dir, 'available.json'))
 
         # S3 Target
-        return S3Target(getFilePath(self.s3_working_path, 'available.json'))
+        return S3Target(getFilePath(config['s3_working_path'], 'available.json'))
         
 
 # Download new products
@@ -137,16 +139,22 @@ class DownloadProducts(luigi.Task):
             downloader.downloadProducts(available, downloaded, failures)
 
     def failures(self):
+        with open(self.config, 'r') as conf:
+            config = yaml.load(conf)
+        # Local Target
         # Local Target
         #return luigi.LocalTarget(getFilePath(self.working_dir, '_failures.json'))
         # S3 Target
-        return S3Target(getFilePath(self.s3_working_path, '_failures.json'))
+        return S3Target(getFilePath(config['s3_working_path'], '_failures.json'))
 
     def output(self):
+        with open(self.config, 'r') as conf:
+            config = yaml.load(conf)
+        # Local Target
         # Local Target
         #return luigi.LocalTarget(getFilePath(self.working_dir, '_success.json'))
         # S3 Target
-        return S3Target(getFilePath(self.s3_working_path, '_success.json'))        
+        return S3Target(getFilePath(config['s3_working_path'], '_success.json'))        
 
 if __name__ == '__main__':
     luigi.run()

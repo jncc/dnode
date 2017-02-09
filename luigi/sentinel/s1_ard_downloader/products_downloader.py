@@ -99,7 +99,7 @@ class ProductDownloader:
 
                     self.logger.info('Uploading to destination path: %s' % destPath)
 
-                    representations = self.upload_dir_to_s3(extracted_path, destPath, {'s3': []}, {'remote_product_id': item['product_id']})
+                    representations = self.upload_dir_to_s3(extracted_path, destPath, {'s3': []}, {'productid': item['product_id']})
                     representations['region_split'] = self.extract_representations(representations['s3'], destPath)
 
                     self.logger.info('Uploaded to destination path, writing progress to database')

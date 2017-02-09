@@ -37,17 +37,19 @@ def runtimeErrorLog(logger, message):
     raise RuntimeError(message)
 
 # Create new products list
-class CreateProductsList(luigi.Task):
+class CreateProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     config = luigi.Parameter(default='config.yaml')
     working_dir = ''
+    s3_working_path = ''
     
     def run(self):
         with open(self.config, 'r') as conf:
             config = yaml.load(conf)
             logger = getLogger(config.get('log_dir'), 'CreateProductsList')
             self.working_dir = config.get('working_dir')
+            self.s3_working_path = config.get('s3_working_path')
 
             datahub_conf = config.get('datahub')
             if not (datahub_conf is not None \
@@ -78,7 +80,12 @@ class CreateProductsList(luigi.Task):
                 products_list_manager.getDownloadableProductsFromDataCatalog()
 
     def output(self):
-        return luigi.LocalTarget(getFilePath(self.working_dir, 'available.json'))
+        # Local Target
+        #return luigi.LocalTarget(getFilePath(self.working_dir, 'available.json'))
+
+        # S3 Target
+        return S3Target(getFilePath(self.s3_working_path, 'available.json'))
+        
 
 # Download new products
 class DownloadProducts(luigi.Task):
@@ -130,10 +137,16 @@ class DownloadProducts(luigi.Task):
             downloader.downloadProducts(available, downloaded, failures)
 
     def failures(self):
-        return luigi.LocalTarget(getFilePath(self.working_dir, '_failures.json'))
+        # Local Target
+        #return luigi.LocalTarget(getFilePath(self.working_dir, '_failures.json'))
+        # S3 Target
+        return S3Target(getFilePath(self.s3_working_path, '_failures.json'))
 
     def output(self):
-        return luigi.LocalTarget(getFilePath(self.working_dir, '_success.json'))
+        # Local Target
+        #return luigi.LocalTarget(getFilePath(self.working_dir, '_success.json'))
+        # S3 Target
+        return S3Target(getFilePath(self.s3_working_path, '_success.json'))        
 
 if __name__ == '__main__':
     luigi.run()

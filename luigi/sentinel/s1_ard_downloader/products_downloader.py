@@ -184,7 +184,7 @@ class ProductDownloader:
 
                 # If we aren't in debug mode, upload file to S3
                 if not self.debug:
-                    s3Helper.copy_file_to_s3(self.logger, self.s3_conf['access_key'], self.s3_conf['secret_access_key'], self.s3_conf['region'], self.s3_conf['bucket'], self.s3_conf['bucket_dest_path'], item_path, path, self.s3_conf['public'], additionalMetadata=additionalMetadata, debug=self.debug)
+                    s3Helper.copy_file_to_s3(self.logger, self.s3_conf['access_key'], self.s3_conf['secret_access_key'], self.s3_conf['region'], self.s3_conf['bucket'], self.s3_conf['bucket_dest_path'], item_path, path, self.s3_conf['public'], additionalMetadata)
                 else:
                     self.logger.debug('Would upload %s to %s' % (item_path, path))
 

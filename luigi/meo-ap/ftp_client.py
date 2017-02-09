@@ -36,11 +36,25 @@ class FTPClient:
             self.ftp.cwd(pDir + yearDir + '/')
             self.ftp.retrlines('NLST', flist[yearDir].append)
 
-        res = []
+        res = {}
 
         for y in flist.keys():
             for f in flist[y]:
-                res.append(y + '/' + f)
+                res[f] = y + '/' + f
 
         return res
 
+    def getFile(self, product, srcFile, target):
+        if product == 'daily':
+            pDir = DAILY_FTP_ROOT
+        elif product == '5day':
+            pDir = FIVEDAILY_FTP_ROOT
+        elif product == 'monthly':
+            pDir = MONTHLY_FTP_ROOT
+        else:
+            raise Exception('Unknown product')
+
+        self.ftp.cwd(pDir)
+
+        with target.open('wb') as t:
+            self.ftp.retrbinary('RETR ' + srcFile, t.write)

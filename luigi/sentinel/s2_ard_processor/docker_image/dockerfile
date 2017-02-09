@@ -3,7 +3,10 @@
 
 FROM ubuntu:16.04
 
-RUN apt-get update && apt-get -y install python python-setuptools python-dev build-essential
+RUN apt-get update && apt-get -y install apt-utils python python-setuptools python-dev build-essential
+
+# LOAD TESTING
+RUN apt-get -y install stress-ng
 
 RUN mkdir /mnt/state
 

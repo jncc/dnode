@@ -16,7 +16,7 @@ sudo apt-get install libpq-dev
 install docker as here:
 https://docs.docker.com/engine/installation/linux/ubuntu/
 
-## Configure  to run as non root user
+## Configure to run as non root user
 ```
 sudo groupadd docker  
 sudo gpasswd -a ${USER} docker 
@@ -40,19 +40,21 @@ Add an export command to profile script.
 ```
 export PATH=~/.local/bin:$PATH
 ```
-log out and back in again
-
-run: aws configure
-
+log out and back in again 
+```
+aws configure
+```
 Input your access key and secret
 
 ## Create a python virtual environment
+```
 virtualenv luigi_venv -p python2
-
-## Activate the virtual environment
+```
+Activate the virtual environment
+```
 source luigi_venv/bin/activate
-
-## Install python depenancies
+```
+Install python depenancies
 ```
 pip install -r requirements.txt
 ```

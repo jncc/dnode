@@ -1,4 +1,7 @@
 import boto
+import os
+
+from helpers import verification as verificationHelper
 
 """
 Based on a file extension return a vague type of file to be added as metadata in the database catalog

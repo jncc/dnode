@@ -75,7 +75,10 @@ def copy_file_to_s3(logger, access_key, secret_access_key, region, bucket, bucke
 
         filesize = os.path.getsize(sourcepath)
         if filesize > MAX_SIZE:
-            mp = None
+            if public:
+                mp = bucket.initiate_multipart_upload(destpath, metadata=metadata, policy='public-read')
+            else:
+                mp = bucket.initiate_multipart_upload(destpath, metadata=metadata)  
 
             fp = open(sourcepath,'rb')
             fp_num = 0
@@ -83,12 +86,7 @@ def copy_file_to_s3(logger, access_key, secret_access_key, region, bucket, bucke
                 fp_num += 1
                 mp.upload_part_from_file(fp, fp_num, num_cb=10, size=PART_SIZE)
 
-            mp.complete_upload()
-
-            if public:
-                mp = bucket.initiate_multipart_upload(destpath, metadata=metadata, policy='public-read')
-            else:
-                mp = bucket.initiate_multipart_upload(destpath, metadata=metadata)            
+            mp.complete_upload()          
         else:
             k = boto.s3.key.Key(bucket)
             k.key = destpath

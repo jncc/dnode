@@ -97,8 +97,7 @@ class ProductDownloader:
 
                     destPath = '%s/%d/%02d' % (self.s3_conf['bucket_dest_path'], beginStamp.tm_year, beginStamp.tm_mon)
 
-                    if self.debug:                    
-                        self.logger.debug('Uploading to destination path: %s' % destPath)
+                    self.logger.info('Uploading to destination path: %s' % destPath)
 
                     representations = self.upload_dir_to_s3(extracted_path, destPath, additionalMetadata={'remote_product_id': item['product_id']})
                     representations['region_split'] = self.extract_representations(representations['s3'], destPath)

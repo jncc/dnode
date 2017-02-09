@@ -11,9 +11,6 @@ from luigi.util import requires
 FILE_ROOT = '/tmp/s2ard'
 DOCKER_IMAGE = '914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test'
 
-https://914910572686.dkr.ecr.eu-west-1.amazonaws.com
-
-
 #Create job spec
 class CreateJobSpec(luigi.Task):
     text = luigi.Parameter()

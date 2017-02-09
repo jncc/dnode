@@ -66,5 +66,5 @@ Outputs - output.txt
 # Run test job
 
     source ../../luigi_venv/bin/activate
-    PYTHONPATH='.' luigi --module workflow CreateArdProduct --local-scheduler --text "this is a test" --runDate=2017-01-26
+    PYTHONPATH='.' luigi --module workflow CreateArdProduct --text "this is a test" --runDate=2017-01-26 --local-scheduler
 

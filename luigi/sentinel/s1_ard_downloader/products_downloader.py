@@ -177,7 +177,7 @@ class ProductDownloader:
         for item in os.listdir(sourcedir):
             item_path = os.path.join(sourcedir, item)
             if os.path.isdir(item_path):
-                representations = self.upload_dir_to_s3(item_path, '%s/%s' % (destpath, item), representations)
+                representations = self.upload_dir_to_s3(item_path, '%s/%s' % (destpath, item), representations, additionalMetadata)
             else:
                 path = '%s/%s' % (destpath, item)
                 representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], path, s3Helper.get_file_type(os.path.splitext(item)[1])))

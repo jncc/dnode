@@ -115,7 +115,14 @@ class ProductDownloader:
                         if osni_metadata is None:
                             # If no OSNI metadata exists copy the OSGB metadata, change its ID to a newly generated one and mark this in the additional metadata
                             osni_metadata = osgb_metadata
+                            
+                            # Attempt to bodge as much of the osgb metadata into the osni metadata, will still be gaps however
                             osni_metadata['ID'] = str(uuid.uuid4())
+                            osni_metadata['Title'] = item['filename'].replace('.SAFE.data', '_OSNI1952.tif')
+                            osni_metadata['SpatialReferenceSystem'] = 'http://www.opengis.net/def/crs/EPSG/0/29901'
+                            # Pop the raw metadata as this is now generated metadata
+                            osni_metadata.pop('RawMetadata', None)
+
                             additionalMetadata['osni_metadata_not_available'] = True
 
                         if osni_geojson is None:

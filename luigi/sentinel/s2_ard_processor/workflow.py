@@ -5,11 +5,14 @@ import os
 import json
 import boto3
 import base64
+import logging
 from luigi.util import requires
 
 #FILE_ROOT = 's3://jncc-data/workflows/s2ard/'
 FILE_ROOT = '/tmp/s2ard'
-DOCKER_IMAGE = '914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test'
+DOCKER_IMAGE = '914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest'
+
+logger = logging.getLogger('luigi-interface')
 
 #Create job spec
 class CreateJobSpec(luigi.Task):
@@ -38,10 +41,13 @@ class CreateArdProduct(luigi.Task):
         token64 = authResponse['authorizationData'][0]['authorizationToken']
         token = base64.b64decode(token64)
         auth = token.split(':')
+        logger.info('Got AWS Auth token')
 
         registry = 'http://' + DOCKER_IMAGE.split('/')[0]
+
         client = docker.from_env()
         client.login(username=auth[0],password=auth[1],registry=registry)
+        logger.info('Pulling docker image %s', DOCKER_IMAGE)
         client.images.pull(DOCKER_IMAGE)
 
         filePath = os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d"))
@@ -55,6 +61,7 @@ class CreateArdProduct(luigi.Task):
             "GROUPID" : os.getgid()
         }
 
+        logger.info('Running image')
         client.containers.run(DOCKER_IMAGE, environment=environment, volumes=volumes,  detach=False)
         
     def output(self):

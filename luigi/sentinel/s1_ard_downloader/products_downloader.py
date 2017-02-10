@@ -91,8 +91,8 @@ class ProductDownloader:
                     # Remove some known unwanted files before upload, i.e. aux.xml file from quicklook
                     if os.path.isfile(os.path.join(os.path.join(extracted_path, item['filename']), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml'))):
                         os.unlink(os.path.join(os.path.join(extracted_path, item['filename']), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml')))
-                    if os.path.isfile(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml'))):
-                        os.unlink(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml')))                        
+                    if os.path.isfile(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), '%s' % item['filename'].replace('.SAFE.data', '_OSNI1952_quicklook.jpg.aux.xml'))):
+                        os.unlink(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), '%s' % item['filename'].replace('.SAFE.data', '_OSNI1952_quicklook.jpg.aux.xml')))
                     
                     # Upload all files to S3 and get paths to uploaded data, optionally extract OSNI data to save as a seperate product
                     beginStamp = time.strptime(osgb_metadata['TemporalExtent']['Begin'], '%Y-%m-%dT%H:%M:%S')

@@ -32,6 +32,9 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
         uuid_str = str(uuid.uuid4())
         metadata['ID'] = uuid_str
 
+    # Entry does not exist
+    props = item
+
     if additional is not None:
         # Copy any additional metadata for this product to the properties field
         for akey in additional.keys():
@@ -40,9 +43,6 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
         if 'relatedTo' in props and metadata['ID'] == props['relatedTo']:
             uuid_str = str(uuid.uuid4())
             metadata['ID'] = uuid_str
-
-    # Entry does not exist
-    props = item
 
     if geom is None:
         cur.execute("INSERT INTO sentinel_ard_backscatter VALUES (%s, %s, %s, %s, %s, null)", (uuid_str,

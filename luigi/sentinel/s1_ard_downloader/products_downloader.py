@@ -100,7 +100,7 @@ class ProductDownloader:
                     self.logger.info('Uploading to destination path: %s' % destPath)
 
                     representations = self.upload_dir_to_s3(extracted_path, destPath, {'s3': []}, {'productid': item['product_id']})
-                    representations['region_split'] = self.extract_representations(representations['s3'], destPath)
+                    representations['region_split'] = self.extract_representations(representations['s3'], os.path.join(destPath, item['filename']))
 
                     self.logger.info('Uploaded to destination path, writing progress to database')
                     
@@ -108,13 +108,25 @@ class ProductDownloader:
                     id = databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osgb_metadata, representations['region_split']['osgb'], osgb_geojson)
                     # If we have more tha one representation (i.e. OSNI data exists) then add an additional record to the catalog for that data
                     if len(representations['region_split']['osni']['s3']) > 0:
-                        if self.debug:
-                            self.logger.debug('OSNI representation exists for %s' % item['filename'])
-                            
+                        self.logger.info('OSNI representation exists for %s' % item['filename'])
+
+                        additionalMetadata = {'relatedTo': osgb_metadata['ID']}
+
+                        if osni_metadata is None:
+                            # If no OSNI metadata exists copy the OSGB metadata, change its ID to a newly generated one and mark this in the additional metadata
+                            osni_metadata = osgb_metadata
+                            osni_metadata['ID'] = str(uuid.uuid4())
+                            additionalMetadata['osni_metadata_not_available'] = True
+
                         if osni_geojson is None:
-                            databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osni_metadata, representations['region_split']['osni'], osgb_geojson, additional={'relatedTo': id})
-                        else:
-                            databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osni_metadata, representations['region_split']['osni'], osni_geojson, additional={'relatedTo': id})
+                            # If no OSNI footprint exists copy the OSGB footprint and mark this in the additional metadata
+                            osni_geojson = osgb_geojson
+                            additionalMetadata['osni_footprint_not_available'] = True
+
+                        if os.path.isfile(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml'))):
+                            os.unlink(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml')))
+                            
+                        databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osni_metadata, representations['region_split']['osni'], osni_geojson, additional=additionalMetadata)
                     
                     item['representations'] = representations['region_split']
                     
@@ -159,7 +171,7 @@ class ProductDownloader:
             }
         }
         for r in representations:
-            if r['path'].startswith('%s/OSNI1952' % (destpath)):
+            if r['path'].startswith(os.path.join(destpath, 'OSNI1952')):
                 outputs['osni']['s3'].append(r)
             else:
                 outputs['osgb']['s3'].append(r)

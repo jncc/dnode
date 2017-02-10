@@ -7,11 +7,10 @@ Write the progress of this download to the database (i.e. failure, etc...)
 :param collection_version_uuid: A UUID for the collection version
 :param item: The item that we want to record progress against (item pulled from API)
 :param representations: The files that we have uploaded to S3 and some basic metadata about them
-:param success: If the download / upload was successfull or not
 :param additional: Any additional metadata that we need (realtedTo uuid for OSNI uploads)
 :param geom: GeoJSON represenation of the footprint of the data we are recording progress against
 """
-def write_progress_to_database(db_conn, collection_version_uuid, item, metadata, representations, geom, additional=None):
+def write_progress_to_database(db_conn, collection_version_uuid, item, metadata, representations, geom, additional):
     cur = db_conn.cursor()
 
     # if product_id in item:
@@ -20,10 +19,8 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
     # else:
     #     existing = None
 
-    retVal = None
-
     if 'ID' in metadata:
-        # Grab the UUID from the metadata if possible, if not create one
+        # Grab the UUID from the metadata if possible, if its not valid create one
         uuid_str = metadata['ID']
         try:
             val = uuid.UUID(uuid_str, version=4)
@@ -31,17 +28,16 @@ def write_progress_to_database(db_conn, collection_version_uuid, item, metadata,
             uuid_str = str(uuid.uuid4())
             metadata['ID'] = uuid_str
     else:
-        # Possibly blank metadata, success is very false here so set it that way
-        success = False
+        # Missing ID, so generate one for now and save it in the metadata blob
         uuid_str = str(uuid.uuid4())
         metadata['ID'] = uuid_str
 
-    # If UUID is equal to the optionally provided relatedTo UUID then generate a new one and replace the 
-    # one in the metadata with it 
     if additional is not None:
-        props['relatedTo'] = additional['relatedTo']
-        # Catch to replace non unique uuid's
-        if metadata['ID'] == additional['relatedTo']:
+        # Copy any additional metadata for this product to the properties field
+        for akey in additional.keys():
+            props[akey] = additional[akey]
+        # Catch to replace non unique uuid's if they come through from related field
+        if 'relatedTo' in props and metadata['ID'] == props['relatedTo']:
             uuid_str = str(uuid.uuid4())
             metadata['ID'] = uuid_str
 

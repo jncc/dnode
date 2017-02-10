@@ -105,7 +105,7 @@ class ProductDownloader:
                     self.logger.info('Uploaded to destination path, writing progress to database')
                     
                     # Write the progress to the catalog table
-                    id = databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osgb_metadata, representations['region_split']['osgb'], osgb_geojson)
+                    id = databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osgb_metadata, representations['region_split']['osgb'], osgb_geojson, None)
                     # If we have more tha one representation (i.e. OSNI data exists) then add an additional record to the catalog for that data
                     if len(representations['region_split']['osni']['s3']) > 0:
                         self.logger.info('OSNI representation exists for %s' % item['filename'])
@@ -133,7 +133,7 @@ class ProductDownloader:
                         if os.path.isfile(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml'))):
                             os.unlink(os.path.join(os.path.join(os.path.join(extracted_path, item['filename']), 'OSNI1952'), '%s' % item['filename'].replace('.SAFE.data', '_quicklook.jpg.aux.xml')))
                             
-                        databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osni_metadata, representations['region_split']['osni'], osni_geojson, additional=additionalMetadata)
+                        databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], item, osni_metadata, representations['region_split']['osni'], osni_geojson, additionalMetadata)
                     
                     item['representations'] = representations['region_split']
                     

@@ -61,7 +61,7 @@ class CreateArdProduct(luigi.Task):
             "GROUPID" : os.getgid()
         }
 
-        logger.info('Running image')
+        logger.info('Running docker image $s', DOCKER_IMAGE)
         client.containers.run(DOCKER_IMAGE, environment=environment, volumes=volumes,  detach=False)
         
     def output(self):

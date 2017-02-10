@@ -43,7 +43,7 @@ class CreateArdProduct(luigi.Task):
         auth = token.split(':')
         logger.info('Got AWS Auth token')
 
-        registry = 'http://' + DOCKER_IMAGE.split('/')[0]
+        registry = 'https://' + DOCKER_IMAGE.split('/')[0]
 
         client = docker.from_env()
         client.login(username=auth[0],password=auth[1],registry=registry)

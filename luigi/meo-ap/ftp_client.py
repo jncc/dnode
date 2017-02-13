@@ -1,6 +1,7 @@
 import datetime
 import os
 import json
+import re
 
 from ftplib import FTP
 from config_manager import ConfigManager
@@ -40,7 +41,8 @@ class FTPClient:
 
         for y in flist.keys():
             for f in flist[y]:
-                res[f] = y + '/' + f
+                m = re.search('OCx-([0-9]{6,8})-fv', f)
+                res[m.group(1)] = y + '/' + f
 
         return res
 
@@ -56,5 +58,5 @@ class FTPClient:
 
         self.ftp.cwd(pDir)
 
-        with target.open('wb') as t:
+        with open(target, 'wb') as t:
             self.ftp.retrbinary('RETR ' + srcFile, t.write)

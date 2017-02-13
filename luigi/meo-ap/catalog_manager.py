@@ -6,15 +6,9 @@ import json
 from config_manager import ConfigManager
 
 class CatalogManager:
-    db = None
-
-    def __init__(self):
-        self.config = ConfigManager("cfg.ini")
-
-    def __enter__(self):
-        connection = self.config.getDatabaseConnectionString()
-        self.db = psycopg2.connect(connection)
-        return self
+    config = ConfigManager("cfg.ini")
+    connection = config.getDatabaseConnectionString()
+    db = psycopg2.connect(connection)
 
     def __exit__(self ,type, value, traceback):
         self.db.close()

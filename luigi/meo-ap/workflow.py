@@ -38,61 +38,32 @@ class CreateFTPDump(luigi.Task):
 
        return luigi.LocalTarget(filePath)
 
-class RetrieveSrcFile(luigi.Task):
-    runDate = luigi.DateParameter(default=datetime.datetime.now())
-    product = luigi.Parameter()
-    srcFile = luigi.Parameter()
-    dstFile = luigi.Parameter()
-
-    ftp = FTPClient()
-
-    def run(self):
-        print('Retrieving ' + self.srcFile)
-        self.ftp.getFile(self.product, self.srcFile, self.output())
-
-
-    def output(self):
-        filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.dstFile)
-
-        return luigi.LocalTarget(filePath)
-
 class TransformSrcFileToTiff(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     product = luigi.Parameter()
     srcFile = luigi.Parameter()
-    dstFile = luigi.Parameter()
+    fileDate = luigi.Parameter()
 
-    def requires(self):
-        return RetrieveSrcFile(self.runDate, self.product, self.srcFile, self.dstFile)
-
-    def run(self):
-        os.system('gdal_translate NETCDF:' + os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.dstFile) + ':chlor_a -projwin -24 63 6 48 ' + os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.dstFile) + '.tiff')
-        return
-
-    def output(self):
-        filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.dstFile) + '.tiff'
-
-        return luigi.LocalTarget(filePath)
-        
-class UploadRegisterFile(luigi.Task):
-    runDate = luigi.DateParameter(default=datetime.datetime.now())
-    product = luigi.Parameter()
-    srcFile = luigi.Parameter()
-    dstFile = luigi.Parameter()
-
+    ftp = FTPClient()
     catalog = CatalogManager()
 
-    def requires(self):
-        return TransformSrcFileToTiff(self.runDate, self.product, self.srcFile, self.dstFile)
-
     def run(self):
-        self.catalog.addEntry(self.product, self.srcFile, self.srcFile, os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.dstFile) + '.tiff'), datetime.datetime.now())
+        ncFile = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.product + '-' + self.fileDate + '.nc')
+        tiffFile = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), 'UK-' + self.product + '-' + self.fileDate + '.tiff')
+
+        print('Retrieving ' + self.srcFile)
+        self.ftp.getFile(self.product, self.srcFile, ncFile)
+
+        os.system('gdal_translate NETCDF:' + ncFile + ':chlor_a -projwin -24 63 6 48 ' + tiffFile)
+
+        self.catalog.addEntry(self.product, 'Chlorophyll-A Density for UK Waters - ' + self.product + ' - ' + self.fileDate, self.srcFile, tiffFile, datetime.datetime.now().strftime("%Y-%m-%d"))
         with self.output().open('w') as outp:
             outp.write('Test\n')
+
         return
 
     def output(self):
-       filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.dstFile + '.tmp')  
+       filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.product + '-' + self.fileDate + '.tmp')  
 
        return luigi.LocalTarget(filePath) 
 

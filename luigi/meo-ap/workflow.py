@@ -12,8 +12,9 @@ from luigi.util import requires
 #FILE_ROOT = 's3://jncc-data/workflows/s2ard/'
 FILE_ROOT = '/tmp/meo-ap'
 #DOCKER_IMAGE = '914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test'
+PRODUCTLIST = ['daily', '5day', 'monthly']
 
-class CreateFTPDump(luigi.Task):
+class CreateWorkOrder(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     ftp = FTPClient()
 
@@ -21,14 +22,9 @@ class CreateFTPDump(luigi.Task):
         with self.output().open('w') as wddump:
             plist = {}
 
-            print('Getting file list for: daily')
-            plist['daily'] = self.ftp.listProductFiles('daily')
-
-            print('Getting file list for: 5day')
-            plist['fiveDaily'] = self.ftp.listProductFiles('5day')
-
-            print('Getting file list for: monthly')
-            plist['monthly'] = self.ftp.listProductFiles('monthly')
+            for p in PRODUCTLIST:
+                print('Getting file list for: ' + p)
+                plist[p] = self.ftp.listProductFiles(p)
 
             print('Writing file list')
             json.dump(plist, wddump, indent=4, sort_keys=True, separators=(',', ':'))    
@@ -63,22 +59,24 @@ class TransformSrcFileToTiff(luigi.Task):
         return
 
     def output(self):
-       filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.product + '-' + self.fileDate + '.tmp')  
+        filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.product + '-' + self.fileDate + '.tmp')  
 
-       return luigi.LocalTarget(filePath) 
+        return luigi.LocalTarget(filePath) 
 
     
 class ProcessFiles(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
 
     def requires(self):
-        return CreateFTPDump(self.runDate)
+        return CreateWorkOrder(self.runDate)
 
     def run(self):
         with self.input().open('r') as inp:
             data = json.load(inp)
-            for k, v in data['daily'].items():
-                yield TransformSrcFileToTiff(self.runDate, 'daily', v, k)
+
+            for p in PRODUCTLIST:
+                for k, v in data[p].items():
+                    yield TransformSrcFileToTiff(self.runDate, p, v, k)
             
         with self.output().open('w') as outp:
             outp.write('Test\n')

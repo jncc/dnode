@@ -7,6 +7,7 @@ sudo apt-get install libcurl4-openssl-dev
 sudo apt-get install virtualenv
 sudo apt-get install libgeos-dev
 sudo apt-get install python-dev
+sudo apt-get install gdal-bin
 ```
 
 ###TODO - Required only for workflows that connect to postgres db's though psycop2 

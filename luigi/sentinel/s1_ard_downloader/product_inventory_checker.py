@@ -51,13 +51,11 @@ class ProductInventoryChecker:
                         'keys': [key]
                     }
         
-        osni_exp = exp = re.compile('%s\/(20[0-9]{2}\/[0-9]{2}\/.*\.SAFE\.data)\/OSNI1952\/(.*)' % re.escape(remote_path))
+        osni_exp = exp = re.compile('(%s\/20[0-9]{2}\/[0-9]{2}\/.*\.SAFE\.data)\/OSNI1952\/(.*)' % re.escape(remote_path))
 
         for key in groups.keys():
             fkeys = groups[key]['keys']
             path = groups[key]['path']
-            representations = {'s3': []}
-            osni_representations = {'s3': []}
 
             (footprint_osgb, footprint_osni) = (None, None)
             (metadata_osgb, metadata_osni) = (None, None)
@@ -116,14 +114,12 @@ class ProductInventoryChecker:
                         footprint_osgb = json.loads(fkey.get_contents_as_string().decode('utf-8'))
                         footprint_osgb['crs'] = { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
                         found_data['osgb']['footprint'] = True
-
                         # Write out temporary file for now with corrected header
                         with open(os.path.join(self.temp, 'footprint_osgb.geojson'), 'w') as osgb_footprint_file:
                             json.dump(footprint_osgb, osgb_footprint_file)
                         # Upload to correct location
                         dest_remote_path = os.path.join(path, os.path.join('Footprint',key.replace('.SAFE.data', '_footprint.geojson')))
                         s3Helper.copy_file_to_s3(self.logger, amazon_key_Id, amazon_key_secret, self.s3_conf['region'], bucket, '', os.path.join(self.temp, 'footprint_osgb.geojson'), dest_remote_path, True, None)      
-                        representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join('/%s' % remote_path, dest_remote_path), s3Helper.get_file_type('.geojson')))
                     elif fkey.key.endswith('_metadata.xml'):
                         # Deal with metadata file
                         with open(os.path.join(self.temp, 'metadata_osgb.xml'), 'wb') as metadata:
@@ -131,23 +127,34 @@ class ProductInventoryChecker:
                         with open(os.path.join(self.temp, 'metadata_osgb.xml'), 'r') as metadata:                            
                             metadata_osgb = metadataHelper.xml_to_json(metadata)                        
                             found_data['osgb']['metadata'] = True
-                        representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], '/%s' % fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                     elif fkey.key.endswith('.tif'):
                         # Found data file
                         found_data['osgb']['data'] = True
-                        representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], '/%s' % fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                     elif fkey.key.endswith('_quicklook.jpg'):
                         # Found quicklook
-                        found_data['osgb']['quicklook'] = True
-                        representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], '/%s' % fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
+                        found_data['osgb']['quicklook'] = True                        
 
             # Deal with OSGB product
             if found_data['osgb']['data'] and found_data['osgb']['metadata'] and found_data['osgb']['quicklook'] and found_data['osgb']['footprint']:
+                representations = {'s3': [
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, os.path.join('Footprint', key.replace('.SAFE.data', '_footprint.geojson')), s3Helper.get_file_type('.geojson')),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '_metadata.xml')), s3Helper.get_file_type('.xml'),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '_quicklook.jpg')), s3Helper.get_file_type('.jpg'),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '.tif')), s3Helper.get_file_type('.tif')
+                ]}
                 databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True, 'filename':key}, metadata_osgb, representations, footprint_osgb, None)
                 # Do Cleanup
             
             # Deal with OSNI product
             if found_data['osni']['data'] and found_data['osni']['metadata'] and found_data['osni']['quicklook'] and found_data['osni']['footprint']:
+                osni_path = os.path.join(path, 'OSNI1952')
+                representations = {'s3': [
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, os.path.join('Footprint', key.replace('.SAFE.data', '_footprint.geojson')), s3Helper.get_file_type('.geojson')),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, key.replace('.SAFE.data', '_metadata.xml')), s3Helper.get_file_type('.xml'),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, key.replace('.SAFE.data', '_quicklook.jpg')), s3Helper.get_file_type('.jpg'),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, key.replace('.SAFE.data', '.tif')), s3Helper.get_file_type('.tif')
+                ]}
+
                databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True, 'filename':key}, metadata_osni, osni_representations, footprint_osni, {'relatedTo': metadata_osgb['ID']})
                # Do Cleanup
 

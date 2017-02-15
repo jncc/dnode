@@ -90,7 +90,7 @@ class ProductInventoryChecker:
                         with open(os.path.join(self.temp, 'footprint_osni.geojson'), 'w') as osni_footprint_file:
                             json.dump(footprint_osni, osni_footprint_file)
                         # Upload to correct location
-                        dest_remote_path = os.path.join(path, os.path.join('OSNI1952', os.path.join('Footprint', '%s_OSNI1952_footprint.geojson' % (key))))
+                        dest_remote_path = os.path.join(path, os.path.join('OSNI1952', os.path.join('Footprint', key.replace('.SAFE.data', '_OSNI1952_footprint.geojson'))))
                         s3Helper.copy_file_to_s3(self.logger, amazon_key_Id, amazon_key_secret, self.s3_conf['region'], bucket, '', os.path.join(self.temp, 'footprint_osni.geojson'), dest_remote_path, True, None)
                         osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join('/%s' % remote_path, dest_remote_path), s3Helper.get_file_type('.geojson')))
                     elif fkey.key.endswith('_metadata.xml'):
@@ -121,7 +121,7 @@ class ProductInventoryChecker:
                         with open(os.path.join(self.temp, 'footprint_osgb.geojson'), 'w') as osgb_footprint_file:
                             json.dump(footprint_osgb, osgb_footprint_file)
                         # Upload to correct location
-                        dest_remote_path = os.path.join(path, os.path.join('Footprint', '%s_footprint.geojson' % (key)))
+                        dest_remote_path = os.path.join(path, os.path.join('Footprint',key.replace('.SAFE.data', '_footprint.geojson')))
                         s3Helper.copy_file_to_s3(self.logger, amazon_key_Id, amazon_key_secret, self.s3_conf['region'], bucket, '', os.path.join(self.temp, 'footprint_osgb.geojson'), dest_remote_path, True, None)      
                         representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join('/%s' % remote_path, dest_remote_path), s3Helper.get_file_type('.geojson')))
                     elif fkey.key.endswith('_metadata.xml'):

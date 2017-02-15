@@ -24,31 +24,35 @@ class ProductInventoryChecker:
         self.database_conf = self.config.get('database')
         self.db_conn = psycopg2.connect(host=self.database_conf['host'], dbname=self.database_conf['dbname'], user=self.database_conf['username'], password=self.database_conf['password']) 
     
-    def getS3Contents(self, path):
+    def getS3Contents(self, remote_path):
         amazon_key_Id = self.s3_conf['access_key']
         amazon_key_secret = self.s3_conf['secret_access_key']
 
         conn = boto.s3.connect_to_region(self.s3_conf['region'], aws_access_key_id=amazon_key_Id, aws_secret_access_key=amazon_key_secret, is_secure=True)
         bucket = conn.get_bucket(self.s3_conf['bucket'])  
 
-        keys = bucket.get_all_keys(prefix=path)
+        keys = bucket.get_all_keys(prefix=remote_path)
 
-        exp = re.compile('%s\/(20[0-9]{2}\/[0-9]{2}\/.*\.SAFE\.data)(.*)' % re.escape(path))
+        exp = re.compile('(%s\/20[0-9]{2}\/[0-9]{2}\/(.*\.SAFE\.data))(.*)' % re.escape(remote_path))
         groups = {}
 
         for key in keys:
             res = exp.findall(key.key)
             if len(res) > 0:
-                name = res[0][0]
+                name = res[0][1]
                 if name in groups:
-                    groups[name].append(key)
+                    groups[name]['keys'].append(key)
                 else:
-                    groups[name] = [key]
+                    groups[name] = {
+                        'path': res[0][0]
+                        'keys': [key]
+                    }
         
-        osni_exp = exp = re.compile('%s\/(20[0-9]{2}\/[0-9]{2}\/.*\.SAFE\.data)\/OSNI1952\/(.*)' % re.escape(path))
+        osni_exp = exp = re.compile('%s\/(20[0-9]{2}\/[0-9]{2}\/.*\.SAFE\.data)\/OSNI1952\/(.*)' % re.escape(remote_path))
 
         for key in groups.keys():
-            fkeys = groups[key]
+            fkeys = groups[key]['keys']
+            path = groups[key]['path']
             representations = {'s3': []}
             osni_representations = {'s3': []}
 
@@ -73,14 +77,19 @@ class ProductInventoryChecker:
             for fkey in fkeys:
                 if osni_exp.match(fkey.key) is not None:
                     # Process OSNI data
-                    if fkey.key.endswith('.shp') or fkey.key.endswith('.shx') or fkey.key.endswith('prj') or fkey.key.endswith('dbf'):
-                        # Deal with shapefiles (move to Footprint folder or delete?)
-                        x = 1
-                    elif fkey.key.endswith('.json'):
+                    if fkey.key.endswith('.json'):
                         # Deal with geojson file (move to Footprint folder and rename to .geojson)
                         footprint_osni = json.loads(fkey.get_contents_as_string().decode('utf-8'))
                         footprint_osni['crs'] = { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
                         found_data['osni']['footprint'] = True
+
+                        # Write out temporary file for now with corrected header
+                        with open(os.path.join(self.temp, 'footprint_osni.geojson'), 'w') as osni_footprint_file:
+                            osni_footprint_file.write(footprint_osni)
+                        # Upload to correct location
+                        dest_remote_path = os.path.join(path, os.path.join('OSNI1952', os.path.join('Footprint', '%s_OSNI1952_footprint.geojson' % (key))))
+                        s3Helper.copy_file_to_s3(self.logger, amazon_key_Id, amazon_key_secret, self.s3_conf['region'], bucket, remote_path, os.path.join(self.temp, 'footprint_osni.geojson'), dest_remote_path, True, None)
+                        osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(remote_path, dest_remote_path), s3Helper.get_file_type('.geojson')))
                     elif fkey.key.endswith('_metadata.xml'):
                         # Deal with metadata file
                         with open(os.path.join(self.temp, 'metadata_osni.xml'), 'wb') as metadata:
@@ -88,15 +97,15 @@ class ProductInventoryChecker:
                         with open(os.path.join(self.temp, 'metadata_osni.xml'), 'r') as metadata:
                             metadata_osni = metadataHelper.xml_to_json(metadata)
                             found_data['osni']['metadata'] = True
+                        osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                     elif fkey.key.endswith('.tif'):
                         # Found data file
                         found_data['osni']['data'] = True
+                        osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                     elif fkey.key.endswith('_quicklook.jpg'):
                         # Found quicklook
-                        found_data['osni']['quicklook'] = True                            
-
-                    # Extract represenation of the file
-                    osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
+                        found_data['osni']['quicklook'] = True
+                        osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                 else:
                     # Process OSGB data
                     if fkey.key.endswith('.json'):
@@ -104,6 +113,14 @@ class ProductInventoryChecker:
                         footprint_osgb = json.loads(fkey.get_contents_as_string().decode('utf-8'))
                         footprint_osgb['crs'] = { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
                         found_data['osgb']['footprint'] = True
+
+                        # Write out temporary file for now with corrected header
+                        with open(os.path.join(self.temp, 'footprint_osgb.geojson'), 'w') as osgb_footprint_file:
+                            osgb_footprint_file.write(footprint_osgb)
+                        # Upload to correct location
+                        dest_remote_path = os.path.join(path, os.path.join('Footprint', '%s_footprint.geojson' % (key)))
+                        s3Helper.copy_file_to_s3(self.logger, amazon_key_Id, amazon_key_secret, self.s3_conf['region'], bucket, remote_path, os.path.join(self.temp, 'footprint_osgb.geojson'), dest_remote_path, True, None)      
+                        representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(remote_path, dest_remote_path), s3Helper.get_file_type('.geojson')))
                     elif fkey.key.endswith('_metadata.xml'):
                         # Deal with metadata file
                         with open(os.path.join(self.temp, 'metadata_osgb.xml'), 'wb') as metadata:
@@ -111,23 +128,43 @@ class ProductInventoryChecker:
                         with open(os.path.join(self.temp, 'metadata_osgb.xml'), 'r') as metadata:                            
                             metadata_osgb = metadataHelper.xml_to_json(metadata)                        
                             found_data['osgb']['metadata'] = True
+                        representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                     elif fkey.key.endswith('.tif'):
                         # Found data file
                         found_data['osgb']['data'] = True
+                        representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                     elif fkey.key.endswith('_quicklook.jpg'):
                         # Found quicklook
                         found_data['osgb']['quicklook'] = True
-                    
-                    # Extract represenation of the file
-                    representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
-                          # Deal with OSGB product
+                        representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
 
             # Deal with OSGB product
             if found_data['osgb']['data'] and found_data['osgb']['metadata'] and found_data['osgb']['quicklook'] and found_data['osgb']['footprint']:
                 databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True}, metadata_osgb, representations, footprint_osgb)
-
+                # Do Cleanup
+            
+            # Deal with OSNI product
             if found_data['osni']['data'] and found_data['osni']['metadata'] and found_data['osni']['quicklook'] and found_data['osni']['footprint']:
                databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True}, metadata_osni, osni_representations, footprint_osni, additional={'relatedTo': metadata_osgb['ID']})
+               # Do Cleanup
+
+    def cleanupPath(self, path, name, bucket, source_bucket_name, osni):
+        if osni:
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.json' % name), source_bucket_name, os.path.join(path, '%s.json' % name))
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.dbf' % name), source_bucket_name, os.path.join(path, '%s.dbf' % name))
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.shp' % name), source_bucket_name, os.path.join(path, '%s.shp' % name))
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.shx' % name), source_bucket_name, os.path.join(path, '%s.shx' % name))
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.prj' % name), source_bucket_name, os.path.join(path, '%s.prj' % name))           
+            
+        else: 
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.json' % name), source_bucket_name, os.path.join(path, 'Footprint/%s.json' % name))
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.dbf' % name), source_bucket_name, os.path.join(path, 'Footprint/%s.dbf' % name))
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.shp' % name), source_bucket_name, os.path.join(path, 'Footprint/%s.shp' % name))
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.shx' % name), source_bucket_name, os.path.join(path, 'Footprint/%s.shx' % name))
+            bucket.copy_key(os.path.join(path, 'Extras/Footprint/%s.prj' % name), source_bucket_name, os.path.join(path, 'Footprint/%s.prj' % name))            
+
+        bucket.copy_key(os.path.join(path, 'Extras/%s_quicklook.jpg.aux.xml' % name), source_bucket_name, os.path.join(path, '%s_quicklook.jpg.aux.xml' % name))
+
 
 if __name__ == '__main__':
     import logging

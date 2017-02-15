@@ -24,14 +24,17 @@ class ProductInventoryChecker:
         self.database_conf = self.config.get('database')
         self.db_conn = psycopg2.connect(host=self.database_conf['host'], dbname=self.database_conf['dbname'], user=self.database_conf['username'], password=self.database_conf['password']) 
     
-    def getS3Contents(self, remote_path):
+    def getS3Contents(self, remote_path, remote_extra_path=None):
         amazon_key_Id = self.s3_conf['access_key']
         amazon_key_secret = self.s3_conf['secret_access_key']
 
         conn = boto.s3.connect_to_region(self.s3_conf['region'], aws_access_key_id=amazon_key_Id, aws_secret_access_key=amazon_key_secret, is_secure=True)
         bucket = conn.get_bucket(self.s3_conf['bucket'])  
 
-        keys = bucket.get_all_keys(prefix=remote_path)
+        if remote_extra_path is not None:
+            keys = bucket.get_all_keys(prefix=os.path.join(remote_path, remote_extra_path))
+        else: 
+            keys = bucket.get_all_keys(prefix=remote_path)
 
         exp = re.compile('(%s\/20[0-9]{2}\/[0-9]{2}\/(.*\.SAFE\.data))(.*)' % re.escape(remote_path))
         groups = {}
@@ -140,12 +143,12 @@ class ProductInventoryChecker:
 
             # Deal with OSGB product
             if found_data['osgb']['data'] and found_data['osgb']['metadata'] and found_data['osgb']['quicklook'] and found_data['osgb']['footprint']:
-                databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True}, metadata_osgb, representations, footprint_osgb)
+                databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True, 'filename':key}, metadata_osgb, representations, footprint_osgb)
                 # Do Cleanup
             
             # Deal with OSNI product
             if found_data['osni']['data'] and found_data['osni']['metadata'] and found_data['osni']['quicklook'] and found_data['osni']['footprint']:
-               databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True}, metadata_osni, osni_representations, footprint_osni, additional={'relatedTo': metadata_osgb['ID']})
+               databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True, 'filename':key}, metadata_osni, osni_representations, footprint_osni, additional={'relatedTo': metadata_osgb['ID']})
                # Do Cleanup
 
     def cleanupPath(self, path, name, bucket, source_bucket_name, osni):

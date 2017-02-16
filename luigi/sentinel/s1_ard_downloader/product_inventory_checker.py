@@ -90,7 +90,6 @@ class ProductInventoryChecker:
                         # Upload to correct location
                         dest_remote_path = os.path.join(path, os.path.join('OSNI1952', os.path.join('Footprint', key.replace('.SAFE.data', '_OSNI1952_footprint.geojson'))))
                         s3Helper.copy_file_to_s3(self.logger, amazon_key_Id, amazon_key_secret, self.s3_conf['region'], bucket, '', os.path.join(self.temp, 'footprint_osni.geojson'), dest_remote_path, True, None)
-                        osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join('/%s' % remote_path, dest_remote_path), s3Helper.get_file_type('.geojson')))
                     elif fkey.key.endswith('_metadata.xml'):
                         # Deal with metadata file
                         with open(os.path.join(self.temp, 'metadata_osni.xml'), 'wb') as metadata:
@@ -98,15 +97,12 @@ class ProductInventoryChecker:
                         with open(os.path.join(self.temp, 'metadata_osni.xml'), 'r') as metadata:
                             metadata_osni = metadataHelper.xml_to_json(metadata)
                             found_data['osni']['metadata'] = True
-                        osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], '/%s' % fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                     elif fkey.key.endswith('.tif'):
                         # Found data file
                         found_data['osni']['data'] = True
-                        osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], '/%s' % fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                     elif fkey.key.endswith('_quicklook.jpg'):
                         # Found quicklook
                         found_data['osni']['quicklook'] = True
-                        osni_representations['s3'].append(s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], '/%s' % fkey.key, s3Helper.get_file_type(os.path.splitext(fkey.key)[1])))
                 else:
                     # Process OSGB data
                     if fkey.key.endswith('.json'):
@@ -137,10 +133,10 @@ class ProductInventoryChecker:
             # Deal with OSGB product
             if found_data['osgb']['data'] and found_data['osgb']['metadata'] and found_data['osgb']['quicklook'] and found_data['osgb']['footprint']:
                 representations = {'s3': [
-                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, os.path.join('Footprint', key.replace('.SAFE.data', '_footprint.geojson')), s3Helper.get_file_type('.geojson')),
-                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '_metadata.xml')), s3Helper.get_file_type('.xml'),
-                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '_quicklook.jpg')), s3Helper.get_file_type('.jpg'),
-                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '.tif')), s3Helper.get_file_type('.tif')
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, os.path.join('Footprint', key.replace('.SAFE.data', '_footprint.geojson'))), s3Helper.get_file_type('.geojson')),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '_metadata.xml')), s3Helper.get_file_type('.xml')),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '_quicklook.jpg')), s3Helper.get_file_type('.jpg')),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '.tif')), s3Helper.get_file_type('.tif'))
                 ]}
                 databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True, 'filename':key}, metadata_osgb, representations, footprint_osgb, None)
                 # Do Cleanup
@@ -148,15 +144,15 @@ class ProductInventoryChecker:
             # Deal with OSNI product
             if found_data['osni']['data'] and found_data['osni']['metadata'] and found_data['osni']['quicklook'] and found_data['osni']['footprint']:
                 osni_path = os.path.join(path, 'OSNI1952')
-                representations = {'s3': [
-                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, os.path.join('Footprint', key.replace('.SAFE.data', '_footprint.geojson')), s3Helper.get_file_type('.geojson')),
-                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, key.replace('.SAFE.data', '_metadata.xml')), s3Helper.get_file_type('.xml'),
-                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, key.replace('.SAFE.data', '_quicklook.jpg')), s3Helper.get_file_type('.jpg'),
-                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, key.replace('.SAFE.data', '.tif')), s3Helper.get_file_type('.tif')
+                osni_representations = {'s3': [
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, os.path.join('Footprint', key.replace('.SAFE.data', '_OSNI1952_footprint.geojson'))), s3Helper.get_file_type('.geojson')),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, key.replace('.SAFE.data', '_OSNI1952_metadata.xml')), s3Helper.get_file_type('.xml')),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, key.replace('.SAFE.data', '_OSNI1952_quicklook.jpg')), s3Helper.get_file_type('.jpg')),
+                    s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(osni_path, key.replace('.SAFE.data', '_OSNI1952.tif')), s3Helper.get_file_type('.tif'))
                 ]}
 
-               databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True, 'filename':key}, metadata_osni, osni_representations, footprint_osni, {'relatedTo': metadata_osgb['ID']})
-               # Do Cleanup
+                databaseHelper.write_progress_to_database(self.db_conn, self.database_conf['collection_version_uuid'], {'s3imported':True, 'filename':key}, metadata_osni, osni_representations, footprint_osni, {'relatedTo': metadata_osgb['ID']})
+                # Do Cleanup
 
     def cleanupPath(self, path, name, bucket, source_bucket_name, osni):
         if osni:
@@ -184,4 +180,4 @@ if __name__ == '__main__':
 
     with open('config.yaml', 'r') as config:
             checker = ProductInventoryChecker(yaml.load(config), logger, './temp')
-            checker.getS3Contents('')
+            checker.getS3Contents('sentinel-1/ard/backscatter', '2015')

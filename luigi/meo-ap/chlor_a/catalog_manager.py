@@ -19,8 +19,8 @@ class CatalogManager:
         cur.execute("SELECT title FROM chlor_a WHERE srcFile = %s AND product = %s", (srcFile,product))
         return cur.fetchone() is not None
 
-    def addEntry(self, product, title, srcFile, location, ingestionDate):
+    def addEntry(self, product, title, srcFile, location, startDate, endDate, ingestionDate):
         cur = self.db.cursor()
 
-        cur.execute('''INSERT INTO chlor_a (product, title, srcFile, location, ingestiondate) VALUES (%s, %s, %s, %s, to_date(%s,'YYYY-MM-DD'))''', (product, title, srcFile, location, ingestionDate))
+        cur.execute('''INSERT INTO chlor_a (product, title, srcFile, location, startDate, endDate, ingestiondate) VALUES (%s, %s, %s, %s, to_date(%s,'YYYYMMDD'), to_date(%s,'YYYYMMDD'), to_date(%s,'YYYY-MM-DD'))''', (product, title, srcFile, location, startDate, endDate, ingestionDate))
         self.db.commit()

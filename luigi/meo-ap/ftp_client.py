@@ -61,5 +61,8 @@ class FTPClient:
 
         self.ftp.cwd(pDir)
 
+        if not os.path.exists(os.path.dirname(target)):
+            os.makedirs(os.path.dirname(target))
+
         with open(target, 'wb') as t:
             self.ftp.retrbinary('RETR ' + srcFile, t.write)

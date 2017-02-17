@@ -46,8 +46,16 @@ def get_representation(bucket, region, path, file_type):
 Copy a file up to a S3 from the sourcepath to a given filename (full path name), will
 calculate md5 checksums and upload with the file
 
+:param logger: logger object (not used currently but should be in the future)
+:param access_key: Your AWS access key
+:param secret_access_key: Your AWS secret access key
+:param region: The AWS region that the bucket resides in [eu-west-1]
+:param bucket: The AWS bucket name
+:param bucket_dest_path: First part of the filepath [Optional should be '' and removed]
 :param sourcepath: The source path of the file to upload
 :param filename: The destination path of the file being uploaded
+:param public: If the data is to be a public file or not (applies Public ACL)
+:param additionalMetadata: Dict containing any additional metadata to be attached to the upload
 """
 def copy_file_to_s3(logger, access_key, secret_access_key, region, bucket, bucket_dest_path, sourcepath, filename, public, additionalMetadata):
     #max size in bytes before uploading in parts. between 1 and 5 GB recommended

@@ -10,12 +10,13 @@ from catalog_manager import CatalogManager
 from luigi.util import requires
 from luigi.s3 import S3Target
 
+from ncMetadata import NetCDFMetadata
+
 from helpers import s3 as s3Helper
 
 S3_FILE_ROOT = 's3://jncc-data/meo-ap/chlor_a/'
 FILE_ROOT = '/tmp/meo-ap'
-#DOCKER_IMAGE = '914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test'
-PRODUCTLIST = ['daily', '5day', 'monthly']
+PRODUCTLIST = ['monthly', '5day', 'daily']
 
 class CreateWorkOrder(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
@@ -46,28 +47,31 @@ class TransformSrcFileToTiff(luigi.Task):
     ftp = FTPClient()
     catalog = CatalogManager()
     config = ConfigManager('cfg.ini')
+    metadata = NetCDFMetadata()
 
     def run(self):
         ncFile = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), self.product + '-' + self.fileDate + '.nc')
         tiffFile = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), 'UK-' + self.product + '-' + self.fileDate + '.tif')
-        s3DstFile = os.path.join(os.path.join(os.path.join(os.path.join('meo-ap/chlor_a', self.product), self.fileDate[:4]), self.fileDate[5:6]), 'UK-' + self.product + '-' + self.fileDate + '.tif')
-        httpLoc = 'http://jnnc-data.s3-eu-west-1.amazonaws.com/' + s3DstFile
+        s3DstFile = os.path.join(os.path.join(os.path.join(os.path.join('meo-ap/chlor_a', self.product), self.fileDate[:4]), self.fileDate[4:6]), 'UK-' + self.product + '-' + self.fileDate + '.tif')
+        httpLoc = 'http://jncc-data.s3-eu-west-1.amazonaws.com/' + s3DstFile
 
         print('Retrieving ' + self.srcFile)
         self.ftp.getFile(self.product, self.srcFile, ncFile)
+
+        tc = self.metadata.getTimeCoverage(ncFile)
 
         os.system('gdal_translate NETCDF:' + ncFile + ':chlor_a -projwin -24 63 6 48 ' + tiffFile)
 
         s3Helper.copy_file_to_s3(self.config.getAmazonKeyId(), self.config.getAmazonKeySecret(), self.config.getAmazonRegion(), self.config.getAmazonBucketName(), tiffFile, s3DstFile, True, None)
 
-        self.catalog.addEntry(self.product, 'Chlorophyll-A Density for UK Waters - ' + self.product + ' - ' + self.fileDate, self.srcFile, httpLoc, datetime.datetime.now().strftime("%Y-%m-%d"))
+        self.catalog.addEntry(self.product, 'Chlorophyll-A Density for UK Waters - ' + self.product + ' - ' + self.fileDate, self.srcFile, httpLoc, tc['start'][:8], tc['end'][:8], datetime.datetime.now().strftime("%Y-%m-%d"))
 
         return
 
     def output(self):
-        filePath = os.path.join(os.path.join(os.path.join(os.path.join(S3_FILE_ROOT, self.product), self.fileDate[:4]), self.fileDate[5:6]), 'UK-' + self.product + '-' + self.fileDate + '.tif')
+        filePath = os.path.join(os.path.join(os.path.join(os.path.join(S3_FILE_ROOT, self.product), self.fileDate[:4]), self.fileDate[4:6]), 'UK-' + self.product + '-' + self.fileDate + '.tif')
 
-        return luigi.LocalTarget(filePath) 
+        return S3Target(filePath) 
 
     
 class ProcessFiles(luigi.Task):

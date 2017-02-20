@@ -1,19 +1,26 @@
-
-# this builds a web server!
-
 FROM ubuntu:16.04
 
-RUN apt-get update && apt-get -y install apt-utils python python-setuptools python-dev build-essential
-
-# LOAD TESTING
-RUN apt-get -y install stress-ng
-
-RUN mkdir /mnt/state
-
+#setup app folder
 WORKDIR /app
+COPY app/ ./
 
-COPY app/* ./
+#install packages
+RUN apt-get update && apt-get -y install apt-utils build-essential wget
 
+#Instal miniconda
+RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+RUN bash Miniconda3-latest-Linux-x86_64.sh -p /app/miniconda -b
+RUN rm Miniconda3-latest-Linux-x86_64.sh
+ENV PATH=/app/miniconda/bin:${PATH}
+RUN conda update -y conda
+
+#Create the environment
+RUN conda install anaconda-client
+RUN chmod u+x create_env.sh
+RUN ./create_env.sh
+RUN rm create_env.sh
+
+#Initialise startup script
 RUN chmod u+x exec.sh
 
 CMD ["./exec.sh"]

@@ -18,6 +18,12 @@ S3_FILE_ROOT = 's3://jncc-data/meo-ap/chlor_a/'
 FILE_ROOT = '/tmp/meo-ap'
 PRODUCTLIST = ['monthly', '5day', 'daily']
 
+#####
+# Author: Paul Gilbertson
+#
+# Creates a list of products present on the PML ftp site without entries in the catalog. These files need
+# processing.
+#####
 class CreateWorkOrder(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     ftp = FTPClient()
@@ -31,14 +37,20 @@ class CreateWorkOrder(luigi.Task):
                 plist[p] = self.ftp.listProductFiles(p)
 
             print('Writing file list')
-            json.dump(plist, wddump, indent=4, sort_keys=True, separators=(',', ':'))    
+            json.dump(plist, wddump)    
     
     def output(self):
-       filePath = os.path.join(S3_FILE_ROOT, 'todo.json')  
+       filePath = os.path.join(os.path.join(S3_FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), 'todo.json')  
 
        return S3Target(filePath)
 
-class TransformSrcFileToTiff(luigi.Task):
+#####
+# Author: Paul Gilbertson
+#
+# Retrieves a Chloro_a density file from PML, transforms to GeoTIFF, trims to UK waters and pushes the
+# output to S3.
+#####
+class ProcessNetCDFFile(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     product = luigi.Parameter()
     srcFile = luigi.Parameter()
@@ -55,16 +67,25 @@ class TransformSrcFileToTiff(luigi.Task):
         s3DstFile = os.path.join(os.path.join(os.path.join(os.path.join('meo-ap/chlor_a', self.product), self.fileDate[:4]), self.fileDate[4:6]), 'UK-' + self.product + '-' + self.fileDate + '.tif')
         httpLoc = 'http://jncc-data.s3-eu-west-1.amazonaws.com/' + s3DstFile
 
+        # Get NetCDF file from FTP site
         print('Retrieving ' + self.srcFile)
         self.ftp.getFile(self.product, self.srcFile, ncFile)
 
+        # Get metadata from NetCDF (also acts as a validation check)
         tc = self.metadata.getTimeCoverage(ncFile)
 
+        # Use GDAL to translate NetCDF to GeoTIFF and trim file to UK waters
         os.system('gdal_translate NETCDF:' + ncFile + ':chlor_a -projwin -24 63 6 48 ' + tiffFile)
 
+        # Push file to S3
         s3Helper.copy_file_to_s3(self.config.getAmazonKeyId(), self.config.getAmazonKeySecret(), self.config.getAmazonRegion(), self.config.getAmazonBucketName(), tiffFile, s3DstFile, True, None)
 
+        # Add entry to catalog
         self.catalog.addEntry(self.product, 'Chlorophyll-A Density for UK Waters - ' + self.product + ' - ' + self.fileDate, self.srcFile, httpLoc, tc['start'][:8], tc['end'][:8], datetime.datetime.now().strftime("%Y-%m-%d"))
+
+        # Clean up intermediate files so we don't flood out /tmp
+        os.remove(ncFile)
+        os.remove(tiffFile)
 
         return
 
@@ -73,7 +94,11 @@ class TransformSrcFileToTiff(luigi.Task):
 
         return S3Target(filePath) 
 
-    
+#####
+# Author: Paul Gilbertson
+#
+# Create a work order and run it
+#####    
 class ProcessFiles(luigi.Task):
     runDate = luigi.DateParameter(default=datetime.datetime.now())
 
@@ -86,13 +111,13 @@ class ProcessFiles(luigi.Task):
 
             for p in PRODUCTLIST:
                 for k, v in data[p].items():
-                    yield TransformSrcFileToTiff(self.runDate, p, v, k)
+                    yield ProcessNetCDFFile(self.runDate, p, v, k)
             
         with self.output().open('w') as outp:
             outp.write('Test\n')
 
     def output(self):
-       filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), 'first.txt')  
+       filePath = os.path.join(os.path.join(FILE_ROOT, self.runDate.strftime("%Y-%m-%d")), '_completed.txt')  
 
        return luigi.LocalTarget(filePath)
         

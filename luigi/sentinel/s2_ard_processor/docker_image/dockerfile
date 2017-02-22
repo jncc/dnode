@@ -5,13 +5,9 @@ WORKDIR /app
 COPY app/ ./
 
 #install packages
-RUN apt-get update && apt-get -y install apt-utils build-essential wget software-properties-common python-software-properties alien
+RUN apt-get update && apt-get -y install apt-utils build-essential wget software-properties-common python-software-properties
 RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
-RUN apt-get update && apt-get -y install gdal-bin 
-
-#install libicu
-RUN wget https://www.openmamba.org/pub/openmamba/devel/RPMS.x86_64/libicu-58.2-1mamba.x86_64.rpm
-  
+RUN apt-get update && apt-get -y install gdal-bin  
 
 #Instal miniconda
 RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -23,6 +19,7 @@ RUN conda update -y conda
 #Create the environment
 RUN conda install anaconda-client
 RUN chmod u+x create_env.sh
+# TODO: Contains temp bug fix 
 RUN ./create_env.sh
 RUN rm create_env.sh
 

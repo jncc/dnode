@@ -23,7 +23,7 @@ class CatalogManager:
 
     def exists(self, productId):
         cur = self.db.cursor()
-        cur.execute("SELECT uniqueid FROM sentinel_l WHERE uniqueid = %s", (productId,))
+        cur.execute("SELECT uniqueid FROM sentinel WHERE uniqueid = %s", (productId,))
         return cur.fetchone() is not None
 
     def addProduct(self, product):
@@ -32,7 +32,7 @@ class CatalogManager:
         centroid = json.dumps(product["centroid"])
         footprint = json.dumps(product["footprint"])
 
-        cur.execute('''INSERT INTO sentinel_l
+        cur.execute('''INSERT INTO sentinel
             (uniqueId,title,ingestiondate,footprint,centroid,beginposition,endposition,orbitdirection,producttype,orbitno,relorbitno,platform,location)
             VALUES (%s,%s,to_date(%s,'YYYY-MM-DD'),ST_GeomFromGeoJSON(%s),ST_GeomFromGeoJSON(%s),%s,%s,%s,%s,%s,%s,%s,%s)''',
             (product["uniqueId"],

@@ -15,6 +15,7 @@ import pprint
 import uuid
 import json
 import re
+import datetime
 
 from functional import seq
 from shapely.geometry import shape
@@ -55,8 +56,21 @@ def makeProduct(result, match):
     bbox = getBBox(footprint["geometry"])
     return { "id"   : guid,
              "title" : m["name"],
+             "abstract" : "The Sentinel 2 Analysis Ready Data (ARD) products provide an estimate of the surface spectral reflectance measured at ground level in the absence of atmospheric effects. Bands 2-8, 8a, 11 and 12 are provided at 10m spatial resolution. The dataset includes imagery captured over the UK only.",
+             "topicCategory" : "ImageryBaseMaps EarthCover",
+             "keyword" : ["Sentinel 2", "S2 level2a", "ARD", "Analysis Ready Data", "Surface Reflectance", m["month"], m["orbit"]],
+             "resourceType" : "Dataset",
+             "datasetReferenceDate" : "2017",
+             "lineage" : "Software versions used are GDAL v2.0, RSGISLib v3.1.0. High level processing steps include: 1.	JPEG2000 converted to GeoTIFF; 2.	Re-projection to the British National Grid; 3.	20m bands (5,6,7,8A,11 and 12) are re-sampled to 10m using a nearest neighbour transformation; 4.	Mosaicing to reconnect granules; 5.	Band stacking - combining all bands associated with an area into one image; 6.	Basic atmospheric correction using a Dark Object Subtraction method; 7.	Improvements to usability such as adding names to reflectance bands. Parameters used in processing are scene specific and will be captured in future iterations through ARCSI software.",
+             "responsibleOrganisation" : "Joint Nature Conservation Committee",
+             "accessLimitations" : "None",
+             "useConstraints" : "Open Government Licence v3",
+             "metadataDate" : datetime.datetime.now().strftime("%Y-%m-%d"),
+             "metadataPointOfContact" : "earthobs@jncc.gov.uk",
+             "metadataLanguage" : "English",
              "footprint": footprint,
              "bbox": bbox,
+             "spatialReferenceSystem" : "EPSG:4326",
              "properties": {
                  "capturedate": m["year"] + "-" + m["month"] + "-" + m["day"]
              },

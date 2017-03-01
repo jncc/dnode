@@ -51,7 +51,7 @@ class ProductInventoryChecker:
                         'keys': [key]
                     }
         
-        osni_exp = exp = re.compile('(%s\/20[0-9]{2}\/[0-9]{2}\/.*\.SAFE\.data)\/OSNI1952\/(.*)' % re.escape(remote_path))
+        osni_exp = re.compile('(%s\/20[0-9]{2}\/[0-9]{2}\/.*\.SAFE\.data)\/OSNI1952\/(.*)' % re.escape(remote_path))
 
         for key in groups.keys():
             fkeys = groups[key]['keys']
@@ -130,8 +130,9 @@ class ProductInventoryChecker:
                         # Found quicklook
                         found_data['osgb']['quicklook'] = True                        
 
+            path = '/%s' % path
             # Deal with OSGB product
-            if found_data['osgb']['data'] and found_data['osgb']['metadata'] and found_data['osgb']['quicklook'] and found_data['osgb']['footprint']:
+            if found_data['osgb']['data'] and found_data['osgb']['metadata'] and found_data['osgb']['quicklook'] and found_data['osgb']['footprint']:    
                 representations = {'s3': [
                     s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, os.path.join('Footprint', key.replace('.SAFE.data', '_footprint.geojson'))), s3Helper.get_file_type('.geojson')),
                     s3Helper.get_representation(self.s3_conf['bucket'], self.s3_conf['region'], os.path.join(path, key.replace('.SAFE.data', '_metadata.xml')), s3Helper.get_file_type('.xml')),

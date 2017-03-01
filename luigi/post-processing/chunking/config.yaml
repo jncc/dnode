@@ -1,0 +1,29 @@
+log_dir: ./logs
+working_dir: ./temp
+file_pattern: '*/*.tif'
+data_directory: 'data_directory'
+bands: 
+    - 1
+lco: 
+    - 'TILED=YES'
+    - 'BLOCKXSIZE=256' 
+    - 'BLOCKYSIZE=256'
+    - 'BIGTIFF=YES'
+    - 'COMPRESS=LZW'
+grids: 
+    grid_1:
+        dest_path: gridded_path/epsg/resolution
+        source_grid: ./source_grid_1.geojson
+    grid_2:
+        dest_path: gridded_path/epsg/resolution
+        source_grid: ./source_grid_2.geojson
+        addo: '2 4 8 16 32'
+debug: False
+s3:
+    username: aws_username_Optional
+    access_key: aws_access_key
+    secret_access_key: aws_secret_access_key
+    bucket: aws_bucket
+    path: aws_base_path
+    region: aws_region
+    public: true

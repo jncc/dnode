@@ -84,7 +84,9 @@ def makeProduct(result, match):
              "osgbBbox": osgbBBox,
             #  "spatialReferenceSystem" : "EPSG:4326",
              "properties": {
-                 "capturedate": m["year"] + "-" + m["month"] + "-" + m["day"]
+                 "capturedate": m["year"] + "-" + m["month"] + "-" + m["day"],
+                 "orbit": m["orbit"],
+                 "row": m["row"],
              },
              "data": {
                  "download": {

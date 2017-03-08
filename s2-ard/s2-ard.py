@@ -6,6 +6,7 @@
 # pip install awscli
 # pip install pyfunctional
 # pip install shapely
+# pip install pyproj
 # aws configure
 
 from __future__ import print_function
@@ -16,9 +17,12 @@ import uuid
 import json
 import re
 import datetime
+import pyproj
 
 from functional import seq
+from functools import partial
 from shapely.geometry import shape
+from shapely.ops import transform
 
 s3 = boto3.resource('s3')
 pp = pprint.PrettyPrinter()
@@ -43,10 +47,16 @@ def getFootprintGeojson(orbit, row):
             return { "type": "Feature", "properties": {}, "geometry": feature["geometry"] }
 
 def getBBox(geom):
+    return shape(geom).bounds
+
+def getOsgbBBox(geom):
     s = shape(geom)
-    # (minx, miny, maxx, maxy)
-    bounds = s.bounds
-    return bounds
+    project = partial(
+        pyproj.transform,
+        pyproj.Proj(init='epsg:4326'), # source coordinate system
+        pyproj.Proj(init='epsg:27700')) # destination coordinate system
+    s2 = transform(project, s)
+    return s2.bounds    
             
 def makeProduct(result, match):
     # print(result.key)
@@ -54,27 +64,29 @@ def makeProduct(result, match):
     guid = uuid.uuid4().urn[9:]
     footprint = getFootprintGeojson(m["orbit"], m["row"])
     bbox = getBBox(footprint["geometry"])
+    osgbBBox = getOsgbBBox(footprint["geometry"])
     return { "id"   : guid,
              "title" : m["name"],
-             "abstract" : "The Sentinel 2 Analysis Ready Data (ARD) products provide an estimate of the surface spectral reflectance measured at ground level in the absence of atmospheric effects. Bands 2-8, 8a, 11 and 12 are provided at 10m spatial resolution. The dataset includes imagery captured over the UK only.",
-             "topicCategory" : "ImageryBaseMaps EarthCover",
-             "keyword" : ["Sentinel 2", "S2 level2a", "ARD", "Analysis Ready Data", "Surface Reflectance", m["month"], m["orbit"]],
-             "resourceType" : "Dataset",
-             "datasetReferenceDate" : "2017",
-             "lineage" : "Software versions used are GDAL v2.0, RSGISLib v3.1.0. High level processing steps include: 1.	JPEG2000 converted to GeoTIFF; 2.	Re-projection to the British National Grid; 3.	20m bands (5,6,7,8A,11 and 12) are re-sampled to 10m using a nearest neighbour transformation; 4.	Mosaicing to reconnect granules; 5.	Band stacking - combining all bands associated with an area into one image; 6.	Basic atmospheric correction using a Dark Object Subtraction method; 7.	Improvements to usability such as adding names to reflectance bands. Parameters used in processing are scene specific and will be captured in future iterations through ARCSI software.",
-             "responsibleOrganisation" : "Joint Nature Conservation Committee",
-             "accessLimitations" : "None",
-             "useConstraints" : "Open Government Licence v3",
-             "metadataDate" : datetime.datetime.now().strftime("%Y-%m-%d"),
-             "metadataPointOfContact" : "earthobs@jncc.gov.uk",
-             "metadataLanguage" : "English",
+            #  "abstract" : "The Sentinel 2 Analysis Ready Data (ARD) products provide an estimate of the surface spectral reflectance measured at ground level in the absence of atmospheric effects. Bands 2-8, 8a, 11 and 12 are provided at 10m spatial resolution. The dataset includes imagery captured over the UK only.",
+            #  "topicCategory" : "ImageryBaseMaps EarthCover",
+            #  "keyword" : ["Sentinel 2", "S2 level2a", "ARD", "Analysis Ready Data", "Surface Reflectance", m["month"], m["orbit"]],
+            #  "resourceType" : "Dataset",
+            #  "datasetReferenceDate" : "2017",
+            #  "lineage" : "Software versions used are GDAL v2.0, RSGISLib v3.1.0. High level processing steps include: 1.	JPEG2000 converted to GeoTIFF; 2.	Re-projection to the British National Grid; 3.	20m bands (5,6,7,8A,11 and 12) are re-sampled to 10m using a nearest neighbour transformation; 4.	Mosaicing to reconnect granules; 5.	Band stacking - combining all bands associated with an area into one image; 6.	Basic atmospheric correction using a Dark Object Subtraction method; 7.	Improvements to usability such as adding names to reflectance bands. Parameters used in processing are scene specific and will be captured in future iterations through ARCSI software.",
+            #  "responsibleOrganisation" : "Joint Nature Conservation Committee",
+            #  "accessLimitations" : "None",
+            #  "useConstraints" : "Open Government Licence v3",
+            #  "metadataDate" : datetime.datetime.now().strftime("%Y-%m-%d"),
+            #  "metadataPointOfContact" : "earthobs@jncc.gov.uk",
+            #  "metadataLanguage" : "English",
              "footprint": footprint,
              "bbox": bbox,
-             "spatialReferenceSystem" : "EPSG:4326",
+             "osgbBbox": osgbBBox,
+            #  "spatialReferenceSystem" : "EPSG:4326",
              "properties": {
                  "capturedate": m["year"] + "-" + m["month"] + "-" + m["day"]
              },
-             "representations": {
+             "data": {
                  "download": {
                      "url": "https://s3-eu-west-1.amazonaws.com/eodip/ard/" + m["name"] + "/" + m["name"] + ".tif",
                      "size": result.size,

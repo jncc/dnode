@@ -2,6 +2,8 @@
 hostname = ftp site
 username = ftp username
 password = ftp password
+[Local]
+folder = annual folder
 [Database]
 connection = host=host name dbname=database name user=pgsql user name password=pgsql user password
 [Amazon]

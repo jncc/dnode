@@ -24,6 +24,9 @@ class ConfigManager:
     def getFtpPassword(self):
         return self.config.get('FTP', 'password')
 
+    def getAnnualFolder(self):
+        return self.config.get('Local', 'folder')
+
     def getDatabaseConnectionString(self):
         return self.config.get('Database', 'connection')
 

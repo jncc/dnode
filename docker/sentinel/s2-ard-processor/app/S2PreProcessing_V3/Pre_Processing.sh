@@ -9,7 +9,7 @@
 ##### Extract Sentinel-2 data in a usable format #####
 # Manually change name of zip file #
 mkdir ./S2
-python extract_s2_data.py -o ./S2 --of KEA \S2A_OPER_PRD_MSIL1C_PDMC_20160902T184601_R080_V20150807T113056_20150807T113051.zip
+python extract_s2_data.py -o ./S2 --of KEA \ /mnt/state/input.zip
 
 ##### Cloud Mask - NEED TO TEST FMASK FOR SENTINEL-2 #####
 
@@ -56,7 +56,7 @@ python DOS.py
 
 ##### Translate final image to a Geotiff #####
 # Manually change name of file #
-for f in ./S2/SRef.kea; do echo "Processing $f"; gdal_translate -of GTiff -co "COMPRESS=LZW" -co "TILED=YES" -co "BLOCKXSIZE=256" -co "BLOCKYSIZE=256" -co "BIGTIFF=YES" $f ./S2/S2_20161003_123_2.tif; done
+for f in ./S2/SRef.kea; do echo "Processing $f"; gdal_translate -of GTiff -co "COMPRESS=LZW" -co "TILED=YES" -co "BLOCKXSIZE=256" -co "BLOCKYSIZE=256" -co "BIGTIFF=YES" $f ./S2/output.tif; done
 
 ##### Calculate Stats on Tiff file #####
 #for f in ./S2/*.tif; do echo "Processing $f"; gdaladdo -r average $f 2 4 8 16; done
@@ -69,5 +69,6 @@ python SetBands_wkt.py
 #mkdir ./Intermediate_Products
 #python CalcProducts.py
 
-
+##### Move output file to output location
+mv ./S2/S2_OUTPUT.tif /mnt/state/output.tif
 

@@ -1,6 +1,10 @@
 # Python environment setup
 Configure the development environment as follows
 ```
+## Add the ustable gdal repo for ubuntu
+sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
+sudo apt-get update
+
 ## Install required apt packages
 sudo apt-get install build-essential
 sudo apt-get install libcurl4-openssl-dev 

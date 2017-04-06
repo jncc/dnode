@@ -25,7 +25,8 @@ RUN rm create_env.sh
 
 # Install the process support config
 RUN pip install boto
-
+COPY config/s3upload.py ./
+COPY config/s3download.py ./
 
 # Copy the application to the working folder
 COPY app/ ./

@@ -1,23 +1,39 @@
-
 import boto
+import sys, os
 from boto.s3.key import Key
+from urllib.parse import urlsplit
 
-# set boto lib debug to critical
-logging.getLogger('boto').setLevel(logging.CRITICAL)
-bucket_name = settings.BUCKET_NAME
-# connect to the bucket
-conn = boto.connect_s3(settings.AWS_ACCESS_KEY_ID,
-                settings.AWS_SECRET_ACCESS_KEY)
+#max size in bytes before uploading in parts. between 1 and 5 GB recommended
+MAX_SIZE = 5000000000
+#size of parts when uploading in parts
+PART_SIZE = 100000000
+LOCAL_FILE_NAME = '/mnt/state/output.tiff'
+
+AWS_ACCESS_KEY_ID = os.environ['AWSKEY']
+AWS_SECRET_ACCESS_KEY = os.environ['AWSSECRET']
+S3_DEST_PATH = os.environ['S3DESTPATH']
+
+x = urlsplit(S3_DEST_PATH)
+
+bucket_name = x.netloc
+
+conn = boto.connect_s3(AWS_ACCESS_KEY_ID,
+                AWS_SECRET_ACCESS_KEY)
 bucket = conn.get_bucket(bucket_name)
-# go through each version of the file
-key = '%s.png' % id
-fn = '/var/www/data/%s.png' % id
-# create a key to keep track of our file in the storage 
-k = Key(bucket)
-k.key = key
-k.set_contents_from_filename(fn)
-# we need to make it public so it can be accessed publicly
-# using a URL like http://s3.amazonaws.com/bucket_name/key
-k.make_public()
-# remove the file from the web server
-os.remove(fn)
+
+filesize = os.path.getsize(LOCAL_FILE_NAME)
+
+if filesize > MAX_SIZE:
+    mp = bucket.initiate_multipart_upload(x.path)
+    fp = open(LOCAL_FILE_NAME,'rb')
+    fp_num = 0
+    while (fp.tell() < filesize):
+        fp_num += 1
+        mp.upload_part_from_file(fp, fp_num, num_cb=10, size=PART_SIZE)
+
+    mp.complete_upload()
+
+else:
+    k = boto.s3.key.Key(bucket)
+    k.key = x.path
+    k.set_contents_from_filename(LOCAL_FILE_NAME, num_cb=10)

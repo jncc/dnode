@@ -8,15 +8,36 @@ import base64
 import logging
 from luigi.util import requires
 
-#FILE_ROOT = 's3://jncc-data/workflows/s2ard/'
-FILE_ROOT = '/tmp/s2ard'
+
+# FILE_ROOT = 's3://jncc-data/workflows/s2ard/'
+FILE_ROOT = 's3://jncc-data/luigi/sentinel/poc4-s2ard'
+# FILE_ROOT = '/tmp/s2ard'
 DOCKER_IMAGE = '914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest'
 
 logger = logging.getLogger('luigi-interface')
 
+def getWorkPath(date):
+    return os.path.join(FILE_ROOT, date.strftime("%Y-%m-%d"))
+
+#Get file list
+class GetSourceFileList(luigi.ExternalTask)
+    runDate = luigi.DateParameter(default=datetime.datetime.now())
+
+    def output(self):
+        filePath = os.path.join(getWorkPath(self.runDate), 'sources.json')
+        
+        return S3Target(filePath)
+
 #Create job spec
+@requires(GetSourceFileList)
+class PrepareJobForEachSource(luigi.Task):
+    def run(self):
+        with self.input().open() as sourceList:
+            sources = json.loads(sourceList)
+
+
+
 class CreateJobSpec(luigi.Task):
-    text = luigi.Parameter()
     runDate = luigi.DateParameter(default=datetime.datetime.now())
 
     def run(self):

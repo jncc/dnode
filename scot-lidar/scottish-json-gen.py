@@ -101,7 +101,7 @@ if __name__ == '__main__':
                     'type': 'GeoTIFF'
                 },
                 'wms': {
-                    'name': 'scotland:lidar-1-dsm',
+                    'name': 'scotland:scotland-lidar-1-dsm',
                     'base_url': 'geoserver-url'
                 }
             }
@@ -132,7 +132,7 @@ if __name__ == '__main__':
                     'type': 'GeoTIFF'
                 },
                 'wms': {
-                    'name': 'scotland:lidar-1-dtm',
+                    'name': 'scotland:scotland-lidar-1-dtm',
                     'base_url': 'geoserver-url'
                 }
             }

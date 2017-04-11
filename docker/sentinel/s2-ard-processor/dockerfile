@@ -2,10 +2,9 @@ FROM ubuntu:16.04
 
 #setup app folder
 WORKDIR /app
-COPY app/ ./
 
 #install packages
-RUN apt-get update && apt-get -y install apt-utils build-essential wget software-properties-common python-software-properties
+RUN apt-get update && apt-get -y install apt-utils build-essential wget wput curl software-properties-common python-software-properties
 RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
 RUN apt-get update && apt-get -y install gdal-bin  
 
@@ -18,10 +17,21 @@ RUN conda update -y conda
 
 #Create the environment
 RUN conda install anaconda-client
+COPY config/create_env.sh ./
 RUN chmod u+x create_env.sh
 # TODO: Contains temp bug fix 
 RUN ./create_env.sh
 RUN rm create_env.sh
+
+# Install the process support config
+RUN pip install boto
+COPY config/s3upload.py ./
+COPY config/s3download.py ./
+
+# Copy the application to the working folder
+COPY app/ ./
+
+
 
 #Initialise startup script
 RUN chmod u+x exec.sh

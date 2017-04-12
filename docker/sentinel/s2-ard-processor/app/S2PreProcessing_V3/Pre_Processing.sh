@@ -13,7 +13,7 @@ mkdir /mnt/state/S2
 mkdir /mnt/state/extracted
 unzip /mnt/state/input.zip -d /mnt/state/extracted
 extract_path=$(echo /mnt/state/extracted/*)
-python extract_s2_data.py -o /mnt/state/S2 --of KEA extract_path
+python extract_s2_data.py -o /mnt/state/S2 --of KEA $extract_path
 
 ##### Cloud Mask - NEED TO TEST FMASK FOR SENTINEL-2 #####
 
@@ -74,5 +74,5 @@ python SetBands_wkt.py
 #python CalcProducts.py
 
 ##### Move output file to output location
-mv /mnt/state/S2/S2_OUTPUT.tif /mnt/state/output.tif
+mv /mnt/state/S2/output.tif /mnt/state/output.tif
 

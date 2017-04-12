@@ -10,7 +10,7 @@ class ConfigManager:
 
         try: 
             self.config = configparser.ConfigParser()
-            self.config.read([configuration_file, os.path.expanduser('~/.scihub.cfg')])
+            self.config.read([configuration_file])
         except configparser.Error, e:
             msg = "Error parsing configuration file: %s" & (e,)
             raise Exception(msg)

@@ -10,7 +10,10 @@
 ##### Extract Sentinel-2 data in a usable format #####
 # Manually change name of zip file #
 mkdir /mnt/state/S2
-python extract_s2_data.py -o /mnt/state/S2 --of KEA \ /mnt/state/input.zip
+mkdir /mnt/state/extracted
+unzip /mnt/state/input.zip -d /mnt/state/extracted
+extract_path=$(echo /mnt/state/extracted/*)
+python extract_s2_data.py -o /mnt/state/S2 --of KEA extract_path
 
 ##### Cloud Mask - NEED TO TEST FMASK FOR SENTINEL-2 #####
 

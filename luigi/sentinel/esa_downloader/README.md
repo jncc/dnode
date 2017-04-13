@@ -17,6 +17,13 @@
 - Create a database connection string
 - Add the credentials and location of the S3 bucket used for storing downloaded data
 
+bucketName is the simply the target bucket name ie "myBucket"
+destPath is the path excluding the bucket name ie "myFolder"
+
+An s3 path such as s3://myBucket/myFolder/mySubfolder would go into the cfg.ini as
+bucketName = myBucket
+destPath = /myFolder/mySubfolder
+
 ## Execute the job for the fist time
 The job must be run manually in the first instance by specifying a seed date. 
 

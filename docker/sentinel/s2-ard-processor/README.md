@@ -42,4 +42,4 @@ Start image with interactive console:
 
 Just run it:
 
-    docker run -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID process-test
+    docker run -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest

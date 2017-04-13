@@ -198,7 +198,7 @@ class product_chunking_simple_s3:
                         ####################################################################################
                         final_key_path = os.path.join(dest_path, key_file.replace('.tif', '_%s.tif' % output_name))
                         self.logger.info('Uploading to %s' % final_key_path)
-                        s3Helper.copy_file_to_s3(self.s3_access_key, self.s3_secret_access_key, self.s3_region, self.s3_bucket, output_file_path, final_key_path, self.s3_public, None)
+                        s3Helper.s3().copy_file_to_s3(self.s3_access_key, self.s3_secret_access_key, self.s3_region, self.s3_bucket, output_file_path, final_key_path, self.s3_public, None)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Cuts a provided Raster image by a provided vector dataset, generally a grid, but can be any data')

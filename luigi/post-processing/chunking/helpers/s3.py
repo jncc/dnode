@@ -33,7 +33,7 @@ class s3:
         if metadata is None:
             metadata = {}
 
-        metadata['md5'] = verificationHelper.calculate_checksum(sourcepath)
+        metadata['md5'] = verificationHelper.verification().calculate_checksum(sourcepath)
         metadata['uploaded'] = time.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         if bucket.get_key(key) != None:

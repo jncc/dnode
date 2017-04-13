@@ -3,8 +3,8 @@ from rsgislib import imagecalc
 from rsgislib import imagecalibration
 
 
-inputFile = './S2/ToARef.kea'
-outputFile = './S2/SRef.kea'
+inputFile = '/mnt/state/S2/ToARef.kea'
+outputFile = '/mnt/state/S2/SRef.kea'
 darkObjPercentile = 0.01
 noDataVal = 0
 gdalformat = 'KEA'

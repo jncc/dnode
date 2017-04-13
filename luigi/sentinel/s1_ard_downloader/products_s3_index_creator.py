@@ -17,7 +17,7 @@ class ProductIndexCreator:
         self.temp = tempdir
         self.debug = self.config.get('debug')
         self.s3_conf = self.config.get('s3')
-        self.years = [2015, 2017]
+        self.years = years
     
     def getS3Contents(self, remote_path):
         amazon_key_Id = self.s3_conf['access_key']
@@ -61,10 +61,10 @@ class ProductIndexCreator:
 
         for year in self.years:
             outputs[year] = {}
-            for month in outputs[year].keys():
+            for month in year_groups[year].keys():
                 html_str = ''
                 for name in sorted(list(year_groups[year][month].keys())):
-                    base_url = 'https://s3-%s.amazonaws.com/%s' % (self.s3_conf['region'], self.s3_conf['bucket'])
+                    base_url = 'https://s3-%s.amazonaws.com/%s/%s/%d/%02d' % (self.s3_conf['region'], self.s3_conf['bucket'], remote_path, year, month)
                     img_url = '%s/%s/%s' % (base_url, name, name.replace('.SAFE.data', '_quicklook.jpg'))
                     data_url = '%s/%s/%s' % (base_url, name, name.replace('.SAFE.data', '.tif'))
                     data_size = year_groups[year][month][name]['osgb_size']
@@ -113,5 +113,5 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
 
     with open('config.yaml', 'r') as config:
-        checker = ProductIndexCreator(yaml.load(config), logger, './temp', [2015, 2017])
+        checker = ProductIndexCreator(yaml.load(config), logger, './temp', [2015, 2016, 2017])
         checker.getS3Contents('sentinel-1/ard/backscatter')

@@ -1,5 +1,6 @@
 import boto
 import sys, os
+import logging
 from boto.s3.key import Key
 from urllib.parse import urlsplit
 
@@ -21,8 +22,11 @@ conn = boto.connect_s3(AWS_ACCESS_KEY_ID,
                 AWS_SECRET_ACCESS_KEY)
 bucket = conn.get_bucket(bucket_name)
 
+logging.info("established connection to bucket: " + bucket_name)
+
 filesize = os.path.getsize(LOCAL_FILE_NAME)
 
+logging.info("uploading " + x.path)
 if filesize > MAX_SIZE:
     mp = bucket.initiate_multipart_upload(x.path)
     fp = open(LOCAL_FILE_NAME,'rb')

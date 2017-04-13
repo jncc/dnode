@@ -2,11 +2,8 @@
 conda create --name osgeoenv python=3.5 
 source activate osgeoenv
 conda install -c conda-forge gdal 
-conda install -c conda-forge tuiview 
 conda install -c conda-forge -c rios rsgislib 
 conda install -c conda-forge -c rios rios 
-conda install -c conda-forge -c rios arcsi 
-conda install -c conda-forge scikit-learn
 
 # Fix for the following lib dependency problem, may not be needed for future build
 # https://groups.google.com/forum/#!topic/rsgislib-support/YD_sTMTxAis

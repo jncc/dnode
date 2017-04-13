@@ -14,3 +14,4 @@ built/
 # Python
 *.pyc
 */luigi_venv/
+luigi/sentinel/s1_ard_downloader/venv/

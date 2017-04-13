@@ -5,7 +5,6 @@
 CREATE TABLE sentinel
 (
   uniqueid uuid NOT NULL,
-  polygonindex integer NOT NULL,
   title character varying(500) NOT NULL,
   ingestiondate date NOT NULL,
   beginposition character varying(500),

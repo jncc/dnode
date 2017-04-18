@@ -5,4 +5,4 @@ source activate osgeoenv
 export CPL_ZIP_ENCODING=UTF-8
 sh ./Pre_Processing.sh
 source deactivate osgeoenv
-phython /app/s3upload.py
+python /app/s3upload.py

@@ -51,7 +51,11 @@ class ProductListManager:
         if self.config.get_esa_searchCriteria() != None:
             q  = '%s AND %s' % (q, self.config.get_esa_searchCriteria())
 
-        criteria = {'q': q}
+        criteria = {
+            'start' : page,
+            'rows' : 100,
+            'q': q
+            }
 
         url = ProductListManager.SEARCH_URL_BASE + \
             '?' + urllib.urlencode(criteria)

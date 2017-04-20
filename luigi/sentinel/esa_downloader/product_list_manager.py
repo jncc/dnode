@@ -206,7 +206,7 @@ class ProductListManager:
         if lastIngestionDate is None:
             raise Exception("Unable to determine last ingestion date")
 
-        page = 1
+        page = 0
         pages = 1
 
         searchUrl = self.__get_search_url(lastIngestionDate, page)
@@ -214,7 +214,7 @@ class ProductListManager:
 
         pages = self.__getPages(rawProductsData)
 
-        while page <= pages:
+        while page <= (pages - 1):
             self.__add_products_to_list(rawProductsData, productList)
             page = page + 1
 

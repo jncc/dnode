@@ -24,7 +24,7 @@ class ConfigManager:
     def get_esa_searchCriteria(self):
         try:
             return self.config.get('EsaApi','searchCriteria')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             return None
 
     def get_search_polygon(self):

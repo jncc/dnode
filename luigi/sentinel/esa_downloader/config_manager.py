@@ -22,7 +22,7 @@ class ConfigManager:
         return username + ':' + password
 
     def get_esa_searchCriteria(self):
-        return self.config.get('EsaApi','searchCriteria')
+        return self.config.get('EsaApi','searchCriteria', fallback=None)
 
     def get_search_polygon(self):
         return self.config.get('EsaApi','polygon')

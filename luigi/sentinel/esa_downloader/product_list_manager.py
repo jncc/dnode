@@ -48,7 +48,7 @@ class ProductListManager:
         q = 'ingestiondate:[%s TO NOW] AND footprint:"Intersects(%s)"' % (
             ingestionDateString, self.config.get_search_polygon())
         
-        if self.config.get_esa_searchCriteria() != '':
+        if self.config.get_esa_searchCriteria() != None:
             q  = '%s AND %s' % (q, self.config.get_esa_searchCriteria())
 
         criteria = {'q': q}

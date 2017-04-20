@@ -11,8 +11,6 @@ import log_helper
 import shapely.wkt
 import constants
 
-
-
 from functional import seq
 from datetime import datetime
 from dateutil import parser
@@ -25,7 +23,7 @@ from shapely.geometry import shape
 
 
 class ProductListManager:
-    POLYGON = 'POLYGON ((-6.604981356192942 49.438680703689379,-10.186858447403869 60.557572594302513,0.518974191882126 61.368840444480654,2.668100446608686 53.215944284612512,1.235349610124312 50.589462482174554,-6.604981356192942 49.438680703689379))'
+   # POLYGON = 'POLYGON ((-6.604981356192942 49.438680703689379,-10.186858447403869 60.557572594302513,0.518974191882126 61.368840444480654,2.668100446608686 53.215944284612512,1.235349610124312 50.589462482174554,-6.604981356192942 49.438680703689379))'
     SEARCH_URL_BASE = 'https://scihub.copernicus.eu/apihub/search'
 
     def __init__(self, debug):
@@ -46,8 +44,15 @@ class ProductListManager:
     def __get_search_url(self, lastIngestionDate, page):
         ingestionDateString = lastIngestionDate.strftime(
             '%Y-%m-%d') + 'T00:00:00.000Z'
-        criteria = {'q': 'ingestiondate:[%s TO NOW] AND footprint:"Intersects(%s)"' % (
-            ingestionDateString, ProductListManager.POLYGON)}
+
+        q = 'ingestiondate:[%s TO NOW] AND footprint:"Intersects(%s)"' % (
+            ingestionDateString, self.config.get_search_polygon())
+        
+        if self.config.get_esa_searchCriteria() != ''
+            q  = '%s AND %s' % (q, self.config.get_esa_searchCriteria())
+
+        criteria = {'q': q}
+
         url = ProductListManager.SEARCH_URL_BASE + \
             '?' + urllib.urlencode(criteria)
 

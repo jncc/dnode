@@ -16,10 +16,16 @@ class ConfigManager:
             raise Exception(msg)
 
     def get_esa_credentials(self):
-        username = self.config.get('EsaCredentials','username')
-        password = self.config.get('EsaCredentials','password')
+        username = self.config.get('EsaApi','username')
+        password = self.config.get('EsaApi','password')
 
         return username + ':' + password
+
+    def get_esa_searchCriteria(self):
+        return self.config.get('EsaApi','searchCriteria')
+
+    def get_search_polygon(self):
+        return self.config.get('EsaApi','polygon')
 
     def getDatabaseConnectionString(self):
         return self.config.get('Database', 'connection')

@@ -1,6 +1,8 @@
-[EsaCredentials]
+[EsaApi]
 username = eas username
 password = esa password
+polygon = search polygon
+searchCriteria = additional search criteria
 [Database]
 connection = host=host name dbname=database name user=pgsql user name password=pgsql user password
 [Amazon]

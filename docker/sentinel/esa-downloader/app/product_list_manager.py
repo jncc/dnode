@@ -66,14 +66,14 @@ class ProductListManager:
 
         return url
 
-    def __get_xml_data(self, url):
+    def __get_xml_data(self, url, esaCredentials):
 
         rawDataBuffer = StringIO()
 
         try:
             c = pycurl.Curl()
             c.setopt(c.URL, str(url))
-            c.setopt(c.USERPWD, self.config.get_esa_credentials())
+            c.setopt(c.USERPWD, esaCredentials))
             c.setopt(c.FOLLOWLOCATION, True)
             c.setopt(c.SSL_VERIFYPEER, False)
             c.setopt(c.WRITEFUNCTION, rawDataBuffer.write)
@@ -194,7 +194,7 @@ class ProductListManager:
         
         return pages
 
-    def create_list(self,runDate, productList, outputListFile, seedDate):
+    def create_list(self,runDate, productList, outputListFile, seedDate, esaCredentials):
         lastIngestionDate = None
 
         if seedDate == constants.DEFAULT_DATE:
@@ -214,7 +214,7 @@ class ProductListManager:
         pages = 1
 
         searchUrl = self.__get_search_url(lastIngestionDate, page)
-        rawProductsData = self.__get_xml_data(searchUrl)
+        rawProductsData = self.__get_xml_data(searchUrl, esaCredentials)
 
         pages = self.__get_pages(rawProductsData)
 
@@ -223,7 +223,7 @@ class ProductListManager:
             page = page + 1
 
             searchUrl = self.__get_search_url(lastIngestionDate, page)
-            rawProductsData = self.__get_xml_data(searchUrl)
+            rawProductsData = self.__get_xml_data(searchUrl, esaCredentials)
             if rawProductsData == None:
                 break
 

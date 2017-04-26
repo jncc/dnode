@@ -66,18 +66,15 @@ class ProductDownloader:
 
         return True
 
-    def __copy_product_to_s3(self, sourcepath, filename):
+    def __copy_product_to_s3(self, sourcepath, filename, awsAccessKeyId, awsSecretKey):
         #max size in bytes before uploading in parts. between 1 and 5 GB recommended
         MAX_SIZE = 5000000000
         #size of parts when uploading in parts
         PART_SIZE = 100000000
 
-        amazon_key_Id = self.config.getAmazonKeyId()
-        amazon_key_secret = self.config.getAmazonKeySecret()
-
         conn = boto.s3.connect_to_region('eu-west-1',
-            aws_access_key_id=amazon_key_Id,
-            aws_secret_access_key=amazon_key_secret,
+            aws_access_key_id=awsAccessKeyId,
+            aws_secret_access_key=awsSecretKey,
             is_secure=True
             )
 
@@ -111,7 +108,7 @@ class ProductDownloader:
         
         return destpath
 
-    def download_products(self, productListFile, runDate):
+    def download_products(self, productListFile, runDate, awsAccessKeyId, awsSecretKey):
         productList = json.load(productListFile)
 
         downloadedProductCount = 0
@@ -143,7 +140,7 @@ class ProductDownloader:
                 
                 # transfer to s3
                 try:
-                    product["location"] = self.__copy_product_to_s3(productZipFile, product["title"])
+                    product["location"] = self.__copy_product_to_s3(productZipFile, product["title"], awsAccessKeyId, awsSecretKey)
                     self.logger.info("Coppied product %s to S3 bucket, removing temp file", product["title"])
                 except Exception as e:
                     self.logger.warn("Failed to copy product %s to S3 with error %s", product["title"], e)

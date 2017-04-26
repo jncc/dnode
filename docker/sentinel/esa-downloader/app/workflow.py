@@ -9,7 +9,7 @@ from product_list_manager import ProductListManager
 from product_downloader import ProductDownloader
 from luigi.util import inherits
 from luigi.util import requires
-from luigi.s3 import S3Target
+from luigi.s3 import S3Target, S3Client
 from datetime import timedelta
 from luigi import LocalTarget
 
@@ -19,7 +19,7 @@ LOCAL_TARGET = '/tmp/luigi_debug/sentinel/esa_downloader'
 
 logger = logging.getLogger('luigi-interface')    
 
-def getTarget(fileName, date, debug):
+def getTarget(fileName, date, debug, awsAccessKeyId, awsSecretKey):
     workPath = ''
     if debug:
         workPath = os.path.join(LOCAL_TARGET, date.strftime("%Y-%m-%d"))
@@ -32,20 +32,25 @@ def getTarget(fileName, date, debug):
         logger.info("Debug - writing to %s", filePath)
         return LocalTarget(filePath)
     else:
-        return S3Target(filePath)
+        client = S3Client(awsAccessKeyId, awsSecretKey)
+        return S3Target(path=filePath, client=client)
         
 class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
     seedDate = luigi.DateParameter(default=constants.DEFAULT_DATE)
     runDate = luigi.DateParameter(default=datetime.datetime.now())
+    awsAccessKeyId = luigi.Parameter()
+    awsSecretKey = luigi.Parameter()
 
     def output(self):
         d = self.runDate - timedelta(days=1)
         
-        return getTarget('available.json', d, self.debug)    
+        return getTarget('available.json', d, self.debug, self.awsAccessKeyId, self.awsSecretKey)    
         
 @inherits(LastAvailableProductsList)
 class CreateAvailableProductsList(luigi.Task):
+    esaUsername = luigi.Parameter()
+    esaPassword = luigi.Parameter()
 
     def run(self):
         lastList = {"products":[]}
@@ -59,10 +64,11 @@ class CreateAvailableProductsList(luigi.Task):
 
         with self.output().open('w') as productList:
             listManager = ProductListManager(self.debug)
-            listManager.create_list(self.runDate ,lastList, productList, self.seedDate)
+            esaCredentials = self.esaUsername + ':' + self.esaPassword
+            listManager.create_list(self.runDate ,lastList, productList, self.seedDate, self.esaUser, esaCredentials)
 
     def output(self):        
-        return getTarget('available.json', self.runDate, self.debug)
+        return getTarget('available.json', self.runDate, self.debug, self.awsAccessKeyId, self.awsSecretKey)
 
 @requires(CreateAvailableProductsList)
 class DownloadAvailableProducts(luigi.Task):
@@ -73,7 +79,7 @@ class DownloadAvailableProducts(luigi.Task):
         result = None
 
         with self.input().open() as productList: 
-            result = downloader.download_products(productList, self.runDate)
+            result = downloader.download_products(productList, self.runDate, self.awsAccessKeyId, self.awsSecretKey)
 
         if not result is None:
             with self.output().open('w') as successFile:
@@ -84,7 +90,7 @@ class DownloadAvailableProducts(luigi.Task):
                 successFile.write(msg)
 
     def output(self):        
-        return getTarget('_success.json', self.runDate, self.debug)
+        return getTarget('_success.json', self.runDate, self.debug, self.awsAccessKeyId, self.awsSecretKey))
         
 if __name__ == '__main__':
     luigi.run()

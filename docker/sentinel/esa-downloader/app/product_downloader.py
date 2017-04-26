@@ -50,7 +50,7 @@ class ProductDownloader:
                 c.perform()
                 c.close()
 
-        except pycurl.error, e:
+        except pycurl.error as e:
             msg = "%s product %s resulted in download error %s" % (downloadType, name, e.args[0])
             raise Exception(msg)
         

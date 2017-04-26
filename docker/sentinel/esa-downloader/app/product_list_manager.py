@@ -14,7 +14,7 @@ import constants
 from functional import seq
 from datetime import datetime
 from dateutil import parser
-from StringIO import StringIO
+from io import StringIO
 from config_manager import ConfigManager
 from catalog_manager import CatalogManager
 from shapely.geometry import shape

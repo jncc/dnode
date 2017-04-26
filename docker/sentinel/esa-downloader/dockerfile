@@ -3,11 +3,29 @@ FROM ubuntu:16.04
 #setup app folder
 WORKDIR /app
 
+#make configuration folder
+RUN mkdir /config
+
 #install packages
-RUN apt-get update && apt-get -y install apt-utils build-essential software-properties-common python-software-properties curl unzip
+RUN apt-get update && apt-get -y install \
+    build-essential \
+    curl \
+    software-properties-common \
+    libgeos-dev \
+    python3-software-properties \
+    python3-setuptools \
+&& rm -rf /var/lib/apt/lists/*
 
-#Set default run to python3
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+#Setup python3
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+&& easy_install3 pip
 
-# Copy the application to the working folder
+# Configure the application
+ADD config/requirements.txt /config
+RUN pip install -r /config/requirements.txt
+
+# Copy the app folder
 COPY app/ ./
+
+# Copy the app config
+ADD config/cfg.ini /app

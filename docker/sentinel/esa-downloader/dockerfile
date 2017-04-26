@@ -35,4 +35,4 @@ ADD config/app.cfg /app
 # Copy the luigi configuration to the app folder
 ADD config/luigi.cfg /app
 
-ENTRYPOINT ./exec.sh
+ENTRYPOINT ["./exec.sh"]

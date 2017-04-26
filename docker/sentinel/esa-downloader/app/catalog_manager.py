@@ -10,12 +10,11 @@ class CatalogManager:
 
     db = None
 
-    def __init__(self):
-        self.config = ConfigManager("cfg.ini")
+    def __init__(self, dbConnectionString):
+        self.dbConnectionString = dbConnectionString
 
-    def __enter__(self):
-        connection = self.config.getDatabaseConnectionString()
-        self.db = psycopg2.connect(connection)
+    def __enter__(self):       
+        self.db = psycopg2.connect(self.dbConnectionString)
         return self
 
     def __exit__(self ,type, value, traceback):

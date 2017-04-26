@@ -27,7 +27,7 @@ class ProductListManager:
     SEARCH_URL_BASE = 'https://scihub.copernicus.eu/apihub/search'
 
     def __init__(self, debug):
-        self.config = ConfigManager("cfg.ini")
+        self.config = ConfigManager("app.cfg")
         self.debug = debug
         self.logger = logging.getLogger('luigi-interface') 
 
@@ -194,7 +194,7 @@ class ProductListManager:
         
         return pages
 
-    def create_list(self,runDate, productList, outputListFile, seedDate, esaCredentials):
+    def create_list(self,runDate, productList, outputListFile, seedDate, esaCredentials, dbConnectionString):
         lastIngestionDate = None
 
         if seedDate == constants.DEFAULT_DATE:
@@ -229,7 +229,7 @@ class ProductListManager:
 
         # remove duplicate products
         # remove products that are already in the catalog
-        with CatalogManager() as cat:
+        with CatalogManager(dbConnectionString) as cat:
             productList["products"] = (seq(productList["products"])
                                         .distinct_by(lambda x: x["uniqueId"])
                                         .filter(lambda x: cat.exists(x["uniqueId"]) != True )).to_list()

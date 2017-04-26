@@ -15,12 +15,6 @@ class ConfigManager:
             msg = "Error parsing configuration file: %s" & (e,)
             raise Exception(msg)
 
-    # def get_esa_credentials(self):
-    #     username = self.config.get('EsaApi','username')
-    #     password = self.config.get('EsaApi','password')
-
-    #     return username + ':' + password
-
     def get_esa_searchCriteria(self):
         try:
             return self.config.get('EsaApi','searchCriteria')
@@ -32,12 +26,6 @@ class ConfigManager:
 
     def getDatabaseConnectionString(self):
         return self.config.get('Database', 'connection')
-
-    # def getAmazonKeyId(self):
-    #     return self.config.get('Amazon', 'accessKeyId')
-
-    # def getAmazonKeySecret(self):
-    #     return self.config.get('Amazon', 'accessKeySecret')
 
     def getAmazonDestPath(self):
         return self.config.get('Amazon', 'destPath')

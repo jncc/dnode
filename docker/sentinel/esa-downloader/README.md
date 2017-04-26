@@ -12,10 +12,9 @@
 - Create a downloader user and set read write permissions for it
 
 ## Create the downloader configuration
-- Rename cfg.ini.RENAME to cfg.ini and update the following
-- Add the esa account you use to access the esa portal
+- Edit app.cfg
 - Create a database connection string
-- Add the credentials and location of the S3 bucket used for storing downloaded data
+- Add the location of the S3 bucket used for storing downloaded data
 
 bucketName is the simply the target bucket name ie "myBucket"
 destPath is the path excluding the bucket name ie "myFolder"
@@ -50,30 +49,24 @@ NB: USE WITH CAUTION this WILL update the catalog as if the product had been dow
 ## seedDate flag
 The seedDate is intened for initialising the system. It is the earliest ESA ingestion date from which the system should begin downloading ata
 
+# Docker image
+## Parmeters
+debug:
+    If supplied 
+seedDate
+runDate
+awsAccessKeyId
+awsSecretKey
+esaUsername
+esaPassword
 
-
-# Docker host setup
-## Configure  to run as non root user
-
-    sudo groupadd docker  
-    sudo gpasswd -a ${USER} docker 
-    sudo service docker restart 
-
-log back in to apply
-
-
-# Build and run instructions
+## Build and run instructions
 
 Build to image: 
 
     docker build -t esa-downloader .
 
-Start image with interactive console: 
- shares the workfiles folder in home
- sets user id and group id
-
-    docker run -i -t -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID esa-downloader /bin/bash
-
 Just run it:
 
-    docker run -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID esa-downloader
+    docker run -v ~/workfiles:/mnt/state  esa-downloader --rundate 2017-04-20
+

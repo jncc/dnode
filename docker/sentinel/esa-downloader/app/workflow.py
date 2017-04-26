@@ -15,7 +15,7 @@ from luigi import LocalTarget
 
 
 FILE_ROOT = 's3://jncc-data/luigi/sentinel/esa_downloader'
-LOCAL_TARGET = '/tmp/luigi_debug/sentinel/esa_downloader'
+LOCAL_TARGET = '/mnt/state/luigi_debug/sentinel/esa_downloader'
 
 logger = logging.getLogger('luigi-interface')    
 
@@ -34,6 +34,9 @@ def getTarget(fileName, date, debug, awsAccessKeyId, awsSecretKey):
     else:
         client = S3Client(awsAccessKeyId, awsSecretKey)
         return S3Target(path=filePath, client=client)
+
+def getDbConnectionString(host, name, user, password):
+    return "host=%s name dbname=%s user=%s name password=%s" % (host, name, user, password)
         
 class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
@@ -51,6 +54,10 @@ class LastAvailableProductsList(luigi.ExternalTask):
 class CreateAvailableProductsList(luigi.Task):
     esaUsername = luigi.Parameter()
     esaPassword = luigi.Parameter()
+    dbHost = luigi.Parameter()
+    dbName = luigi.Parameter()
+    dbUser = luigi.Parameter()
+    dbPassword = luigi.Parameter
 
     def run(self):
         lastList = {"products":[]}
@@ -63,9 +70,11 @@ class CreateAvailableProductsList(luigi.Task):
                 lastList = json.load(l)
 
         with self.output().open('w') as productList:
-            listManager = ProductListManager(self.debug)
+            listManager = ProductListManager(self.debug, dbConn)
+            
             esaCredentials = self.esaUsername + ':' + self.esaPassword
-            listManager.create_list(self.runDate ,lastList, productList, self.seedDate, self.esaUser, esaCredentials)
+            dbConn = getDbConnectionString(self.dbHost, self.dbName, self.dbUser, self.dbPassword)
+            listManager.create_list(self.runDate ,lastList, productList, self.seedDate, self.esaUser, esaCredentials, dbConn)
 
     def output(self):        
         return getTarget('available.json', self.runDate, self.debug, self.awsAccessKeyId, self.awsSecretKey)
@@ -79,7 +88,8 @@ class DownloadAvailableProducts(luigi.Task):
         result = None
 
         with self.input().open() as productList: 
-            result = downloader.download_products(productList, self.runDate, self.awsAccessKeyId, self.awsSecretKey)
+            dbConn = getDbConnectionString(self.dbHost, self.dbName, self.dbUser, self.dbPassword)
+            result = downloader.download_products(productList, self.runDate, self.awsAccessKeyId, self.awsSecretKey, dbConn)
 
         if not result is None:
             with self.output().open('w') as successFile:
@@ -90,7 +100,7 @@ class DownloadAvailableProducts(luigi.Task):
                 successFile.write(msg)
 
     def output(self):        
-        return getTarget('_success.json', self.runDate, self.debug, self.awsAccessKeyId, self.awsSecretKey))
+        return getTarget('_success.json', self.runDate, self.debug, self.awsAccessKeyId, self.awsSecretKey)
         
 if __name__ == '__main__':
     luigi.run()

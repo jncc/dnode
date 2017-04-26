@@ -11,10 +11,10 @@ from catalog_manager import CatalogManager
 
 class ProductDownloader:
     DOWNLOAD_URL_BASE = 'https://scihub.copernicus.eu/apihub/odata/v1'
-    TEMP_FILE_ROOT = '/tmp/luigi/esadownloader'
+    TEMP_FILE_ROOT = '/mnt/state/luigi/esadownloader'
 
     def __init__(self, debug):
-        self.config = ConfigManager("cfg.ini")
+        self.config = ConfigManager("app.cfg")
         self.debug = debug
         self.logger = logging.getLogger('luigi-interface') 
 
@@ -108,7 +108,7 @@ class ProductDownloader:
         
         return destpath
 
-    def download_products(self, productListFile, runDate, awsAccessKeyId, awsSecretKey):
+    def download_products(self, productListFile, runDate, awsAccessKeyId, awsSecretKey, dbConnectionString):
         productList = json.load(productListFile)
 
         downloadedProductCount = 0
@@ -116,7 +116,7 @@ class ProductDownloader:
 
         tempPath = self.__createTempPath(runDate)
 
-        with CatalogManager() as cat:
+        with CatalogManager(dbConnectionString) as cat:
             for product in productList["products"]:
                 # download product
                 productZipFile = None

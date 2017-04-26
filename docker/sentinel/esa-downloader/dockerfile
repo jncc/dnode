@@ -1,12 +1,12 @@
 FROM ubuntu:16.04
 
-#setup app folder
+# Setup app folder
 WORKDIR /app
 
-#make configuration folder
+# Make configuration folder
 RUN mkdir /config
 
-#install packages
+# Install packages
 RUN apt-get update && apt-get -y install \
     build-essential \
     curl \
@@ -16,16 +16,22 @@ RUN apt-get update && apt-get -y install \
     python3-setuptools \
 && rm -rf /var/lib/apt/lists/*
 
-#Setup python3
+# Setup python3
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
 && easy_install3 pip
 
 # Configure the application
 ADD config/requirements.txt /config
-RUN pip install -r /config/requirements.txt
+RUN pip install -r /config/requirements.txt \
+&& rm -f /config/requirements.txt
 
-# Copy the app folder
+# Copy the app to the working folder
 COPY app/ ./
 
 # Copy the app config
-ADD config/cfg.ini /app
+ADD config/app.cfg /app
+
+# Copy the luigi configuration to the app folder
+ADD config/luigi.cfg /app
+
+ENTRYPOINT PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts

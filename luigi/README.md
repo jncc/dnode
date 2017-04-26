@@ -1,33 +1,14 @@
 # Python environment setup
 Configure the development environment as follows
-```
+
 ## Add the ustable gdal repo for ubuntu
 sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
 sudo apt-get update
 
 ## Install required apt packages
-sudo apt-get install build-essential
-sudo apt-get install libcurl4-openssl-dev 
-sudo apt-get install virtualenv
-sudo apt-get install libgeos-dev
-sudo apt-get install python-dev
-sudo apt-get install gdal-bin
-```
-
-###TODO - Required only for workflows that connect to postgres db's though psycop2 
-sudo apt-get install libpq-dev
-
-# Docker host setup
-install docker as here:
-https://docs.docker.com/engine/installation/linux/ubuntu/
-
-## Configure to run as non root user
-```
-sudo groupadd docker  
-sudo gpasswd -a ${USER} docker 
-sudo service docker restart 
-```
-log out and back in again
+sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
+sudo apt-get update
+sudo apt-get install build-essential libcurl4-openssl-dev virtualenv libgeos-dev python-dev gdal-bin libpq-dev libgdal-dev
 
 ## AWS client install
 The aws client is used to manage default credentials for luigi / docker.
@@ -61,6 +42,8 @@ source luigi_venv/bin/activate
 ```
 Install python depenancies
 ```
+export CPLUS_INCLUDE_PATH=/usr/include/gdal
+export C_INCLUDE_PATH=/usr/include/gdal
 pip install -r requirements.txt
 ```
 ## Update Python Environment
@@ -69,6 +52,24 @@ After adding or updating PIP manged libraires refresh the requirement file.
 rm requirements.txt
 pip freeze > requirements.txt
 ```
+
+
+
+
+
+# Docker host setup
+install docker as here:
+https://docs.docker.com/engine/installation/linux/ubuntu/
+
+## Configure to run as non root user
+```
+sudo groupadd docker  
+sudo gpasswd -a ${USER} docker 
+sudo service docker restart 
+```
+log out and back in again
+
+
 
 # Before running the scripts
 Sorce the environment

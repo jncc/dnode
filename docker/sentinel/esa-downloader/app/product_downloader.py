@@ -4,7 +4,7 @@ import zipfile
 import pycurl
 import boto
 import boto.s3
-import log_helper
+import logging
 
 from config_manager import ConfigManager
 from catalog_manager import CatalogManager
@@ -16,7 +16,7 @@ class ProductDownloader:
     def __init__(self, debug):
         self.config = ConfigManager("cfg.ini")
         self.debug = debug
-        self.log = log_helper.setup_logging('DownloadAvailableProducts', self.debug)
+        self.logger = logging.getLogger('luigi-interface') 
 
     def __createTempPath(self, runDate):
         tempPath = os.path.join(self.TEMP_FILE_ROOT, runDate.strftime("%Y-%m-%d"))
@@ -36,7 +36,7 @@ class ProductDownloader:
         tempFilename = os.path.join(tempPath,zipname)
         
         if self.debug:
-            self.log.debug("download url: %s, would create %s", url, tempFilename)
+            self.logger.debug("download url: %s, would create %s", url, tempFilename)
             return tempFilename
 
         try: 
@@ -88,7 +88,7 @@ class ProductDownloader:
         destpath = os.path.join(amazonDestPath, filename)
 
         if self.debug:
-            self.log.debug("S3 copy would copy %s to %s", sourcepath, amazonDestPath)
+            self.logger.debug("S3 copy would copy %s to %s", sourcepath, amazonDestPath)
         else:
             if bucket.get_key(destpath) != None:
                 bucket.delete_key(destpath)
@@ -125,9 +125,9 @@ class ProductDownloader:
                 productZipFile = None
                 try:
                     productZipFile = self.__download_product(product, tempPath)
-                    self.log.info("Downloaded product %s", product["title"])
+                    self.logger.info("Downloaded product %s", product["title"])
                 except Exception as e: 
-                    self.log.warn("Failed to download product %s with error %s ", product["title"], e)
+                    self.logger.warn("Failed to download product %s with error %s ", product["title"], e)
                     continue
 
                 if productZipFile is None and not self.debug:
@@ -136,17 +136,17 @@ class ProductDownloader:
                 # verify product
                 if not self.debug:
                     verified = self.__verify_zip_file(productZipFile)
-                    self.log.info("Verified product %s", product["title"])
+                    self.logger.info("Verified product %s", product["title"])
                     if not verified:
-                        self.log.warn("Failed to download product %s with error invalid zip file", product["title"])
+                        self.logger.warn("Failed to download product %s with error invalid zip file", product["title"])
                         continue
                 
                 # transfer to s3
                 try:
                     product["location"] = self.__copy_product_to_s3(productZipFile, product["title"])
-                    self.log.info("Coppied product %s to S3 bucket, removing temp file", product["title"])
+                    self.logger.info("Coppied product %s to S3 bucket, removing temp file", product["title"])
                 except Exception as e:
-                    self.log.warn("Failed to copy product %s to S3 with error %s", product["title"], e)
+                    self.logger.warn("Failed to copy product %s to S3 with error %s", product["title"], e)
                     continue
                     
                 if not self.debug:

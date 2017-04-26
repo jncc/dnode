@@ -7,7 +7,7 @@ import math
 import geojson
 import shapely
 import xml.etree.ElementTree as eTree
-import log_helper
+import logging
 import shapely.wkt
 import constants
 
@@ -29,7 +29,8 @@ class ProductListManager:
     def __init__(self, debug):
         self.config = ConfigManager("cfg.ini")
         self.debug = debug
-        self.log = log_helper.setup_logging('CreateAvailableProductsList', self.debug)
+        self.logger = logging.getLogger('luigi-interface') 
+
 
     def __get_last_ingestion_date(self, productList):
         topDate = None
@@ -60,6 +61,9 @@ class ProductListManager:
         url = ProductListManager.SEARCH_URL_BASE + \
             '?' + urllib.urlencode(criteria)
 
+        if self.debug:
+            self.logger.info("search url %s", url)
+
         return url
 
     def __get_xml_data(self, url):
@@ -75,9 +79,9 @@ class ProductListManager:
             c.setopt(c.WRITEFUNCTION, rawDataBuffer.write)
             c.perform()
             c.close()
-        except pycurl.error, e:
+        except pycurl.error as e:
             msg = "Available product search failed  with error: %s" % (e.args[0],)
-            self.log.error(msg)
+            self.loggerger.error(msg)
             # fail the search without an exception we want to continue
 
         return rawDataBuffer.getvalue()
@@ -86,9 +90,9 @@ class ProductListManager:
         root = None
         try:
             root = eTree.fromstring(data)
-        except eTree.ParseError:
+        except eTree.ParseError as e:
             raise Exception("Parse Error: %s \n %s" %
-                            (eTree.ParseError.message, data))
+                            (e.message, data))
 
         return root
 
@@ -102,7 +106,7 @@ class ProductListManager:
             feature = geojson.loads(footprintText)
             footprint = feature.geometry
             geom = shape(feature)
-        except ValueError, e:
+        except ValueError as e:
             # probably failed because footprintText is wkt
             geom = shapely.wkt.loads(footprintText)
             feature = geojson.Feature(geometry=geom)
@@ -178,7 +182,7 @@ class ProductListManager:
         
             productList["products"].append(product)
 
-    def __getPages(self, rawProductsData):
+    def __get_pages(self, rawProductsData):
         root = self.__get_xml_element_tree(rawProductsData)
 
         pages = 1
@@ -212,7 +216,7 @@ class ProductListManager:
         searchUrl = self.__get_search_url(lastIngestionDate, page)
         rawProductsData = self.__get_xml_data(searchUrl)
 
-        pages = self.__getPages(rawProductsData)
+        pages = self.__get_pages(rawProductsData)
 
         while page <= (pages - 1):
             self.__add_products_to_list(rawProductsData, productList)

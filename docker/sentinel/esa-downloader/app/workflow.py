@@ -3,6 +3,7 @@ import datetime
 import os
 import json
 import constants
+import logging
 
 from product_list_manager import ProductListManager
 from product_downloader import ProductDownloader
@@ -10,12 +11,29 @@ from luigi.util import inherits
 from luigi.util import requires
 from luigi.s3 import S3Target
 from datetime import timedelta
+from luigi import LocalTarget
+
 
 FILE_ROOT = 's3://jncc-data/luigi/sentinel/esa_downloader'
+LOCAL_TARGET = '/tmp/luigi_debug/sentinel/esa_downloader'
 
-def getWorkPath(date):
-    return os.path.join(FILE_ROOT, date.strftime("%Y-%m-%d"))
+logger = logging.getLogger('luigi-interface')    
 
+def getTarget(fileName, date, debug):
+    workPath = ''
+    if debug:
+        workPath = os.path.join(LOCAL_TARGET, date.strftime("%Y-%m-%d"))
+    else:
+        workPath = os.path.join(FILE_ROOT, date.strftime("%Y-%m-%d"))
+
+    filePath = os.path.join(workPath, fileName)
+
+    if debug:
+        logger.info("Debug - writing to %s", filePath)
+        return LocalTarget(filePath)
+    else:
+        return S3Target(filePath)
+        
 class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BooleanParameter()
     seedDate = luigi.DateParameter(default=constants.DEFAULT_DATE)
@@ -23,9 +41,8 @@ class LastAvailableProductsList(luigi.ExternalTask):
 
     def output(self):
         d = self.runDate - timedelta(days=1)
-        filePath = os.path.join(getWorkPath(d), 'available.json')
         
-        return S3Target(filePath)
+        return getTarget('available.json', d, self.debug)    
         
 @inherits(LastAvailableProductsList)
 class CreateAvailableProductsList(luigi.Task):
@@ -44,11 +61,8 @@ class CreateAvailableProductsList(luigi.Task):
             listManager = ProductListManager(self.debug)
             listManager.create_list(self.runDate ,lastList, productList, self.seedDate)
 
-    def output(self):
-        workPath = getWorkPath(self.runDate)
-        filePath = os.path.join(workPath,'available.json')
-        
-        return S3Target(filePath)
+    def output(self):        
+        return getTarget('available.json', self.runDate, self.debug)
 
 @requires(CreateAvailableProductsList)
 class DownloadAvailableProducts(luigi.Task):
@@ -69,11 +83,8 @@ class DownloadAvailableProducts(luigi.Task):
                     msg = "Downloaded %s products" % (result,)
                 successFile.write(msg)
 
-    def output(self):
-        workPath = getWorkPath(self.runDate)
-        filePath = os.path.join(workPath, '_success.json')
-        
-        return S3Target(filePath)
+    def output(self):        
+        return getTarget('_success.json', self.runDate, self.debug)
         
 if __name__ == '__main__':
     luigi.run()

@@ -1,0 +1,13 @@
+FROM ubuntu:16.04
+
+#setup app folder
+WORKDIR /app
+
+#install packages
+RUN apt-get update && apt-get -y install apt-utils build-essential software-properties-common python-software-properties curl unzip
+
+#Set default run to python3
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
+# Copy the application to the working folder
+COPY app/ ./

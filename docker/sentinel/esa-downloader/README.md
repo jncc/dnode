@@ -41,7 +41,7 @@ source luigi_venv/bin/activate
 ```
 - Execute the downloader with the following command, substiuting the --runDate 
 ```
-PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts --local-scheduler --runDate 2016-11-28
+PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts --local-scheduler --runDate 2017-04-20 --seedDate 2016-12-19
 ```
 ## debug flag
 Specifying the --debug flag outputs the url that would have been requested only,
@@ -50,3 +50,30 @@ NB: USE WITH CAUTION this WILL update the catalog as if the product had been dow
 ## seedDate flag
 The seedDate is intened for initialising the system. It is the earliest ESA ingestion date from which the system should begin downloading ata
 
+
+
+# Docker host setup
+## Configure  to run as non root user
+
+    sudo groupadd docker  
+    sudo gpasswd -a ${USER} docker 
+    sudo service docker restart 
+
+log back in to apply
+
+
+# Build and run instructions
+
+Build to image: 
+
+    docker build -t esa-downloader .
+
+Start image with interactive console: 
+ shares the workfiles folder in home
+ sets user id and group id
+
+    docker run -i -t -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID esa-downloader /bin/bash
+
+Just run it:
+
+    docker run -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID esa-downloader

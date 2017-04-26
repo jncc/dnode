@@ -5,5 +5,5 @@ PyFunctional
 Shapely
 python-dateutil
 configparser
-
-
+psycopg2
+boto

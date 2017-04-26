@@ -39,7 +39,7 @@ def getDbConnectionString(host, name, user, password):
     return "host=%s name dbname=%s user=%s name password=%s" % (host, name, user, password)
         
 class LastAvailableProductsList(luigi.ExternalTask):
-    debug = luigi.BooleanParameter()
+    debug = luigi.BoolParameter()
     seedDate = luigi.DateParameter(default=constants.DEFAULT_DATE)
     runDate = luigi.DateParameter(default=datetime.datetime.now())
     awsAccessKeyId = luigi.Parameter()
@@ -57,11 +57,10 @@ class CreateAvailableProductsList(luigi.Task):
     dbHost = luigi.Parameter()
     dbName = luigi.Parameter()
     dbUser = luigi.Parameter()
-    dbPassword = luigi.Parameter
+    dbPassword = luigi.Parameter()
 
     def run(self):
         lastList = {"products":[]}
-        workPath = getWorkPath(self.runDate)
 
         # If not seeding get last ingestion list from LastAvailableProductsList task
         if self.seedDate == constants.DEFAULT_DATE:
@@ -70,7 +69,7 @@ class CreateAvailableProductsList(luigi.Task):
                 lastList = json.load(l)
 
         with self.output().open('w') as productList:
-            listManager = ProductListManager(self.debug, dbConn)
+            listManager = ProductListManager(self.debug)
             
             esaCredentials = self.esaUsername + ':' + self.esaPassword
             dbConn = getDbConnectionString(self.dbHost, self.dbName, self.dbUser, self.dbPassword)

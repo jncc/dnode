@@ -27,6 +27,7 @@ RUN pip install -r /config/requirements.txt \
 
 # Copy the app to the working folder
 COPY app/ ./
+RUN chmod u+x exec.sh
 
 # Copy the app config
 ADD config/app.cfg /app
@@ -34,4 +35,4 @@ ADD config/app.cfg /app
 # Copy the luigi configuration to the app folder
 ADD config/luigi.cfg /app
 
-ENTRYPOINT PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts
+ENTRYPOINT ./exec.sh

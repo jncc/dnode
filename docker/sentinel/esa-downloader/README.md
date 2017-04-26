@@ -66,7 +66,11 @@ Build to image:
 
     docker build -t esa-downloader .
 
-Just run it:
+Just run it:  
 
     docker run -v ~/workfiles:/mnt/state  esa-downloader --rundate 2017-04-20
+
+Start interactivly:  
+
+    docker run -it --entrypoint /bin/bash -v ~/workfiles:/mnt/state esa-downloader 
 

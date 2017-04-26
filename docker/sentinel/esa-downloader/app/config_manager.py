@@ -1,6 +1,6 @@
 import sys
 import os
-import ConfigParser as configparser
+import configparser
 
 class ConfigManager:
 

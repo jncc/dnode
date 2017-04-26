@@ -73,7 +73,7 @@ class ProductListManager:
         try:
             c = pycurl.Curl()
             c.setopt(c.URL, str(url))
-            c.setopt(c.USERPWD, esaCredentials))
+            c.setopt(c.USERPWD, esaCredentials)
             c.setopt(c.FOLLOWLOCATION, True)
             c.setopt(c.SSL_VERIFYPEER, False)
             c.setopt(c.WRITEFUNCTION, rawDataBuffer.write)

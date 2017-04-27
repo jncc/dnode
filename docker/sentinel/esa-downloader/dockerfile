@@ -20,7 +20,7 @@ RUN apt-get update && apt-get -y install \
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
 && easy_install3 pip
 
-# Configure the application
+# Configure the python environment
 ADD config/requirements.txt /config
 RUN pip install -r /config/requirements.txt \
 && rm -f /config/requirements.txt

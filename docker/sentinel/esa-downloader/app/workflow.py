@@ -36,7 +36,7 @@ def getTarget(fileName, date, debug, awsAccessKeyId, awsSecretKey):
         return S3Target(path=filePath, client=client)
 
 def getDbConnectionString(host, name, user, password):
-    return "host=%s name dbname=%s user=%s name password=%s" % (host, name, user, password)
+    return "host=%s dbname=%s user=%s password=%s" % (host, name, user, password)
         
 class LastAvailableProductsList(luigi.ExternalTask):
     debug = luigi.BoolParameter()

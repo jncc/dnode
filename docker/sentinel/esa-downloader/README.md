@@ -76,7 +76,7 @@ In /config
 Polygon = The WKT polygon that will be used to search the esa scihub portal for products
 searchCriteria = Optional additional search paramters for the ESA search api. They are appended onto the default search criteria with an AND.
 
-https://scihub.copernicus.eu/twiki/do/view/SciHubUserGuide/5APIsAndBatchScripting#Using_Open_Search_to_discover_pr
+[Further info on search api](https://scihub.copernicus.eu/twiki/do/view/SciHubUserGuide/5APIsAndBatchScripting#Using_Open_Search_to_discover_pr)
 
 #### Amazon
 bucketName = The name of the bucket in which to store downloaded files

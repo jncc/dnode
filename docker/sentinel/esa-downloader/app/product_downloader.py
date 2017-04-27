@@ -150,7 +150,10 @@ class ProductDownloader:
                     os.remove(productZipFile)
                 
                 # add metadata to catalog
-                cat.addProduct(product)
+                if not self.debug:
+                    cat.addProduct(product)
+                else:
+                    self.logger.info("DEBUG: Add product to catalog %s", product["title"]
 
                 downloadedProductCount = downloadedProductCount + 1
 

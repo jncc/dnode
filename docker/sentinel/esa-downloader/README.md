@@ -43,8 +43,7 @@ source luigi_venv/bin/activate
 PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts --local-scheduler --runDate 2017-04-20 --seedDate 2016-12-19
 ```
 ## debug flag
-Specifying the --debug flag outputs the url that would have been requested only,
-NB: USE WITH CAUTION this WILL update the catalog as if the product had been downloaded
+Specifying the --debug flag outputs the url that would have been requested only, does not add products to the catalog 
 
 ## seedDate flag
 The seedDate is intened for initialising the system. It is the earliest ESA ingestion date from which the system should begin downloading ata

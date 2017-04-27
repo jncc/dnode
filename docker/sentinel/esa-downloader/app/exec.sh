@@ -1,5 +1,3 @@
 #!/bin/bash
-echo "some shit"
-echo "$@"
-echo "command"
+rm -rf /mnt/state
 PYTHONPATH='.' luigi --module workflow DownloadAvailableProducts "$@"

@@ -1,6 +1,5 @@
 import datetime
 import json
-import urllib
 import pycurl
 import logging
 import math
@@ -11,10 +10,11 @@ import logging
 import shapely.wkt
 import constants
 
+from urllib.parse import urlencode
 from functional import seq
 from datetime import datetime
 from dateutil import parser
-from io import StringIO
+from io import BytesIO
 from config_manager import ConfigManager
 from catalog_manager import CatalogManager
 from shapely.geometry import shape
@@ -59,7 +59,7 @@ class ProductListManager:
             }
 
         url = ProductListManager.SEARCH_URL_BASE + \
-            '?' + urllib.urlencode(criteria)
+            '?' + urlencode(criteria)
 
         if self.debug:
             self.logger.info("search url %s", url)
@@ -68,7 +68,7 @@ class ProductListManager:
 
     def __get_xml_data(self, url, esaCredentials):
 
-        rawDataBuffer = StringIO()
+        buffer = BytesIO()
 
         try:
             c = pycurl.Curl()
@@ -76,25 +76,18 @@ class ProductListManager:
             c.setopt(c.USERPWD, esaCredentials)
             c.setopt(c.FOLLOWLOCATION, True)
             c.setopt(c.SSL_VERIFYPEER, False)
-            c.setopt(c.WRITEFUNCTION, rawDataBuffer.write)
+            c.setopt(c.WRITEFUNCTION, buffer.write)
             c.perform()
             c.close()
         except pycurl.error as e:
             msg = "Available product search failed  with error: %s" % (e.args[0],)
-            self.loggerger.error(msg)
+            self.logger.error(msg)
             # fail the search without an exception we want to continue
-
-        return rawDataBuffer.getvalue()
+        body = buffer.getvalue()
+        return body.decode('iso-8859-1')
 
     def __get_xml_element_tree(self, data):
-        root = None
-        try:
-            root = eTree.fromstring(data)
-        except eTree.ParseError as e:
-            raise Exception("Parse Error: %s \n %s" %
-                            (e.message, data))
-
-        return root
+        return eTree.fromstring(data)
 
     def __getGeometry(self, footprintText):
         
@@ -139,7 +132,7 @@ class ProductListManager:
             endPosition = ''
             ingestionDate = ''
             for string in entry.iter('{http://www.w3.org/2005/Atom}str'):
-                if string.attrib.has_key('name'):
+                if 'name' in string.attrib:
                     if string.attrib['name'] == 'footprint':
                         footprint = string.text
                     if string.attrib['name'] == 'orbitdirection':
@@ -149,7 +142,7 @@ class ProductListManager:
                     if string.attrib['name'] == 'platformname':
                         platform = string.text
             for string in entry.iter('{http://www.w3.org/2005/Atom}date'):
-                if string.attrib.has_key('name'):
+                if 'name' in string.attrib:
                     if string.attrib['name'] == 'ingestiondate':
                         ingestionDate = string.text
                     if string.attrib['name'] == 'beginposition':
@@ -157,7 +150,7 @@ class ProductListManager:
                     if string.attrib['name'] == 'endposition':
                         endPosition = string.text
             for string in entry.iter('{http://www.w3.org/2005/Atom}int'):
-                if string.attrib.has_key('name'):
+                if 'name' in string.attrib:
                     if string.attrib['name'] == 'orbitnumber':
                         orbitNo = string.text
                     if string.attrib['name'] == 'relativeorbitnumber':

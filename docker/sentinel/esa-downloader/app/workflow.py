@@ -73,7 +73,7 @@ class CreateAvailableProductsList(luigi.Task):
             
             esaCredentials = self.esaUsername + ':' + self.esaPassword
             dbConn = getDbConnectionString(self.dbHost, self.dbName, self.dbUser, self.dbPassword)
-            listManager.create_list(self.runDate ,lastList, productList, self.seedDate, self.esaUser, esaCredentials, dbConn)
+            listManager.create_list(self.runDate ,lastList, productList, self.seedDate, esaCredentials, dbConn)
 
     def output(self):        
         return getTarget('available.json', self.runDate, self.debug, self.awsAccessKeyId, self.awsSecretKey)

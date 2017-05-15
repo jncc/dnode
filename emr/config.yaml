@@ -1,0 +1,30 @@
+log_dir: ./logs
+currentCluster: ./current_cluster.json
+historyFile: ./historical_cluster.json
+aws:
+    ec2:
+        key: ec2-key-name
+        subnet: aws-subnet-id
+    emr:
+        cluster-name: TestCluster
+        release-label: emr-5.5.0
+        default-roles: true
+        service-role: EMR_DefaultRole
+        ec2-role: EMR_EC2_DefaultRole
+        applications: 
+            - Spark
+    profile: test-profile 
+    tags:
+        project: test
+nodes:
+    master:
+        instance-type: m1.medium
+        #ebs:
+        #    type: gp2
+        #    size: 500
+    core:
+        instance-type: m1.medium
+        instance-count: 1
+        #ebs:
+        #    type: gp2
+        #    size: 500

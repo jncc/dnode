@@ -1,22 +1,20 @@
 import datetime
 import json
-import urllib
 import pycurl
 import logging
 import math
 import geojson
 import shapely
 import xml.etree.ElementTree as eTree
-import log_helper
+import logging
 import shapely.wkt
 import constants
 
-
-
+from urllib.parse import urlencode
 from functional import seq
 from datetime import datetime
 from dateutil import parser
-from StringIO import StringIO
+from io import BytesIO
 from config_manager import ConfigManager
 from catalog_manager import CatalogManager
 from shapely.geometry import shape
@@ -25,13 +23,14 @@ from shapely.geometry import shape
 
 
 class ProductListManager:
-    POLYGON = 'POLYGON ((-6.604981356192942 49.438680703689379,-10.186858447403869 60.557572594302513,0.518974191882126 61.368840444480654,2.668100446608686 53.215944284612512,1.235349610124312 50.589462482174554,-6.604981356192942 49.438680703689379))'
+   # POLYGON = 'POLYGON ((-6.604981356192942 49.438680703689379,-10.186858447403869 60.557572594302513,0.518974191882126 61.368840444480654,2.668100446608686 53.215944284612512,1.235349610124312 50.589462482174554,-6.604981356192942 49.438680703689379))'
     SEARCH_URL_BASE = 'https://scihub.copernicus.eu/apihub/search'
 
     def __init__(self, debug):
-        self.config = ConfigManager("cfg.ini")
+        self.config = ConfigManager("app.cfg")
         self.debug = debug
-        self.log = log_helper.setup_logging('CreateAvailableProductsList', self.debug)
+        self.logger = logging.getLogger('luigi-interface') 
+
 
     def __get_last_ingestion_date(self, productList):
         topDate = None
@@ -46,42 +45,49 @@ class ProductListManager:
     def __get_search_url(self, lastIngestionDate, page):
         ingestionDateString = lastIngestionDate.strftime(
             '%Y-%m-%d') + 'T00:00:00.000Z'
-        criteria = {'q': 'ingestiondate:[%s TO NOW] AND footprint:"Intersects(%s)"' % (
-            ingestionDateString, ProductListManager.POLYGON)}
+
+        q = 'ingestiondate:[%s TO NOW] AND footprint:"Intersects(%s)"' % (
+            ingestionDateString, self.config.get_search_polygon())
+        
+        if self.config.get_esa_searchCriteria() != None:
+            q  = '%s AND %s' % (q, self.config.get_esa_searchCriteria())
+
+        criteria = {
+            'start' : page,
+            'rows' : 100,
+            'q': q
+            }
+
         url = ProductListManager.SEARCH_URL_BASE + \
-            '?' + urllib.urlencode(criteria)
+            '?' + urlencode(criteria)
+
+        if self.debug:
+            self.logger.info("search url %s", url)
 
         return url
 
-    def __get_xml_data(self, url):
+    def __get_xml_data(self, url, esaCredentials):
 
-        rawDataBuffer = StringIO()
+        buffer = BytesIO()
 
         try:
             c = pycurl.Curl()
             c.setopt(c.URL, str(url))
-            c.setopt(c.USERPWD, self.config.get_esa_credentials())
+            c.setopt(c.USERPWD, esaCredentials)
             c.setopt(c.FOLLOWLOCATION, True)
             c.setopt(c.SSL_VERIFYPEER, False)
-            c.setopt(c.WRITEFUNCTION, rawDataBuffer.write)
+            c.setopt(c.WRITEFUNCTION, buffer.write)
             c.perform()
             c.close()
-        except pycurl.error, e:
+        except pycurl.error as e:
             msg = "Available product search failed  with error: %s" % (e.args[0],)
-            self.log.error(msg)
+            self.logger.error(msg)
             # fail the search without an exception we want to continue
-
-        return rawDataBuffer.getvalue()
+        body = buffer.getvalue()
+        return body.decode('iso-8859-1')
 
     def __get_xml_element_tree(self, data):
-        root = None
-        try:
-            root = eTree.fromstring(data)
-        except eTree.ParseError:
-            raise Exception("Parse Error: %s \n %s" %
-                            (eTree.ParseError.message, data))
-
-        return root
+        return eTree.fromstring(data)
 
     def __getGeometry(self, footprintText):
         
@@ -93,7 +99,7 @@ class ProductListManager:
             feature = geojson.loads(footprintText)
             footprint = feature.geometry
             geom = shape(feature)
-        except ValueError, e:
+        except ValueError as e:
             # probably failed because footprintText is wkt
             geom = shapely.wkt.loads(footprintText)
             feature = geojson.Feature(geometry=geom)
@@ -126,7 +132,7 @@ class ProductListManager:
             endPosition = ''
             ingestionDate = ''
             for string in entry.iter('{http://www.w3.org/2005/Atom}str'):
-                if string.attrib.has_key('name'):
+                if 'name' in string.attrib:
                     if string.attrib['name'] == 'footprint':
                         footprint = string.text
                     if string.attrib['name'] == 'orbitdirection':
@@ -136,7 +142,7 @@ class ProductListManager:
                     if string.attrib['name'] == 'platformname':
                         platform = string.text
             for string in entry.iter('{http://www.w3.org/2005/Atom}date'):
-                if string.attrib.has_key('name'):
+                if 'name' in string.attrib:
                     if string.attrib['name'] == 'ingestiondate':
                         ingestionDate = string.text
                     if string.attrib['name'] == 'beginposition':
@@ -144,7 +150,7 @@ class ProductListManager:
                     if string.attrib['name'] == 'endposition':
                         endPosition = string.text
             for string in entry.iter('{http://www.w3.org/2005/Atom}int'):
-                if string.attrib.has_key('name'):
+                if 'name' in string.attrib:
                     if string.attrib['name'] == 'orbitnumber':
                         orbitNo = string.text
                     if string.attrib['name'] == 'relativeorbitnumber':
@@ -169,7 +175,7 @@ class ProductListManager:
         
             productList["products"].append(product)
 
-    def __getPages(self, rawProductsData):
+    def __get_pages(self, rawProductsData):
         root = self.__get_xml_element_tree(rawProductsData)
 
         pages = 1
@@ -181,7 +187,7 @@ class ProductListManager:
         
         return pages
 
-    def create_list(self,runDate, productList, outputListFile, seedDate):
+    def create_list(self,runDate, productList, outputListFile, seedDate, esaCredentials, dbConnectionString):
         lastIngestionDate = None
 
         if seedDate == constants.DEFAULT_DATE:
@@ -197,26 +203,26 @@ class ProductListManager:
         if lastIngestionDate is None:
             raise Exception("Unable to determine last ingestion date")
 
-        page = 1
+        page = 0
         pages = 1
 
         searchUrl = self.__get_search_url(lastIngestionDate, page)
-        rawProductsData = self.__get_xml_data(searchUrl)
+        rawProductsData = self.__get_xml_data(searchUrl, esaCredentials)
 
-        pages = self.__getPages(rawProductsData)
+        pages = self.__get_pages(rawProductsData)
 
-        while page <= pages:
+        while page <= (pages - 1):
             self.__add_products_to_list(rawProductsData, productList)
             page = page + 1
 
             searchUrl = self.__get_search_url(lastIngestionDate, page)
-            rawProductsData = self.__get_xml_data(searchUrl)
+            rawProductsData = self.__get_xml_data(searchUrl, esaCredentials)
             if rawProductsData == None:
                 break
 
         # remove duplicate products
         # remove products that are already in the catalog
-        with CatalogManager() as cat:
+        with CatalogManager(dbConnectionString) as cat:
             productList["products"] = (seq(productList["products"])
                                         .distinct_by(lambda x: x["uniqueId"])
                                         .filter(lambda x: cat.exists(x["uniqueId"]) != True )).to_list()

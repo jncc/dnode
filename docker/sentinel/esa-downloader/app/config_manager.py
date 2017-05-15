@@ -1,6 +1,6 @@
 import sys
 import os
-import ConfigParser as configparser
+import configparser
 
 class ConfigManager:
 
@@ -11,24 +11,21 @@ class ConfigManager:
         try: 
             self.config = configparser.ConfigParser()
             self.config.read([configuration_file])
-        except configparser.Error, e:
+        except configparser.Error as e:
             msg = "Error parsing configuration file: %s" & (e,)
             raise Exception(msg)
 
-    def get_esa_credentials(self):
-        username = self.config.get('EsaCredentials','username')
-        password = self.config.get('EsaCredentials','password')
+    def get_esa_searchCriteria(self):
+        try:
+            return self.config.get('EsaApi','searchCriteria')
+        except configparser.NoOptionError:
+            return None
 
-        return username + ':' + password
+    def get_search_polygon(self):
+        return self.config.get('EsaApi','polygon')
 
     def getDatabaseConnectionString(self):
         return self.config.get('Database', 'connection')
-
-    def getAmazonKeyId(self):
-        return self.config.get('Amazon', 'accessKeyId')
-
-    def getAmazonKeySecret(self):
-        return self.config.get('Amazon', 'accessKeySecret')
 
     def getAmazonDestPath(self):
         return self.config.get('Amazon', 'destPath')

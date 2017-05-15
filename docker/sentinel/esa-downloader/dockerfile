@@ -1,0 +1,38 @@
+FROM ubuntu:16.04
+
+# Setup app folder
+WORKDIR /app
+
+# Make configuration folder
+RUN mkdir /config
+
+# Install packages
+RUN apt-get update && apt-get -y install \
+    build-essential \
+    curl \
+    software-properties-common \
+    libgeos-dev \
+    python3-software-properties \
+    python3-setuptools \
+&& rm -rf /var/lib/apt/lists/*
+
+# Setup python3
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+&& easy_install3 pip
+
+# Configure the python environment
+ADD config/requirements.txt /config
+RUN pip install -r /config/requirements.txt \
+&& rm -f /config/requirements.txt
+
+# Copy the app to the working folder
+COPY app/ ./
+RUN chmod u+x exec.sh
+
+# Copy the app config
+ADD config/app.cfg /app
+
+# Copy the luigi configuration to the app folder
+ADD config/luigi.cfg /app
+
+ENTRYPOINT ["./exec.sh"]

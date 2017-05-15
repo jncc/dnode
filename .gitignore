@@ -1,3 +1,5 @@
+#local readme files
+*.md.private
 
 #npm
 node_modules/

@@ -52,6 +52,8 @@ def getClusterStartCommand(config):
 
     if 'subnet' in ec2 and ec2['subnet'] is not None:
         ec2Attribs = '%s,SubnetId=%s' % (ec2Attribs, ec2['subnet'])
+    if 'master-sg' in ec2 and 'slave-sg' in ec2:
+        ec2Attribs = '%s,EmrManagedMasterSecurityGroup=%s,EmrManagedSlaveSecurityGroup=%s' % (ec2Attribs, ec2['master-sg'], ec2['slave-sg'])
 
     arguments = '%s --ec2-attributes %s' % (arguments, ec2Attribs)
 

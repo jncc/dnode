@@ -19,7 +19,7 @@ def createInstanceGroup(config, groupType):
             configStr, config['instance-count'])
 
     if 'ebs' in config:
-        configStr = '%s,EbsConfiguration={EbsOptimized=true,EbsBlockDeviceConfigs=[{VolumeSpecification={VolumeType=%s,SizeInGB=%d}}' % (
+        configStr = '%s,EbsConfiguration={EbsOptimized=true,EbsBlockDeviceConfigs=[{VolumeSpecification={VolumeType=%s,SizeInGB=%d}}]}' % (
             configStr, config['ebs']['type'], config['ebs']['size'])
 
     return configStr
@@ -52,8 +52,8 @@ def getClusterStartCommand(config):
 
     if 'subnet' in ec2 and ec2['subnet'] is not None:
         ec2Attribs = '%s,SubnetId=%s' % (ec2Attribs, ec2['subnet'])
-    if 'master-sg' in ec2 and 'slave-sg' in ec2:
-        ec2Attribs = '%s,EmrManagedMasterSecurityGroup=%s,EmrManagedSlaveSecurityGroup=%s' % (ec2Attribs, ec2['master-sg'], ec2['slave-sg'])
+    if 'master-sg' in emr and 'slave-sg' in emr:
+        ec2Attribs = '%s,EmrManagedMasterSecurityGroup=%s,EmrManagedSlaveSecurityGroup=%s' % (ec2Attribs, emr['master-sg'], emr['slave-sg'])
 
     arguments = '%s --ec2-attributes %s' % (arguments, ec2Attribs)
 

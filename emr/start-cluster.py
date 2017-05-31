@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 import yaml
+import uuid
 
 def createInstanceGroup(config, groupType):
     configStr = '"InstanceGroupType":"%s","InstanceType":"%s"' % (
@@ -29,6 +30,25 @@ def appendProfileArgument(aws, cmd):
         return '%s --profile %s' % (cmd, aws['profile'])
     else:
         return cmd
+
+def buildBootstrap(bootstrap):
+    arguments = []
+
+    for cmd in bootstrap:       
+        argument = {}
+        argument['Path'] = cmd['path']
+
+        if 'name' in cmd:
+            argument['Name'] = cmd['name']
+        else:
+            argument['Name'] = uuid.uuid4().hex
+        
+        if 'args' in cmd:
+            argument['Args'] = cmd['args']
+
+        arguments.append(argument)
+    
+    return '--bootstrap-actions \'%s\''  % (json.dumps(arguments, separators=(',', ':')))
 
 def getClusterStartCommand(config):
     aws = config.get('aws')
@@ -72,8 +92,16 @@ def getClusterStartCommand(config):
 
     arguments = '%s --instance-groups \'[%s]\'' % (arguments, ','.join(instanceGroups))
 
-    arguments = appendProfileArgument(aws, arguments)
+    # Bootstrap action
+    if 'bootstrap-actions' in emr:
+        arguments = '%s %s' % (arguments, buildBootstrap(emr['bootstrap-actions']))
+    
+    # Logs
+    if 'log-uri' in emr:
+        arguments = '%s --log-uri %s' % (arguments, emr['log-uri'])
 
+    arguments = appendProfileArgument(aws, arguments)
+    
     return 'aws emr create-cluster %s' % arguments
 
 def getClusterDetails(config, clusterId, startTime, logger):
@@ -145,11 +173,14 @@ def waitForCluster(config, clusterId, logger):
 
             elif output['Cluster']['Status']['State'] == 'STARTING':
                 logger.info('Waiting for cluster to start')
-                time.sleep(30)
+            elif output['Cluster']['Status']['State'] == 'BOOTSTRAPPING':
+                logger.info('Cluster is now bootstrapping')
             else:
                 logger.error('Terminating Cluster - Unexpected Cluster Status - %s' % (output['Cluster']['Status']['State']))
                 terminateCluster(config, output['Cluster']['Id'], logger)
                 raise RuntimeError('Unexpected Cluster Status')
+                
+            time.sleep(30)
         else:
             if len(err) > 0:
                 raise RuntimeError(err)
@@ -205,17 +236,17 @@ if __name__ == '__main__':
         terminateCluster(config, id, logger)
     else:
         logger.info('Creating Cluster')
+        logger.info(getClusterStartCommand(config))
+        # p = subprocess.Popen(getClusterStartCommand(config),
+        #                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        # (output, err) = p.communicate()
 
-        p = subprocess.Popen(getClusterStartCommand(config),
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        (output, err) = p.communicate()
-
-        aws = config.get('aws')
-        arguments = appendProfileArgument(aws, '')
+        # aws = config.get('aws')
+        # arguments = appendProfileArgument(aws, '')
         
-        if len(err) > 0:
-            logger.error(err)
-        elif len(output) > 0:
-            clusterId = json.loads(output)['ClusterId']
-            logger.info('Created Cluster [%s]' % clusterId)
-            waitForCluster(config, clusterId, logger)
+        # if len(err) > 0:
+        #     logger.error(err)
+        # elif len(output) > 0:
+        #     clusterId = json.loads(output)['ClusterId']
+        #     logger.info('Created Cluster [%s]' % clusterId)
+        #     waitForCluster(config, clusterId, logger)

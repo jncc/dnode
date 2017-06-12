@@ -2,6 +2,16 @@
 # This script gets the Sentinel-2 ARD catalogue data for alpha-1 from the S3 bucket.
 # It produces data.json containing the product representations for the web deli.
 
+# Instal spatial packages from apt:
+# sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
+# sudo apt-get update
+## python3-gdal or python-gdal depending on the python env to be used
+# sudo apt-get install build-essential libgeos-dev python-dev gdal-bin libgdal-dev python3-gdal python-gdal
+
+# for special people running conda
+# conda install -c conda-forge gdal=2.2.0
+
+# pip install gdal
 # pip install boto3
 # pip install awscli
 # pip install pyfunctional

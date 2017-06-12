@@ -119,7 +119,7 @@ collections = [{
         "spatialReferenceSystem": "EPSG:4326"
     },
     #"bbox": {},  todo
-    #"data": { },
+    "data": { },
     "products": products.list()
 }]
 

@@ -92,7 +92,7 @@ def makeProduct(result, match):
                      "type": "Geotiff", 
                  },
                  "wms": {
-                     "name": guid,
+                     "name": "s2_ard:" + m["name"] + "_rgba",
                      "base_url": "https://eo.jncc.gov.uk/geoserver/ows"
                  }
              }

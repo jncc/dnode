@@ -38,8 +38,8 @@ Start image with interactive console:
  shares the workfiles folder in home
  sets user id and group id
 
-    docker run -i -t -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest /bin/bash
+    docker run -i -t -v ~/workfiles:/mnt/state -e AWSKEY=<aws access key> -e AWSSECRET=<aws secret key> -e SOURCE_PATH=<s3 path to source file> 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest /bin/bash
 
 Just run it:
 
-    docker run -v ~/workfiles:/mnt/state -e USERID=$UID -e GROUPID=$GID 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest
+    docker run -v ~/workfiles:/mnt/state -e AWSKEY=<aws access key> -e AWSSECRET=<aws secret key> -e SOURCE_PATH=<s3 path to source file> 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest

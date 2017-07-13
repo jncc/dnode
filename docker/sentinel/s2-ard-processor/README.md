@@ -36,17 +36,17 @@ Build to image:
 
 ## Run time paramters
 Parmeters are passed in as environment variables.
-- AWSKEY=<aws access key> 
-- AWSSECRET=<aws secret key> 
-- S3SOURCEPATH=<s3 path to source file including file name> 
-- S3DESTPATH=<s3 path for output file inculding file name> 
+- AWSKEY= aws access key
+- AWSSECRET= aws secret key 
+- S3SOURCEPATH= s3 path to source file including file name 
+- S3DESTPATH= s3 path for output file inculding file name
 
 Start image with interactive console: 
  shares the workfiles folder in home
  sets user id and group id
 
-    docker run -i -t -v ~/workfiles:/mnt/state -e AWSKEY=<aws access key> -e AWSSECRET=<aws secret key> -e S3SOURCEPATH=<s3 path to source file> S3DESTPATH=<s3 path for output file> 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest /bin/bash
+    docker run -i -t -v ~/workfiles:/mnt/state -e AWSKEY= aws access key> -e AWSSECRET=secret -e S3SOURCEPATH=source path S3DESTPATH=output path 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest /bin/bash
 
 Just run it:
 
-    docker run -v ~/workfiles:/mnt/state -e AWSKEY=<aws access key> -e AWSSECRET=<aws secret key> -e S3SOURCEPATH=<s3 path to source file> S3DESTPATH=<s3 path for output file> 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest
+    docker run -v ~/workfiles:/mnt/state -e AWSKEY= aws access key> -e AWSSECRET=secret -e S3SOURCEPATH=source path S3DESTPATH=output 914910572686.dkr.ecr.eu-west-1.amazonaws.com/process-test:latest

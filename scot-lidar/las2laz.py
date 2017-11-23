@@ -71,7 +71,6 @@ if __name__ == "__main__":
                 create_laz_product(args.executable, input_file, output_file)
 
                 logger.info('Calculating checksum for resulting .laz file')
-                logger.info(output_file)
                 checksum = md5(output_file)
 
                 logger.info('Uploading resulting .laz file to output path')

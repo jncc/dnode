@@ -83,4 +83,4 @@ if __name__ == "__main__":
                 logger.error('Process errored on %s' % (match.key))
                 logger.error('Error is:')
                 logger.error(sys.exc_info()[0].message)
-    logger.info('Finished scanning bucket with prefix \'%s\'' % args.prefix)
+    logger.info('Finished scanning bucket with prefix \'%s\'' % args.input)

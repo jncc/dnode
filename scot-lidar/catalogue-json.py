@@ -13,12 +13,6 @@ s3 = boto3.resource('s3')
 bucket = s3.Bucket('scotland-gov-gi')
 print('Bucket name is ' + bucket.name)
 
-# results = bucket.objects.filter(Prefix='lidar-1/processed/DSM/gridded/27700/10000')
-# for o in results:
-#     print(o.key)
-# exit()
-
-
 def get_bbox(item):
     minx = item['geometry']['coordinates'][0][0][0]
     miny = item['geometry']['coordinates'][0][0][1]
@@ -61,8 +55,8 @@ def get_products(grids, s3_path, bucket, s3_region, s3_bucket, base_title, type)
             grid = os.path.basename(o.key).replace('.tif', '').replace('DSM_', '')
         elif (type is 'DTM' and o.key.endswith('.tif')):
             grid = os.path.basename(o.key).replace('.tif', '').replace('DTM_', '')
-        elif (type is 'LAS' and o.key.endswith('.las')):
-            grid = os.path.basename(o.key).replace('.las', '').replace('LAS_', '')
+        elif (type is 'LAZ' and o.key.endswith('.laz')):
+            grid = os.path.basename(o.key).replace('.laz', '').replace('LAS_', '') # not LAS, not LAZ
         if (grid is not None):
             products.append({
                 "id": str(uuid.uuid4()),
@@ -75,7 +69,7 @@ def get_products(grids, s3_path, bucket, s3_region, s3_bucket, base_title, type)
                     "download": {
                         "url": 'https://s3-%s.amazonaws.com/%s/%s' % (s3_region, s3_bucket, o.key),
                         "size": o.size,
-                        "type": 'LAS' if type is 'LAS' else 'GeoTIFF'
+                        "type": 'LAZ' if type is 'LAZ' else 'GeoTIFF'
                     }
                 }
             })
@@ -86,15 +80,12 @@ def get_products(grids, s3_path, bucket, s3_region, s3_bucket, base_title, type)
 s3_region = 'eu-west-1'
 s3_bucket = 'scotland-gov-gi'
 
-# conn = boto.s3.connect_to_region(s3_region, aws_access_key_id='xxx', aws_secret_access_key='xxx', is_secure=True)
-# bucket = conn.get_bucket(s3_bucket)
-
 phase_1_s3_dsm_path = 'lidar-1/processed/DSM/gridded/27700/10000'
 phase_1_s3_dtm_path = 'lidar-1/processed/DTM/gridded/27700/10000'
-phase_1_s3_las_path = 'lidar-1/raw/las/gridded/27700/1000'
+phase_1_s3_laz_path = 'lidar-1/raw/laz/gridded/27700/1000'
 phase_2_s3_dsm_path = 'lidar-2/processed/DSM/gridded/27700/10000'
 phase_2_s3_dtm_path = 'lidar-2/processed/DTM/gridded/27700/10000'
-phase_2_s3_las_path = 'lidar-2/raw/las/gridded/27700/5000'
+phase_2_s3_laz_path = 'lidar-2/raw/laz/gridded/27700/5000'
 
 print('Loading grids...')
 grids = get_grids('wgs84.1k.grid.scotland.json', 'osgb.1k.grid.scotland.json')
@@ -102,9 +93,7 @@ grids5k = get_grids('wgs84.5k.grid.scotland.json', 'osgb.5k.grid.scotland.json')
 grids10k = get_grids('wgs84.grid.json', 'osgb.grid.json')
 print('Loaded grids!')
 
-#exit()
-
-with open('output.json', 'w') as output:
+with open('data.lidar.json', 'w') as output:
     collections = {'data': [
     {
         'id': 'b32e4101-6d8a-538b-9c01-a23389acfe35',
@@ -161,7 +150,7 @@ with open('output.json', 'w') as output:
     {
         'id': 'ddc9c05b-6060-5abb-92c4-5586ed52ad77',
         'metadata': {
-            'title': 'LiDAR for Scotland Phase I LAS',
+            'title': 'LiDAR for Scotland Phase I LAZ',
             'abstract': 'The Scottish Public Sector LiDAR Phase I dataset was commissioned by the Scottish Government, SEPA and Scottish Water in 2011. This was commissioned in response to the Flood Risk Management Act (2009). The contract was awarded to Atkins, and the LiDAR data was collected and delivered by Blom. Airbourne LiDAR data was collected for 10 collection areas (the dataset does not have full national coverage) totalling 11,845 km2 between March 2011 and May 2012. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
@@ -176,7 +165,7 @@ with open('output.json', 'w') as output:
             'metadataLanguage': 'English',
             'spatialReferenceSystem': 'EPSG:27700'
         },
-        'products': get_products(grids, phase_1_s3_las_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase I', 'LAS'),
+        'products': get_products(grids, phase_1_s3_laz_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase I', 'LAZ'),
         'data': {
             'wms': {
                 'name': 'scotland:scotland-lidar-1-dsm',
@@ -239,7 +228,7 @@ with open('output.json', 'w') as output:
     {
         'id': 'a4b6e778-0fc6-5fe6-9c70-9721ad9a1ff8',
         'metadata': {
-            'title': 'LiDAR for Scotland Phase II LAS',
+            'title': 'LiDAR for Scotland Phase II LAZ',
             'abstract': 'The Scottish Public Sector LiDAR Phase II dataset was commissioned by the Scottish Government, SEPA, 13 local authorities and sportscotland in 2012. This was commissioned in response to the Flood Risk Management Act (2009). The project was managed by Sniffer and the contract was awarded to Fugro BKS. Airbourne LiDAR data was collected for 66 sites (the dataset does not have full national coverage) totalling 3,516 km2 between 29th November 2012 and 18th April 2014. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
@@ -254,7 +243,7 @@ with open('output.json', 'w') as output:
             'metadataLanguage': 'English',
             'spatialReferenceSystem': 'EPSG:27700'
         },
-        'products': get_products(grids5k, phase_2_s3_las_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase II', 'LAS'),
+        'products': get_products(grids5k, phase_2_s3_laz_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase II', 'LAZ'),
         'data': {
             'wms': {
                 'name': 'scotland:scotland-lidar-2-dsm',
@@ -264,3 +253,4 @@ with open('output.json', 'w') as output:
     }]}
     json.dump(collections, output)
 
+print('Done.')

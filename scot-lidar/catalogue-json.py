@@ -113,6 +113,7 @@ with open('data.lidar.json', 'w') as output:
             'metadataLanguage': 'English',
             'spatialReferenceSystem': 'EPSG:27700'
         },
+        'metadataExternalLink': 'https://www.spatialdata.gov.scot/geonetwork/srv/eng/catalog.search#/metadata/92367c84-74d3-4426-8b0f-6f4a8096f593',
         'products': get_products(grids10k, phase_1_s3_dsm_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase I', 'DSM'),
         'data': {
             'wms': {
@@ -139,6 +140,7 @@ with open('data.lidar.json', 'w') as output:
             'metadataLanguage': 'English',
             'spatialReferenceSystem': 'EPSG:27700'
         },
+        'metadataExternalLink': 'https://www.spatialdata.gov.scot/geonetwork/srv/eng/catalog.search#/metadata/40017f89-2857-49cb-a913-e0784f250769',
         'products': get_products(grids10k, phase_1_s3_dtm_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase I', 'DTM'),
         'data': {
             'wms': {
@@ -150,7 +152,7 @@ with open('data.lidar.json', 'w') as output:
     {
         'id': 'ddc9c05b-6060-5abb-92c4-5586ed52ad77',
         'metadata': {
-            'title': 'LiDAR for Scotland Phase I LAZ',
+            'title': 'LiDAR for Scotland Phase I LAS (LAZ)',
             'abstract': 'The Scottish Public Sector LiDAR Phase I dataset was commissioned by the Scottish Government, SEPA and Scottish Water in 2011. This was commissioned in response to the Flood Risk Management Act (2009). The contract was awarded to Atkins, and the LiDAR data was collected and delivered by Blom. Airbourne LiDAR data was collected for 10 collection areas (the dataset does not have full national coverage) totalling 11,845 km2 between March 2011 and May 2012. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
@@ -165,6 +167,7 @@ with open('data.lidar.json', 'w') as output:
             'metadataLanguage': 'English',
             'spatialReferenceSystem': 'EPSG:27700'
         },
+        'metadataExternalLink': 'https://www.spatialdata.gov.scot/geonetwork/srv/eng/catalog.search#/metadata/3d53554e-1072-4039-8a51-d6701f345fe0',
         'products': get_products(grids, phase_1_s3_laz_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase I', 'LAZ'),
         'data': {
             'wms': {
@@ -191,6 +194,7 @@ with open('data.lidar.json', 'w') as output:
             'metadataLanguage': 'English',
             'spatialReferenceSystem': 'EPSG:27700'
         },
+        'metadataExternalLink': 'https://www.spatialdata.gov.scot/geonetwork/srv/eng/catalog.search#/metadata/689b5296-d265-4927-8449-99b46fa3f4e7',
         'products': get_products(grids10k, phase_2_s3_dsm_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase II', 'DSM'),
         'data': {
             'wms': {
@@ -217,6 +221,7 @@ with open('data.lidar.json', 'w') as output:
             'metadataLanguage': 'English',
             'spatialReferenceSystem': 'EPSG:27700'
         },
+        'metadataExternalLink': 'https://www.spatialdata.gov.scot/geonetwork/srv/eng/catalog.search#/metadata/2835f36d-35cf-4166-9bf0-09b3fc839f62',
         'products': get_products(grids10k, phase_2_s3_dtm_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase II', 'DTM'),
         'data': {
             'wms': {
@@ -228,7 +233,7 @@ with open('data.lidar.json', 'w') as output:
     {
         'id': 'a4b6e778-0fc6-5fe6-9c70-9721ad9a1ff8',
         'metadata': {
-            'title': 'LiDAR for Scotland Phase II LAZ',
+            'title': 'LiDAR for Scotland Phase II LAS (LAZ)',
             'abstract': 'The Scottish Public Sector LiDAR Phase II dataset was commissioned by the Scottish Government, SEPA, 13 local authorities and sportscotland in 2012. This was commissioned in response to the Flood Risk Management Act (2009). The project was managed by Sniffer and the contract was awarded to Fugro BKS. Airbourne LiDAR data was collected for 66 sites (the dataset does not have full national coverage) totalling 3,516 km2 between 29th November 2012 and 18th April 2014. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
@@ -243,6 +248,7 @@ with open('data.lidar.json', 'w') as output:
             'metadataLanguage': 'English',
             'spatialReferenceSystem': 'EPSG:27700'
         },
+        'metadataExternalLink': 'https://www.spatialdata.gov.scot/geonetwork/srv/eng/catalog.search#/metadata/02fe2556-3394-42e8-a91c-eb3e3b6efe9d',
         'products': get_products(grids5k, phase_2_s3_laz_path, bucket, s3_region, s3_bucket, 'LiDAR for Scotland Phase II', 'LAZ'),
         'data': {
             'wms': {

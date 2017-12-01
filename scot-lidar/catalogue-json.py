@@ -99,7 +99,7 @@ with open('data.lidar.json', 'w') as output:
         'id': 'b32e4101-6d8a-538b-9c01-a23389acfe35',
         'metadata': {
             'title': 'LiDAR for Scotland Phase I DSM',
-            'abstract': 'The Scottish Public Sector LiDAR Phase I dataset was commissioned by the Scottish Government, SEPA and Scottish Water in 2011. This was commissioned in response to the Flood Risk Management Act (2009). The contract was awarded to Atkins, and the LiDAR data was collected and delivered by Blom. Airbourne LiDAR data was collected for 10 collection areas (the dataset does not have full national coverage) totalling 11,845 km2 between March 2011 and May 2012. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
+            'abstract': 'The Scottish Public Sector LiDAR (Phase I) dataset was commissioned in response to the Flood Risk Management Act (2009) by the Scottish Government, Scottish Environmental Protection Agency (SEPA), and Scottish Water collaboratively. Airborne LiDAR data was collected across 10 sites totalling 11,845 km2 (note the dataset does not have full national coverage) between March 2011 and May 2012. Aside from flood risk management, this data has also been used for archaeological and orienteering purposes. This dataset reflects the Digital Surface Model (DSM) produced from the point cloud data.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
             'resourceType': 'Dataset',
@@ -126,7 +126,7 @@ with open('data.lidar.json', 'w') as output:
         'id': '572c2ead-84bc-5d27-8a2e-8fb1b35e5acc',
         'metadata': {
             'title': 'LiDAR for Scotland Phase I DTM',
-            'abstract': 'The Scottish Public Sector LiDAR Phase I dataset was commissioned by the Scottish Government, SEPA and Scottish Water in 2011. This was commissioned in response to the Flood Risk Management Act (2009). The contract was awarded to Atkins, and the LiDAR data was collected and delivered by Blom. Airbourne LiDAR data was collected for 10 collection areas (the dataset does not have full national coverage) totalling 11,845 km2 between March 2011 and May 2012. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
+            'abstract': 'The Scottish Public Sector LiDAR (Phase I) dataset was commissioned in response to the Flood Risk Management Act (2009) by the Scottish Government, Scottish Environmental Protection Agency (SEPA), and Scottish Water collaboratively. Airborne LiDAR data was collected across 10 sites totalling 11,845 km2 (note the dataset does not have full national coverage) between March 2011 and May 2012. Aside from flood risk management, this data has also been used for archaeological and orienteering purposes. This dataset reflects the Digital Terrain Model (DTM) produced from the point cloud data.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
             'resourceType': 'Dataset',
@@ -153,7 +153,7 @@ with open('data.lidar.json', 'w') as output:
         'id': 'ddc9c05b-6060-5abb-92c4-5586ed52ad77',
         'metadata': {
             'title': 'LiDAR for Scotland Phase I LAS (LAZ)',
-            'abstract': 'The Scottish Public Sector LiDAR Phase I dataset was commissioned by the Scottish Government, SEPA and Scottish Water in 2011. This was commissioned in response to the Flood Risk Management Act (2009). The contract was awarded to Atkins, and the LiDAR data was collected and delivered by Blom. Airbourne LiDAR data was collected for 10 collection areas (the dataset does not have full national coverage) totalling 11,845 km2 between March 2011 and May 2012. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
+            'abstract': 'The Scottish Public Sector LiDAR (Phase I) dataset was commissioned in response to the Flood Risk Management Act (2009) by the Scottish Government, Scottish Environmental Protection Agency (SEPA), and Scottish Water collaboratively. Airborne LiDAR data was collected across 10 sites totalling 11,845 km2 (note the dataset does not have full national coverage) between March 2011 and May 2012. Aside from flood risk management, this data has also been used for archaeological and orienteering purposes. This dataset reflects the LAS format point cloud data.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
             'resourceType': 'Dataset',
@@ -180,7 +180,7 @@ with open('data.lidar.json', 'w') as output:
         'id': '227b2528-0c7b-58f1-9e4e-315a1491969c',
         'metadata': {
             'title': 'LiDAR for Scotland Phase II DSM',
-            'abstract': 'The Scottish Public Sector LiDAR Phase II dataset was commissioned by the Scottish Government, SEPA, 13 local authorities and sportscotland in 2012. This was commissioned in response to the Flood Risk Management Act (2009). The project was managed by Sniffer and the contract was awarded to Fugro BKS. Airbourne LiDAR data was collected for 66 sites (the dataset does not have full national coverage) totalling 3,516 km2 between 29th November 2012 and 18th April 2014. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
+            'abstract': 'The Scottish Public Sector LiDAR (Phase II) dataset was commissioned in response to the Flood Risk Management Act (2009) by the Scottish Government, Scottish Environmental Protection Agency (SEPA), sportscotland, and 13 Scottish local authorities. This extension of the Phase I dataset collected airborne LiDAR for 66 additional sites for the purposes of localised flood management. Data was collected between 29th November 2012 and 18th April 2014 totalling an area of 3,516 km2 (note the dataset does not have full national coverage). Aside from flood risk management, this data has also been used for archaeological and orienteering purposes. This dataset reflects the Digital Surface Model (DSM) produced from the point cloud data.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
             'resourceType': 'Dataset',
@@ -207,7 +207,7 @@ with open('data.lidar.json', 'w') as output:
         'id': '4bbd5cc3-d879-55e0-a44d-2567697a1471',
         'metadata': {
             'title': 'LiDAR for Scotland Phase II DTM',
-            'abstract': 'The Scottish Public Sector LiDAR Phase II dataset was commissioned by the Scottish Government, SEPA, 13 local authorities and sportscotland in 2012. This was commissioned in response to the Flood Risk Management Act (2009). The project was managed by Sniffer and the contract was awarded to Fugro BKS. Airbourne LiDAR data was collected for 66 sites (the dataset does not have full national coverage) totalling 3,516 km2 between 29th November 2012 and 18th April 2014. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
+            'abstract': 'The Scottish Public Sector LiDAR (Phase II) dataset was commissioned in response to the Flood Risk Management Act (2009) by the Scottish Government, Scottish Environmental Protection Agency (SEPA), sportscotland, and 13 Scottish local authorities. This extension of the Phase I dataset collected airborne LiDAR for 66 additional sites for the purposes of localised flood management. Data was collected between 29th November 2012 and 18th April 2014 totalling an area of 3,516 km2 (note the dataset does not have full national coverage). Aside from flood risk management, this data has also been used for archaeological and orienteering purposes. This dataset reflects the Digital Terrain Model (DTM) produced from the point cloud data.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
             'resourceType': 'Dataset',
@@ -234,7 +234,7 @@ with open('data.lidar.json', 'w') as output:
         'id': 'a4b6e778-0fc6-5fe6-9c70-9721ad9a1ff8',
         'metadata': {
             'title': 'LiDAR for Scotland Phase II LAS (LAZ)',
-            'abstract': 'The Scottish Public Sector LiDAR Phase II dataset was commissioned by the Scottish Government, SEPA, 13 local authorities and sportscotland in 2012. This was commissioned in response to the Flood Risk Management Act (2009). The project was managed by Sniffer and the contract was awarded to Fugro BKS. Airbourne LiDAR data was collected for 66 sites (the dataset does not have full national coverage) totalling 3,516 km2 between 29th November 2012 and 18th April 2014. A DTM and DSM were produced from the point clouds, with 1m spatial resolution.',
+            'abstract': 'The Scottish Public Sector LiDAR (Phase II) dataset was commissioned in response to the Flood Risk Management Act (2009) by the Scottish Government, Scottish Environmental Protection Agency (SEPA), sportscotland, and 13 Scottish local authorities. This extension of the Phase I dataset collected airborne LiDAR for 66 additional sites for the purposes of localised flood management. Data was collected between 29th November 2012 and 18th April 2014 totalling an area of 3,516 km2 (note the dataset does not have full national coverage). Aside from flood risk management, this data has also been used for archaeological and orienteering purposes. This dataset reflects the LAS format point cloud data.',
             'topicCategory': 'Orthoimagery Elevation',
             'keyword': ['Orthoimagery', 'Elevation', 'Society'],
             'resourceType': 'Dataset',

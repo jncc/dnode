@@ -1,3 +1,15 @@
+
+# This script ingests S2 ARD images by looping through the S3 bucket.
+# You need read access to S3, so you can use a user such as the "s3-read-only" user.
+#
+# To create a local security profile called 's3-read-only', run
+# `aws configure --profile s3-read-only`
+# add the key details, and then
+# `python ingest.py --profile s3-read-only`.
+# When hacking, use the --limit option to get just the first few S3 objects e.g.
+# `python ingest.py --profile s3-read-only --limit 10`.
+
+
 import argparse
 import calendar
 import boto3
@@ -6,86 +18,159 @@ import os
 import re
 import subprocess
 import time
+from types import SimpleNamespace
 
-logger = logging.getLogger('s2init')
+
+log = logging.getLogger('log')
+regex = re.compile('Sentinel2([AB])\_((20[0-9]{2})([0-9]{2})([0-9]{2}))\/SEN2\_[0-9]{8}\_lat([0-9]{2,4})lon([0-9]{2,4})\_T([0-9]{2}[A-Z]{3})\_ORB([0-9]{3})\_(utm[0-9]{2}n)(\_osgb)?\_(clouds|sat|toposhad|valid|vmsk_sharp_rad_srefdem_stdsref|meta|thumbnail)(?!\.tif\.aux\.xml)')
+
+def main():
+    initialise_log()
+    args = parse_command_line_args()
+
+    log.info('Starting...')
+    session = boto3.Session(profile_name=args.profile)
+    s3c = session.client('s3')
+    bucket = session.resource('s3').Bucket(args.bucket)
+    log.info('Bucket is %s' % (args.bucket))
+
+    output_by_date = {}
+    output_by_grid = {}
+
+    log.info('Scanning %s/%s...' % (args.bucket, args.path))
+    for o in bucket.objects.filter(Prefix=args.path).limit(args.limit):
+        match = regex.search(o.key)
+        if match:
+            log.info('Processing object %s' % (o.key))
+            p = parse_object(match)
+            print(p)
+            add_by_date(output_by_date, o, p)
+            add_by_grid(output_by_grid, o, p)
+        else:
+            log.info('Skipping object %s' % (o.key))
+
+
+def initialise_log():
+    # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(levelname)s - %(message)s')
+    log.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    ch.setFormatter(formatter)
+    # fh = logging.FileHandler('s2init-%s.log' % time.strftime('%y%m%d-%H%M%S'))
+    # fh.setFormatter(formatter)
+    # fh.setLevel(logging.DEBUG)
+    log.addHandler(ch)
+    # log.addHandler(fh)
+    log.info('Logger initialised.')
+
+def parse_command_line_args():
+    parser = argparse.ArgumentParser(
+        description='Runs through S3 directory looking for S2 ARD images and generates a html structure to view them in')
+    parser.add_argument('-p', '--profile', type=str, required=True, help='Profile to use when connecting to S3')
+    parser.add_argument('-b', '--bucket', type=str, required=False, default='eocoe-sentinel-2', help='S3 bucket to look in')
+    parser.add_argument('-l', '--limit', type=int, required=False, default=1000000000, help='Limit the number of S3 objects scanned for dev')
+    parser.add_argument('-a', '--path', type=str, required=False, default='initial', help='Folder within S3 bucket')
+    parser.add_argument('-t', '--tempdir', type=str, required=False, default='./temp', help='Local temporary directory [Default: ./temp]')
+    return parser.parse_args()
 
 def sizeof_fmt(num, suffix='B'):
+    """ Gets the human-readable file size. https://stackoverflow.com/a/1094933 """
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
         if abs(num) < 1024.0:
             return "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
-def add_item(output, matched, satellite, year, month, day, lat, lon, grid, orbit, original_projection, new_projection, file_type, remote, year_slicing=True):
-    if year_slicing:
-        if not year in output:
-            output[year] = {}
-        if not month in output[year]:
-            output[year][month] = {}
-        if not day in output[year][month]:
-            output[year][month][day] = {}
-        if not grid in output[year][month][day]:
-            output[year][month][day][grid] = {
-                'name': 'S2%s_%s%s%s_lat%slon%s_T%s_ORB%s_%s%s' % (satellite, year, month, day, lat, lon, grid, orbit, original_projection, ('_%s' % (new_projection) if new_projection is not None else '')),
-                'satellite': 'sentinel-2%s' % (satellite.lower()),
-                'lat': lat,
-                'lon': lon,
-                'orbit': orbit,
-                'original_projection': original_projection,
-                'new_projection': original_projection       # Not a typo, this happens with Rockall
-            }
+def parse_object(match):
+    return SimpleNamespace(
+        satellite=           match.group(1),
+        full_date=           match.group(2),
+        year=                match.group(3),
+        month=               match.group(4),
+        day=                 match.group(5),
+        lat=                 match.group(6),
+        lon=                 match.group(7),
+        grid=                match.group(8),
+        orbit=               match.group(9),
+        original_projection= match.group(10),
+        new_projection=      match.group(11), # Optional Group, could give None
+        file_type=           match.group(12),
+    )
 
-            if new_projection is not None:
-                output[year][month][day][grid]['new_projection']: new_projection
 
-        if file_type == 'vmsk_sharp_rad_srefdem_stdsref':
-            output[year][month][day][grid]['product'] = {
-                'data': matched,
-                'size': sizeof_fmt(remote.size)
-            }
-        else:
-            output[year][month][day][grid][file_type] = {
-                'data': matched,
-                'size': sizeof_fmt(remote.size)
-            }
+
+def add_by_date(output, o, p):
+    # make a data structure like
+    # output[year][month][day][grid]['new_projection']
+    if not p.year in output:
+        output[p.year] = {}
+    if not p.month in output[p.year]:
+        output[p.year][p.month] = {}
+    if not p.day in output[p.year][p.month]:
+        output[p.year][p.month][p.day] = {}
+    if not p.grid in output[p.year][p.month][p.day]:
+        output[p.year][p.month][p.day][p.grid] = {
+            'name': 'S2%s_%s%s%s_lat%slon%s_T%s_ORB%s_%s%s' % (p.satellite, p.year, p.month, p.day, p.lat, p.lon, p.grid, p.orbit, p.original_projection, ('_%s' % (p.new_projection) if p.new_projection is not None else '')),
+            'satellite': 'sentinel-2%s' % (p.satellite.lower()),
+            'lat': p.lat,
+            'lon': p.lon,
+            'orbit': p.orbit,
+            'original_projection': p.original_projection,
+            'new_projection': p.original_projection       # Not a typo, this happens with Rockall
+        }
+
+        if p.new_projection is not None:
+            output[p.year][p.month][p.day][p.grid]['new_projection']: p.new_projection
+
+    if p.file_type == 'vmsk_sharp_rad_srefdem_stdsref':
+        output[p.year][p.month][p.day][p.grid]['product'] = {
+            'data': o.key,
+            'size': sizeof_fmt(o.size)
+        }
     else:
-        if not grid in output:
-            output[grid] = {}
+        output[p.year][p.month][p.day][p.grid][p.file_type] = {
+            'data': o.key,
+            'size': sizeof_fmt(o.size)
+        }
 
-        if not '%s%s%s' % (year, month, day) in output[grid]:
-            output[grid]['%s%s%s' % (year, month, day)] = {
-                'name': 'S2%s_%s%s%s_lat%slon%s_T%s_ORB%s_%s%s' % (satellite, year, month, day, lat, lon, grid, orbit, original_projection, ('_%s' % (new_projection) if new_projection is not None else '')),
-                'satellite': 'sentinel-2%s' % (satellite.lower()),
-                'lat': lat,
-                'lon': lon,
-                'orbit': orbit,
-                'original_projection': original_projection,
-                'new_projection': original_projection       # Not a typo, this happens with Rockall
-            }
+def add_by_grid(output, o, p):
+    if not p.grid in output:
+        output[p.grid] = {}
 
-        if new_projection is not None:
-            output[grid]['%s%s%s' % (year, month, day)]['new_projection']: new_projection
+    datestring = '%s%s%s' % (p.year, p.month, p.day)
+    if not datestring in output[p.grid]:
+        output[p.grid][datestring] = {
+            'name': 'S2%s_%s%s%s_lat%slon%s_T%s_ORB%s_%s%s' % (p.satellite, p.year, p.month, p.day, p.lat, p.lon, p.grid, p.orbit, p.original_projection, ('_%s' % (p.new_projection) if p.new_projection is not None else '')),
+            'satellite': 'sentinel-2%s' % (p.satellite.lower()),
+            'lat': p.lat,
+            'lon': p.lon,
+            'orbit': p.orbit,
+            'original_projection': p.original_projection,
+            'new_projection': p.original_projection       # Not a typo, this happens with Rockall
+        }
 
-        if file_type == 'vmsk_sharp_rad_srefdem_stdsref':
-            output[grid]['%s%s%s' % (year, month, day)]['product'] = {
-                'data': matched,
-                'size': sizeof_fmt(remote.size)
-            }
-        else:
-            output[grid]['%s%s%s' % (year, month, day)][file_type] = {
-                'data': matched,
-                'size': sizeof_fmt(remote.size)
-            }
+    if p.new_projection is not None:
+        output[p.grid][p.datestring]['new_projection']: p.new_projection
+
+    if p.file_type == 'vmsk_sharp_rad_srefdem_stdsref':
+        output[p.grid][p.datestring]['product'] = {
+            'data': o.key,
+            'size': sizeof_fmt(o.size)
+        }
+    else:
+        output[p.grid][datestring][p.file_type] = {
+            'data': o.key,
+            'size': sizeof_fmt(o.size)
+        }
     
-    return output
-
 def create_thumbnail(s3client, bucket, product, tempdir):
     s3client.download_file(bucket, product, os.path.join(tempdir, os.path.basename(product)))
 
     p = subprocess.Popen('gdal_translate -b 3 -b 2 -b 1 -ot Byte -of JPEG -outsize 5%% 5%% %s %s' % (os.path.join(tempdir, os.path.basename(product)), os.path.join(tempdir, os.path.basename(product).replace('_vmsk_sharp_rad_srefdem_stdsref.tif', '_thumbnail.jpg'))), shell=True)
     (output, err) = p.communicate()
     if output is not None:
-        self.logger.debug(output)
+        self.log.debug(output)
     if err is not None:
         raise RuntimeError(err)
     
@@ -93,61 +178,16 @@ def create_thumbnail(s3client, bucket, product, tempdir):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description='Runs through S3 directory looking for S2 ARD images and generates a html structure to view them in')
-    parser.add_argument('-b', '--bucket', type=str, required=True, help='S3 Bucket to look in')
-    parser.add_argument('-p', '--profile', type=str, required=True, help='Profile to use when connecting to S3')
-    parser.add_argument('-i', '--input', type=str, required=False, default='', help='Folder prefix to use when scanning S3 bucket')
-    parser.add_argument('-t', '--tempdir', type=str, required=False, default='./temp', help='Local temporary directory [Default: ./temp]')
+    main()
+    exit()
+        
 
-    args = parser.parse_args()
 
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-    logger = logging.getLogger('s2init')
-    logger.setLevel(logging.DEBUG)
+#
+#
+#
 
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    ch.setFormatter(formatter)
-
-    # fh = logging.FileHandler('s2init-%s.log' % time.strftime('%y%m%d-%H%M%S'))
-    # fh.setFormatter(formatter)
-    # fh.setLevel(logging.DEBUG)
-
-    logger.addHandler(ch)
-    # logger.addHandler(fh)    
-
-    session = boto3.Session(profile_name=args.profile)
-    s3 = session.resource('s3')
-    s3c = session.client('s3')
-    bucket = s3.Bucket(args.bucket)    
-
-    output_date = {}
-    output_grid = {}
-
-    regex = re.compile('Sentinel2([AB])\_((20[0-9]{2})([0-9]{2})([0-9]{2}))\/SEN2\_[0-9]{8}\_lat([0-9]{2,4})lon([0-9]{2,4})\_T([0-9]{2}[A-Z]{3})\_ORB([0-9]{3})\_(utm[0-9]{2}n)(\_osgb)?\_(clouds|sat|toposhad|valid|vmsk_sharp_rad_srefdem_stdsref|meta|thumbnail)(?!\.tif\.aux\.xml)')
-
-    logger.info('Scanning bucket (%s) path \'%s\' for files' % (args.bucket, args.input))
-    for remote in bucket.objects.filter(Prefix=args.input):
-        match = regex.search(remote.key)
-        if match:
-            satellite = match.group(1)
-            full_date = match.group(2)
-            year = match.group(3)
-            month = match.group(4)
-            day = match.group(5)
-            lat = match.group(6)
-            lon = match.group(7)
-            grid = match.group(8)
-            orbit = match.group(9)
-            original_projection = match.group(10)
-            new_projection = match.group(11) # Optional Group
-            file_type = match.group(12)
-
-            # do something
-            output_date = add_item(output_date, remote.key, satellite, year, month, day, lat, lon, grid, orbit, original_projection, new_projection, file_type, remote, year_slicing=True)
-            output_grid = add_item(output_grid, remote.key, satellite, year, month, day, lat, lon, grid, orbit, original_projection, new_projection, file_type, remote, year_slicing=False)
 
     date_temp_path = os.path.join(args.tempdir, 'date')
     grid_temp_path = os.path.join(args.tempdir, 'grid')

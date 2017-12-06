@@ -1,5 +1,5 @@
 
-# This script ingests S2 ARD images by looping through the S3 bucket.
+# This script ingests S2 ARD images by looping through the object S3 bucket.
 # You need read access to S3, so you can use a user such as the "s3-read-only" user.
 #
 # To create a local security profile called 's3-read-only', run
@@ -12,43 +12,50 @@
 
 import argparse
 import calendar
-import boto3
+import json
 import logging
 import os
 import re
 import subprocess
+import sys
 import time
 from types import SimpleNamespace
 
 
 log = logging.getLogger('log')
-regex = re.compile('Sentinel2([AB])\_((20[0-9]{2})([0-9]{2})([0-9]{2}))\/SEN2\_[0-9]{8}\_lat([0-9]{2,4})lon([0-9]{2,4})\_T([0-9]{2}[A-Z]{3})\_ORB([0-9]{3})\_(utm[0-9]{2}n)(\_osgb)?\_(clouds|sat|toposhad|valid|vmsk_sharp_rad_srefdem_stdsref|meta|thumbnail)(?!\.tif\.aux\.xml)')
+
+validation_regex = re.compile('^(.+) (\d+)$')
+extraction_regex = re.compile('Sentinel2([AB])\_((20[0-9]{2})([0-9]{2})([0-9]{2}))\/SEN2\_[0-9]{8}\_lat([0-9]{2,4})lon([0-9]{2,4})\_T([0-9]{2}[A-Z]{3})\_ORB([0-9]{3})\_(utm[0-9]{2}n)(\_osgb)?\_(clouds|sat|toposhad|valid|vmsk_sharp_rad_srefdem_stdsref|meta|thumbnail)(?!\.tif\.aux\.xml)')
 
 def main():
     initialise_log()
     args = parse_command_line_args()
 
     log.info('Starting...')
-    session = boto3.Session(profile_name=args.profile)
-    s3c = session.client('s3')
-    bucket = session.resource('s3').Bucket(args.bucket)
-    log.info('Bucket is %s' % (args.bucket))
 
     output_by_date = {}
     output_by_grid = {}
 
-    log.info('Scanning %s/%s...' % (args.bucket, args.path))
-    for o in bucket.objects.filter(Prefix=args.path).limit(args.limit):
-        match = regex.search(o.key)
-        if match:
-            log.info('Processing object %s' % (o.key))
-            p = parse_object(match)
-            print(p)
-            add_by_date(output_by_date, o, p)
-            add_by_grid(output_by_grid, o, p)
-        else:
-            log.info('Skipping object %s' % (o.key))
+    log.info('Scanning input file %s...' % (args.input))
 
+    with open(args.input) as f:
+        for line in f:
+            line = line.rstrip('\n') # remove newline
+            validation_match = validation_regex.match(line)
+            if validation_match is None:
+                sys.exit('Uh oh, input line was bad.')
+            else:
+                extraction_match = extraction_regex.search(line)
+                if extraction_match:
+                    log.info('Processing %s ...' % (line))
+                    p = parse_object(validation_match, extraction_match)
+                    log.info('Parsed %s' % (p))
+                    add_by_date(output_by_date, p)
+                    add_by_grid(output_by_grid, p)
+                else:
+                    log.info('Skipping %s ...' % (line))
+
+    write_json_file(output_by_date, args.outdir, 'by_date.json')
 
 def initialise_log():
     # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -67,11 +74,9 @@ def initialise_log():
 def parse_command_line_args():
     parser = argparse.ArgumentParser(
         description='Runs through S3 directory looking for S2 ARD images and generates a html structure to view them in')
-    parser.add_argument('-p', '--profile', type=str, required=True, help='Profile to use when connecting to S3')
-    parser.add_argument('-b', '--bucket', type=str, required=False, default='eocoe-sentinel-2', help='S3 bucket to look in')
-    parser.add_argument('-l', '--limit', type=int, required=False, default=1000000000, help='Limit the number of S3 objects scanned for dev')
+    parser.add_argument('-i', '--input', type=str, required=True, help='File of S3 objects')
     parser.add_argument('-a', '--path', type=str, required=False, default='initial', help='Folder within S3 bucket')
-    parser.add_argument('-t', '--tempdir', type=str, required=False, default='./temp', help='Local temporary directory [Default: ./temp]')
+    parser.add_argument('-o', '--outdir', type=str, required=False, default='output', help='Local output directory [Default: ./output]')
     return parser.parse_args()
 
 def sizeof_fmt(num, suffix='B'):
@@ -82,8 +87,10 @@ def sizeof_fmt(num, suffix='B'):
         num /= 1024.0
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
-def parse_object(match):
+def parse_object(validation_match, match):
     return SimpleNamespace(
+        s3_key=              validation_match.group(1),
+        s3_size=             int(validation_match.group(2)),
         satellite=           match.group(1),
         full_date=           match.group(2),
         year=                match.group(3),
@@ -98,9 +105,7 @@ def parse_object(match):
         file_type=           match.group(12),
     )
 
-
-
-def add_by_date(output, o, p):
+def add_by_date(output, p):
     # make a data structure like
     # output[year][month][day][grid]['new_projection']
     if not p.year in output:
@@ -125,16 +130,16 @@ def add_by_date(output, o, p):
 
     if p.file_type == 'vmsk_sharp_rad_srefdem_stdsref':
         output[p.year][p.month][p.day][p.grid]['product'] = {
-            'data': o.key,
-            'size': sizeof_fmt(o.size)
+            'data': p.s3_key,
+            'size': sizeof_fmt(p.s3_size)
         }
     else:
         output[p.year][p.month][p.day][p.grid][p.file_type] = {
-            'data': o.key,
-            'size': sizeof_fmt(o.size)
+            'data': p.s3_key,
+            'size': sizeof_fmt(p.s3_size)
         }
 
-def add_by_grid(output, o, p):
+def add_by_grid(output, p):
     if not p.grid in output:
         output[p.grid] = {}
 
@@ -151,30 +156,35 @@ def add_by_grid(output, o, p):
         }
 
     if p.new_projection is not None:
-        output[p.grid][p.datestring]['new_projection']: p.new_projection
+        output[p.grid][datestring]['new_projection']: p.new_projection
 
     if p.file_type == 'vmsk_sharp_rad_srefdem_stdsref':
-        output[p.grid][p.datestring]['product'] = {
-            'data': o.key,
-            'size': sizeof_fmt(o.size)
+        output[p.grid][datestring]['product'] = {
+            'data': p.s3_key,
+            'size': sizeof_fmt(p.s3_size)
         }
     else:
         output[p.grid][datestring][p.file_type] = {
-            'data': o.key,
-            'size': sizeof_fmt(o.size)
+            'data': p.s3_key,
+            'size': sizeof_fmt(p.s3_size)
         }
-    
-def create_thumbnail(s3client, bucket, product, tempdir):
-    s3client.download_file(bucket, product, os.path.join(tempdir, os.path.basename(product)))
 
-    p = subprocess.Popen('gdal_translate -b 3 -b 2 -b 1 -ot Byte -of JPEG -outsize 5%% 5%% %s %s' % (os.path.join(tempdir, os.path.basename(product)), os.path.join(tempdir, os.path.basename(product).replace('_vmsk_sharp_rad_srefdem_stdsref.tif', '_thumbnail.jpg'))), shell=True)
+def write_json_file(data, outdir, filename):
+    path = os.path.join('.', outdir, filename)
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=4)    
+    
+def create_thumbnail(s3client, bucket, product, outdir):
+    s3client.download_file(bucket, product, os.path.join(outdir, os.path.basename(product)))
+
+    p = subprocess.Popen('gdal_translate -b 3 -b 2 -b 1 -ot Byte -of JPEG -outsize 5%% 5%% %s %s' % (os.path.join(outdir, os.path.basename(product)), os.path.join(outdir, os.path.basename(product).replace('_vmsk_sharp_rad_srefdem_stdsref.tif', '_thumbnail.jpg'))), shell=True)
     (output, err) = p.communicate()
     if output is not None:
         self.log.debug(output)
     if err is not None:
         raise RuntimeError(err)
     
-    s3client.upload_file(os.path.join(tempdir, os.path.basename(product).replace('_vmsk_sharp_rad_srefdem_stdsref.tif', '_thumbnail.jpg')), bucket, product.replace('_vmsk_sharp_rad_srefdem_stdsref.tif', '_thumbnail.jpg'))
+    s3client.upload_file(os.path.join(outdir, os.path.basename(product).replace('_vmsk_sharp_rad_srefdem_stdsref.tif', '_thumbnail.jpg')), bucket, product.replace('_vmsk_sharp_rad_srefdem_stdsref.tif', '_thumbnail.jpg'))
 
 
 if __name__ == "__main__":
@@ -189,8 +199,8 @@ if __name__ == "__main__":
 #
 
 
-    date_temp_path = os.path.join(args.tempdir, 'date')
-    grid_temp_path = os.path.join(args.tempdir, 'grid')
+    date_temp_path = os.path.join(args.outdir, 'date')
+    grid_temp_path = os.path.join(args.outdir, 'grid')
 
     # Built output dictionary
     with open(os.path.join(date_temp_path, 'index.html'), 'w') as index:

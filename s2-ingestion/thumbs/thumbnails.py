@@ -35,7 +35,7 @@ def main():
         product_file = next((f for f in files if f['type']=='product'), None)
         if product_file is not None:
             s3_key = product_file['data']
-            print('Processing %d of %d. %s' (count, len(products), s3_key))
+            print('Processing %d of %d. %s' % (count, len(products), s3_key))
             product_file_name = os.path.basename(s3_key)
             product_path = os.path.join('.', product_file_name)
             s3_client.download_file(s3_bucket, s3_key, product_path)

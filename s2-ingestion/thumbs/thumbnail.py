@@ -23,6 +23,7 @@ def create_single_thumbnail(input_path):
         self.log.debug(output)
     if err is not None:
         raise RuntimeError(err)
-
+    return output_path
+    
 if __name__ == '__main__':
     main()

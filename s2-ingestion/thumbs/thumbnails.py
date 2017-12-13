@@ -20,11 +20,10 @@ def main():
 
     print('Loading %s products' % (len(products)))
 
+    s3 = boto3.resource('s3')
     session = boto3.Session(profile_name=args.profile)
     s3_client = session.client('s3')
     s3_bucket = 'eocoe-sentinel-2'
-
-    # todo open success file to append to
 
     count = 0
     for p in products.keys():
@@ -39,7 +38,11 @@ def main():
             product_file_name = os.path.basename(s3_key)
             product_path = os.path.join('.', product_file_name)
             s3_client.download_file(s3_bucket, s3_key, product_path)
-            thumbnail.create_single_thumbnail(product_path)
+            thumbnail_path = thumbnail.create_single_thumbnail(product_path)
             # now there should be a thumbnail next to the product file!
+            thumbnail_file_name = os.path.basename(thumbnail_path)
+            thumbnail_s3_key = 'thumbnails/' + thumbnail_file_name
+            s3.Bucket(s3_bucket).upload_file(thumbnail_path, thumbnail_s3_key)
+            
 
 main()

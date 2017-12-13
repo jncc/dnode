@@ -3,13 +3,14 @@ import argparse
 import boto3
 import json
 import os
-import subprocess
+
+# script to generate a thumbnail
+import thumbnail
 
 def parse_command_line_args():
     p = argparse.ArgumentParser()
-    p.add_argument('-p', '--profile', type=str, required=True, help='Profile to use when connecting to S3')
-    p.add_argument('-i', '--input', type=str, required=True, help='Input from previous step output')
-    p.add_argument('-o', '--outdir', type=str, required=False, default='output', help='Local output directory [Default: ./output]')
+    p.add_argument('-p', '--profile', type=str, required=False, help='Profile to use when connecting to S3')
+    p.add_argument('-i', '--input', type=str, required=True, help='Input from previous step''s output')
     return p.parse_args()
 
 def main():
@@ -22,16 +23,26 @@ def main():
 
     session = boto3.Session(profile_name=args.profile)
     s3_client = session.client('s3')
+    s3_bucket = 'eocoe-sentinel-2'
+    s3_key = 'initial/UKSentinel2A_20150628/SEN2_20150628_lat52lon366_T30UVC_ORB077_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref.tif'
+    product_file_name = os.path.basename(s3_key)
+    product_path = os.path.join('.', product_file_name)
+    s3_client.download_file(s3_bucket, s3_key, product_path)
 
+    exit()
+
+    # todo open success file to append to
+
+    count = 0
     for p in products.keys():
+        count += 1
         name = p
         attrs = products[p]['attrs']
         files = products[p]['files']
         product_file = next((f for f in files if f['type']=='product'), None)
         print(product_file)
         if product_file is not None:
-            # s3_bucket = 'eocoe-sentinel-2'
-            # s3_key = product_file['data']
+            s3_key = product_file['data']
             # product_file_name = os.path.basename(s3_key)
             # print(product_file_name)
             # full_out_dir = os.path.join('.', outdir, 'thumbnails')

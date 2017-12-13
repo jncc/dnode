@@ -1,5 +1,6 @@
 
-FROM python:3
-ADD thumbgen.py /
+# doesn't work, just trying things
+FROM geodata/gdal:2.1.3
+ADD thumbnail.py /
 RUN pip install pyfunctional
-CMD [ "python", "./thumbgen.py" ]
+CMD [ "python", "./thumbnail.py" ]

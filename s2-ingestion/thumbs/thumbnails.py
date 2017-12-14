@@ -43,7 +43,8 @@ def main():
             # now there should be a thumbnail next to the product file!
             thumbnail_file_name = os.path.basename(thumbnail_path)
             thumbnail_s3_key = 'thumbnails/' + thumbnail_file_name
-            s3.Bucket(s3_bucket).upload_file(thumbnail_path, thumbnail_s3_key, ExtraArgs={'ACL':'public-read'})
+            extra_args = {'ACL':'public-read', 'ContentType': 'image/jpeg'}
+            s3.Bucket(s3_bucket).upload_file(thumbnail_path, thumbnail_s3_key, ExtraArgs=extra_args)
             remove_files('.', 'SEN2_')
 
 def remove_files(dir, pattern):

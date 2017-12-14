@@ -1,6 +1,7 @@
 
 import argparse
 import boto3
+import fcntl
 import json
 import logging
 import os
@@ -10,6 +11,8 @@ import re
 import thumbnail # import our script to generate a thumbnail
 
 log = logging.getLogger('log')
+
+success_file = './success.txt'
 
 def parse_command_line_args():
     p = argparse.ArgumentParser()
@@ -23,8 +26,7 @@ def main():
 
     with open(args.input) as f:
         products = json.load(f)
-
-    log.info('Loading %s products' % (len(products)))
+    log.info('Found %s products' % (len(products)))
 
     s3 = boto3.resource('s3')
     session = boto3.Session(profile_name=args.profile)
@@ -41,22 +43,37 @@ def main():
         files = products[p]['files']
         product_file = next((f for f in files if f['type']=='product'), None)
         if product_file is not None:
-            s3_key = product_file['data']
-            log.info('Processing %d of %d. %s' % (count, len(products), s3_key))
-            product_file_name = os.path.basename(s3_key)
+            product_s3_key = product_file['data']
+            log.info('Processing %d of %d. %s' % (count, len(products), product_s3_key))
+            product_file_name = os.path.basename(product_s3_key)
             product_path = os.path.join('.', product_file_name)
-            s3_client.download_file(s3_bucket, s3_key, product_path)
+            # download product
+            s3_client.download_file(s3_bucket, product_s3_key, product_path)
             log.info('Downloaded product.')
+            # generate thumbnail
             thumbnail_path = thumbnail.create_single_thumbnail(product_path)
             log.info('Generated thumbnail.')
             # now there should be a thumbnail next to the product file!
             thumbnail_file_name = os.path.basename(thumbnail_path)
             thumbnail_s3_key = 'thumbnails/' + thumbnail_file_name
+            # upload thumbnail
             extra_args = {'ACL':'public-read', 'ContentType': 'image/jpeg'}
             s3.Bucket(s3_bucket).upload_file(thumbnail_path, thumbnail_s3_key, ExtraArgs=extra_args)
             log.info('Uploaded thumbnail.')
+            # clean up
             remove_files('.', 'SEN2_')
             log.info('Cleaned up.')
+            # record success
+            record_success(product_s3_key)
+
+
+# append the product key to the success file using a lock
+def record_success(product_s3_key):
+    with open(success_file, 'a') as g:
+        fcntl.flock(g, fcntl.LOCK_EX)
+        g.write(product_s3_key + '\n')
+        fcntl.flock(g, fcntl.LOCK_UN)
+
 
 def remove_files(dir, pattern):
     for f in os.listdir(dir):

@@ -40,7 +40,7 @@ def main():
 
     count = 0
 
-    while True
+    while True:
         # open success file
         with open(success_file) as f:
             successes = f.read().splitlines()

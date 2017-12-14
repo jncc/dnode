@@ -3,6 +3,7 @@ import argparse
 import boto3
 import json
 import os
+import re
 
 import thumbnail # import our script to generate a thumbnail
 
@@ -43,6 +44,11 @@ def main():
             thumbnail_file_name = os.path.basename(thumbnail_path)
             thumbnail_s3_key = 'thumbnails/' + thumbnail_file_name
             s3.Bucket(s3_bucket).upload_file(thumbnail_path, thumbnail_s3_key, ExtraArgs={'ACL':'public-read'})
-            
+            remove_files('.', 'SEN2_')
+
+def remove_files(dir, pattern):
+    for f in os.listdir(dir):
+        if re.search(pattern, f):
+            os.remove(os.path.join(dir, f))
 
 main()

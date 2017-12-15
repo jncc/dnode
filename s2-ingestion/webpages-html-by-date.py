@@ -53,6 +53,7 @@ def make_html_by_date(data, outdir):
         </style>        
     </head>
     <body>
+        <div class="ui container">
         <h1>Sentinel-2 ARD Index</h1>
         <table width=80%>
         <thead>
@@ -71,7 +72,8 @@ def make_html_by_date(data, outdir):
                 if not os.path.exists(year_dir_path):
                     os.makedirs(year_dir_path)
                 with open(os.path.join(year_dir_path, '%s.html' % month), 'w') as month_index:
-                    month_index.write('<html><head><title></title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css"/></head><body>\n')
+                    month_index.write('<html><head><title></title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css"/></head><body><div class="ui container">\n')
+                    month_index.write('<h1>%s %s</h1>' % (year, calendar.month_name[int(month)]))
                     month_index.write('<table>\n')
                     for day in data[year][month]:
                         for grid in data[year][month][day]:
@@ -83,30 +85,30 @@ def make_html_by_date(data, outdir):
                             sat_file = next((f for f in p['files'] if f['type']=='sat'), None)
                             toposhad_file = next((f for f in p['files'] if f['type']=='toposhad'), None)
                             valid_file = next((f for f in p['files'] if f['type']=='valid'), None)
-
                             if product_file is not None:
+                                thumbnail_file = 'thumbnails/' + os.path.basename(product_file['data'].replace('_vmsk_sharp_rad_srefdem_stdsref.tif', '_thumbnail.jpg'))
                                 month_index.write('<tr>\n')
-                                month_index.write('<td><img src="%s" height=100px width=100px></td>\n' % ('TODO'))
+                                month_index.write('<td><img src="%s" height=100px width=100px></td>\n' % (s3_base + thumbnail_file))
                                 month_index.write('<td>\n')
                                 month_index.write('<h3>%s</h3>\n' % (p['name']))
-                                month_index.write('<a href="%s">Data [GeoTIFF] (%s)</a><br/>\n' % (s3_base + product_file['data'], product_file['size']))
+                                month_index.write('<a href="%s">Data file</a>  GeoTIFF %s<br/>\n' % (s3_base + product_file['data'], product_file['size']))
                                 if clouds_file is not None:
-                                    month_index.write('<a href="%s">Cloudmask [GeoTIFF] (%s)</a><br/>\n' % (s3_base + clouds_file['data'], clouds_file['size']))
+                                    month_index.write('<a href="%s">Cloudmask</a> GeoTIFF %s<br/>\n' % (s3_base + clouds_file['data'], clouds_file['size']))
                                 if sat_file is not None:
-                                    month_index.write('<a href="%s">Saturated pixel mask [GeoTIFF] (%s)</a><br/>\n' % (s3_base + sat_file['data'], sat_file['size']))
+                                    month_index.write('<a href="%s">Saturated pixel mask</a> GeoTIFF %s<br/>\n' % (s3_base + sat_file['data'], sat_file['size']))
                                 if valid_file is not None:
-                                    month_index.write('<a href="%s">Valid pixel mask [GeoTIFF] (%s)</a><br/>\n' % (s3_base + valid_file['data'], valid_file['size']))
+                                    month_index.write('<a href="%s">Valid pixel mask</a> GeoTIFF %s<br/>\n' % (s3_base + valid_file['data'], valid_file['size']))
                                 if toposhad_file is not None:
-                                    month_index.write('<a href="%s">Topographic shadow mask [GeoTIFF] (%s)</a><br/>\n' % (s3_base + toposhad_file['data'], toposhad_file['size']))
+                                    month_index.write('<a href="%s">Topographic shadow mask</a> GeoTIFF %s<br/>\n' % (s3_base + toposhad_file['data'], toposhad_file['size']))
                                 if meta_file is not None:
-                                    month_index.write('<a href="%s">Metadata [JSON] (%s)</a>\n' % (s3_base + meta_file['data'], meta_file['size']))
+                                    month_index.write('<a href="%s">Metadata</a> JSON %s\n' % (s3_base + meta_file['data'], meta_file['size']))
                                 month_index.write('<hr/\n')
                                 month_index.write('</td>\n')
                                 month_index.write('</tr>\n')
                     month_index.write('</table>\n')
-                    month_index.write('</body></html>')
+                    month_index.write('</div></body></html>')
             index.write('</td>\n')
             index.write('</tr>\n')
-        index.write('</tbody></table></body></html>\n')
+        index.write('</tbody></table></div></body></html>\n')
 
 main()

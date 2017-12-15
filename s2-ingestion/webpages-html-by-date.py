@@ -9,7 +9,6 @@ import re
 import subprocess
 import sys
 import time
-from types import SimpleNamespace
 
 def parse_command_line_args():
     p = argparse.ArgumentParser()

@@ -23,7 +23,6 @@ def main():
     print('Starting...')
     session = boto3.Session(profile_name=args.profile)
     bucket = session.resource('s3').Bucket(args.bucket)
-    # s3c = session.client('s3')
 
     filename = 'list-' + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S") + '.txt'    
 

@@ -6,7 +6,6 @@ import json
 import logging
 import os
 import random
-import time
 import re
 
 import thumbnail # import our script to generate a thumbnail
@@ -53,7 +52,6 @@ def main():
         p = random.choice(remaining)
         # now process it ...
         count += 1
-        stopwatch = time.time()
         product_name = p
         attrs = products[p]['attrs']
         files = products[p]['files']

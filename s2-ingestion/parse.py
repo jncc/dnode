@@ -26,11 +26,7 @@ extraction_regex = re.compile('Sentinel2([AB])\_((20[0-9]{2})([0-9]{2})([0-9]{2}
 def main():
     initialise_log()
     args = parse_command_line_args()
-
-    log.info('Starting...')
-
     output = {}
-
     log.info('Scanning input file %s...' % (args.input))
 
     with open(args.input) as f:

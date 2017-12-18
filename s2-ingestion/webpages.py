@@ -33,10 +33,13 @@ def main():
         print(attrs)
         print(files)
         print('\n')
-        add_by_date(products_by_date, name, attrs, files)
+        #add_by_date(products_by_date, name, attrs, files)
+        add_by_grid(products_by_grid, name, attrs, files)
 
-        with open(os.path.join('.', args.outdir, 'products_by_date.json'), 'w') as f:
-            json.dump(products_by_date, f, indent=4)    
+        # with open(os.path.join('.', args.outdir, 'products_by_date.json'), 'w') as f:
+        #     json.dump(products_by_date, f, indent=4)    
+        with open(os.path.join('.', args.outdir, 'products_by_grid.json'), 'w') as f:
+            json.dump(products_by_grid, f, indent=4)    
 
 
 def add_by_date(output, name, attrs, files):
@@ -59,34 +62,16 @@ def add_by_date(output, name, attrs, files):
             'files': files,
         }
 
-# def add_by_grid(output, p):
-#     if not p.grid in output:
-#         output[p.grid] = {}
-
-#     datestring = '%s%s%s' % (p.year, p.month, p.day)
-#     if not datestring in output[p.grid]:
-#         output[p.grid][datestring] = {
-#             'name': 'S2%s_%s%s%s_lat%slon%s_T%s_ORB%s_%s%s' % (p.satellite, p.year, p.month, p.day, p.lat, p.lon, p.grid, p.orbit, p.original_projection, ('_%s' % (p.new_projection) if p.new_projection is not None else '')),
-#             'satellite': 'sentinel-2%s' % (p.satellite.lower()),
-#             'lat': p.lat,
-#             'lon': p.lon,
-#             'orbit': p.orbit,
-#             'original_projection': p.original_projection,
-#             'new_projection': p.original_projection       # Not a typo, this happens with Rockall
-#         }
-
-#     if p.new_projection is not None:
-#         output[p.grid][datestring]['new_projection']: p.new_projection
-
-#     if p.file_type == 'vmsk_sharp_rad_srefdem_stdsref':
-#         output[p.grid][datestring]['product'] = {
-#             'data': p.s3_key,
-#             'size': sizeof_fmt(p.s3_size)
-#         }
-#     else:
-#         output[p.grid][datestring][p.file_type] = {
-#             'data': p.s3_key,
-#             'size': sizeof_fmt(p.s3_size)
-#         }
+def add_by_grid(output, name, attrs, files):
+    # make a data structure like
+    # output[grid]
+    grid = attrs['grid']
+    if not grid in output:
+        output[grid] = []
+    output[grid].append({
+        'name': name,
+        'attrs': attrs,
+        'files': files,
+    })
 
 main()

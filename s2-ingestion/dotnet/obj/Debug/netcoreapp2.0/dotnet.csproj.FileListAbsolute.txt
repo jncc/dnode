@@ -1,0 +1,10 @@
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/bin/Debug/netcoreapp2.0/dotnet.deps.json
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/bin/Debug/netcoreapp2.0/dotnet.runtimeconfig.json
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/bin/Debug/netcoreapp2.0/dotnet.runtimeconfig.dev.json
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/bin/Debug/netcoreapp2.0/dotnet.dll
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/bin/Debug/netcoreapp2.0/dotnet.pdb
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/obj/Debug/netcoreapp2.0/dotnet.csproj.CoreCompileInputs.cache
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/obj/Debug/netcoreapp2.0/dotnet.AssemblyInfoInputs.cache
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/obj/Debug/netcoreapp2.0/dotnet.AssemblyInfo.cs
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/obj/Debug/netcoreapp2.0/dotnet.dll
+/home/petemontgomery/Work/dnode/s2-ingestion/dotnet/obj/Debug/netcoreapp2.0/dotnet.pdb

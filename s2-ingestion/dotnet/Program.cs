@@ -53,7 +53,7 @@ namespace dotnet
             Console.WriteLine("{0} non-Rockall assets without a new projection.", nonRockallAssetsWithoutNewProjection.Count());
             nonRockallAssetsWithoutNewProjection.Select(a => a.s3_key).ToList().ForEach(Console.WriteLine);
 
-            // group the assets into "products", ie things with a name and multiple associated files
+            // group the assets into "products", ie things with a name, attributes and multiple associated files
             var products = from a in assets
                            let name = String.Format("S2{0}_{1}{2}{3}_lat{4}lon{5}_T{6}_ORB{7}_{8}{9}",
                                 a.satellite_code, a.year, a.month, a.day, a.lat, a.lon, a.grid, a.orbit, a.original_projection,
@@ -81,7 +81,7 @@ namespace dotnet
             Debug.Assert(products.Count() == productsByKey.Count());
 
             // do all products have a data file?
-            var productsWithDataFile = products.Where(p => p.Files.Any(f => f.path.Contains("vmsk_sharp_rad_srefdem_stdsref")));
+            var productsWithDataFile = products.Where(p => p.Files.Any(f => f.type == "data"));
             Console.WriteLine("{0} products have a data file.", productsWithDataFile.Count());
 
             // ok, how many files do these products actually have?
@@ -100,26 +100,7 @@ namespace dotnet
             Console.WriteLine("Products with fewer than 6 files:");
             (from x in q where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
 
-            // HtmlByDate.GenerateHtml(products);
-
-            var productsByDate = from p in productsByKey
-                                 group p by p.Key.year into g
-                                 select new {
-                                     Year = g.Key,
-                                     Months = from p in productsByKey
-                                              group p by p.Key.month into g2
-                                              select new {
-                                                  Month = g2.Key,
-                                                  Days = g2
-                                              }
-                                 };
-        }
-
-        static string ParseName(Asset p)
-        {
-            return String.Format("S2{0}_{1}{2}{3}_lat{4}lon{5}_T{6}_ORB{7}_{8}{9}",
-                               p.satellite_code, p.year, p.month, p.day, p.lat, p.lon, p.grid, p.orbit, p.original_projection,
-                               p.new_projection != p.original_projection ? "_" + p.new_projection : "");
+            HtmlByDate.GenerateHtml(productsWithDataFile);
         }
 
         static Asset ParseAsset(string key, string size, Match match)
@@ -140,10 +121,11 @@ namespace dotnet
                 orbit=               match.Groups[9].Value,
                 original_projection= match.Groups[10].Value,
                 new_projection=      match.Groups[11].Success ? match.Groups[11].Value : match.Groups[10].Value,
-                file_type=           match.Groups[12].Value,
+                file_type=           match.Groups[12].Value == "vmsk_sharp_rad_srefdem_stdsref" ? "data" : match.Groups[12].Value,
             };
         }       
     }
+
 
     // wish we had better type inference! these are just shapes which could be inferred.
 

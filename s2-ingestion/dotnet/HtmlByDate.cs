@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,55 +10,141 @@ namespace dotnet
 {
     public static class HtmlByDate
     {
-        public static void GenerateHtml(IEnumerable<IGrouping<string, Asset>> products)
+        static string outputDir = "../output/bydate";
+        static string s3BasePath = "https://s3-eu-west-1.amazonaws.com/eocoe-sentinel-2/";
+        
+        public static void GenerateHtml(IEnumerable<Product> products)
         {
             Console.WriteLine("Generating HTML by date...");
-
-            // with open(os.path.join(outdir, 'index.html'), 'w') as index:
-        
+                   
             var s = new StringBuilder();
-
-    //     <style>
-    //         td {
-    //             border-bottom: 1px solid #bfc1c3;
-    //             padding-bottom: 0.05em;
-    //             text-align: center;
-    //         }
-    //     </style>        
 
             s.Append(@"<html>
                         <head>
                         <title>Sentinel 2 ARD Index</title>
                         <link rel=""stylesheet"" href=""https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css""/>
+                        <style>
+                            td {
+                                border-bottom: 1px solid #bfc1c3;
+                                padding-bottom: 0.5em;
+                                text-align: left;
+                            }
+                            tr {
+                                border-bottom: 1px solid #bfc1c3;
+                                margin-bottom: 1em;
+                            }
+                        </style>        
                         </head>
                         <body>
                         <div class=""ui container"">
                         <h1>Sentinel-2 ARD Index</h1>
-                        <table width=80%>
+                        <table width=""80%"">
                         <thead>
                         <td>Year</td>
                         <td>Month</td>
                         </thead>
                         <tbody>");
-            // var years = from p in products
-            //             group p by p.Key.y
-        
-    //     for year in data:
-    //         index.write('<tr>\n')
-    //         index.write('<td width=25%%>%s</td>\n' % (year))
-    //         index.write('<td>\n')
-    //         for month in data[year]:
-    //             index.write('<a href="%s/%s.html">%s</a><br/>\n' % (year, month, calendar.month_name[int(month)]))
-    //             year_dir_path = os.path.join('.', outdir, year)
-    //             if not os.path.exists(year_dir_path):
-    //                 os.makedirs(year_dir_path)
-    //             with open(os.path.join(year_dir_path, '%s.html' % month), 'w') as month_index:
-    //                 month_index.write('<html><head><title></title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css"/></head><body><div class="ui container">\n')
-    //                 month_index.write('<h1>%s %s</h1>' % (year, calendar.month_name[int(month)]))
-    //                 month_index.write('<table>\n')
-    //                 for day in data[year][month]:
-    //                     for grid in data[year][month][day]:
-    //                         s3_base = 'https://s3-eu-west-1.amazonaws.com/eocoe-sentinel-2/'
+
+            var byYear = from p in products
+                         orderby p.Attrs.year
+                         group p by p.Attrs.year;
+
+            foreach (var productsInYear in byYear)
+            {
+                string year = productsInYear.Key;
+                
+                s.Append("<tr>");
+                s.Append("<td width=\"25%\">" + year + "</td>");
+                s.Append("<td>");
+
+                var byMonth = from p in productsInYear
+                              group p by p.Attrs.month into g
+                              orderby g.Key
+                              select g;
+
+                foreach (var productsInMonth in byMonth)
+                {
+                    string month = productsInMonth.Key;
+                    string monthName = CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(int.Parse(month)); 
+                    
+                    s.Append("<div>");
+                    s.AppendFormat("<a href=\"{0}/{1}.html\">{2}</a> ", year, month, monthName);
+                    s.AppendFormat("<span class=\"ui tiny \">{0} products</span><br/>", productsInMonth.Count());
+                    s.Append("</div>");
+
+                    GenerateMonthPage(productsInMonth, year, monthName);
+                }
+
+                s.Append("</td>");
+                s.Append("</tr>");                
+            }
+
+            s.Append("</tbody></table></div></body></html>");
+
+            Directory.CreateDirectory(outputDir);
+            File.WriteAllText(Path.Combine(outputDir, "index.html"), s.ToString());
+        }
+
+        static void GenerateMonthPage(IGrouping<string, Product> productsInMonth, string year, string monthName)
+        {
+            var s = new StringBuilder();
+            string month = productsInMonth.Key;
+
+            s.Append("<html><head><title></title><link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css\"/></head><body><div class=\"ui container\">");
+            s.AppendFormat("<h1>{0} {1}</h1>", year, monthName);
+
+            var byGridsquare = from p in productsInMonth
+                               group p by p.Attrs.grid into g
+                               orderby g.Key
+                               select g;
+
+            var ordered = from p in productsInMonth
+                          orderby p.Attrs.day, p.Attrs.grid
+                          select p;
+
+            foreach (var productsInGridsquare in byGridsquare)
+            {
+                string gridsquare = productsInGridsquare.Key;
+                
+                s.AppendFormat("<h2>{0}</h2>", gridsquare);
+                s.AppendFormat("<div>{0} products</div>", productsInGridsquare.Count());
+                s.Append("<div class=\"ui items\">");
+
+                foreach (var p in productsInGridsquare)
+                {
+                    var dataFile = p.Files.Single(f => f.type == "data");
+                    string thumbnailPath = "thumbnails/" + Path.GetFileName(dataFile.path.Replace("_vmsk_sharp_rad_srefdem_stdsref.tif", "_thumbnail.jpg"));
+
+                    s.Append("<div class=\"item\">");
+                    s.Append("<div class=\"image\">");
+                    s.AppendFormat("<img src=\"{0}\" height=\"100px\" width=\"100px\">", s3BasePath + thumbnailPath);
+                    s.Append("</div>");
+                    s.Append("<div class=\"content\">");
+                        s.AppendFormat("<div class=\"header\">{0}</div>", p.Name);
+                        s.Append("<div class=\"meta\">");
+                        s.AppendFormat("<span>{0}</span>", "Meta");
+                        s.Append("</div>");
+                        s.Append("<div class=\"description\">");
+                        s.AppendFormat("<p>{0}</p>", "blah");
+                        s.Append("</div>");
+                        //       <div class="extra">
+                        //         Additional Details
+                        //       </div>
+                        // s.Append("<ul>");
+                        // foreach (var f in p.Files)
+                        // {
+                        //     s.Append("<li>");
+                        //     //s.AppendFormat("{0} {1}<br />", f.type, f.path);
+                        //     s.Append("</li>");
+                        // }
+                        // s.Append("</ul>");
+                    s.Append("</div>"); // content
+                    s.Append("</div>"); // item
+                }
+
+                s.Append("</div>"); // ui items
+            }
+
     //                         p = data[year][month][day][grid] # the product at this gridsquare
     //                         product_file = next((f for f in p['files'] if f['type']=='product'), None)
     //                         clouds_file = next((f for f in p['files'] if f['type']=='clouds'), None)
@@ -65,9 +152,7 @@ namespace dotnet
     //                         sat_file = next((f for f in p['files'] if f['type']=='sat'), None)
     //                         toposhad_file = next((f for f in p['files'] if f['type']=='toposhad'), None)
     //                         valid_file = next((f for f in p['files'] if f['type']=='valid'), None)
-    //                         if product_file is not None:
-    //                             thumbnail_file = 'thumbnails/' + os.path.basename(product_file['data'].replace('_vmsk_sharp_rad_srefdem_stdsref.tif', '_thumbnail.jpg'))
-    //                             month_index.write('<tr>\n')
+
     //                             month_index.write('<td><img src="%s" height=100px width=100px></td>\n' % (s3_base + thumbnail_file))
     //                             month_index.write('<td>\n')
     //                             month_index.write('<h3>%s</h3>\n' % (p['name']))
@@ -85,14 +170,12 @@ namespace dotnet
     //                             month_index.write('<hr/\n')
     //                             month_index.write('</td>\n')
     //                             month_index.write('</tr>\n')
-    //                 month_index.write('</table>\n')
-    //                 month_index.write('</div></body></html>')
-    //         index.write('</td>\n')
-    //         index.write('</tr>\n')
+            s.Append("</div></body></html>");
 
-            s.Append("</tbody></table></div></body></html>");
 
-            Console.WriteLine(s);
+            string dir = Path.Combine(outputDir, year);
+            Directory.CreateDirectory(dir);            
+            File.WriteAllText(Path.Combine(dir, month + ".html"), s.ToString());
         }
     }
 }

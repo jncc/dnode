@@ -8,12 +8,12 @@ using System.Text;
 
 namespace dotnet
 {
-    public static class HtmlByDate
+    public static class HtmlGenerator
     {
         static string outputDir = "../output/bydate";
         static string s3BasePath = "https://s3-eu-west-1.amazonaws.com/eocoe-sentinel-2/";
         
-        public static void GenerateHtml(IEnumerable<Product> products)
+        public static void GenerateByDate(IEnumerable<Product> products)
         {
             Console.WriteLine("Generating HTML by date...");
                    
@@ -107,7 +107,7 @@ namespace dotnet
                 string gridsquare = productsInGridsquare.Key;
                 
                 s.AppendFormat("<h2>{0}</h2>", gridsquare);
-                s.AppendFormat("<div>{0} products</div>", productsInGridsquare.Count());
+//              s.AppendFormat("<div>{0} products</div>", productsInGridsquare.Count());
                 s.Append("<div class=\"ui items\">");
 
                 foreach (var p in productsInGridsquare)
@@ -115,29 +115,47 @@ namespace dotnet
                     var dataFile = p.Files.Single(f => f.type == "data");
                     string thumbnailPath = "thumbnails/" + Path.GetFileName(dataFile.path.Replace("_vmsk_sharp_rad_srefdem_stdsref.tif", "_thumbnail.jpg"));
 
+                    Action<string, string, string> renderFile = (name, type, filetype) =>
+                    {
+                        var file = p.Files.SingleOrDefault(f => f.type == type);
+                        if (file == null) {
+                            s.Append($"<div>No {name} available</div>");
+                        } else {
+                            string path = s3BasePath + file.path;
+                            s.Append($"<div><a href=\"{path}\">{name}</a> {filetype} {file.size}</div>");
+                        }
+                    };
+
                     s.Append("<div class=\"item\">");
                     s.Append("<div class=\"image\">");
                     s.AppendFormat("<img src=\"{0}\" height=\"100px\" width=\"100px\">", s3BasePath + thumbnailPath);
                     s.Append("</div>");
                     s.Append("<div class=\"content\">");
-                        s.AppendFormat("<div class=\"header\">{0}</div>", p.Name);
-                        s.Append("<div class=\"meta\">");
-                        s.AppendFormat("<span>{0}</span>", "Meta");
-                        s.Append("</div>");
-                        s.Append("<div class=\"description\">");
-                        s.AppendFormat("<p>{0}</p>", "blah");
-                        s.Append("</div>");
-                        //       <div class="extra">
-                        //         Additional Details
-                        //       </div>
-                        // s.Append("<ul>");
-                        // foreach (var f in p.Files)
-                        // {
-                        //     s.Append("<li>");
-                        //     //s.AppendFormat("{0} {1}<br />", f.type, f.path);
-                        //     s.Append("</li>");
-                        // }
-                        // s.Append("</ul>");
+                    s.AppendFormat("<div class=\"header\">{0}</div>", p.Name);
+                    s.Append("<div class=\"meta\">");
+                    s.AppendFormat("<span>{0} &bullet; {1}</span>", p.Attrs.day + " " + monthName, gridsquare);
+                    s.Append("</div>");
+                    // s.Append("<div class=\"description\">");
+                    // s.AppendFormat("<p>{0}</p>", "blah");
+                    // s.Append("</div>");
+                    s.Append("<div class=\"extra\">");
+
+                    // s.AppendFormat("<div><a href=\"{0}\">Data file</a> Geotiff {1}</div>", s3BasePath + dataFile.path, dataFile.size);
+                    
+                    renderFile("Data file", "data", "Geotiff");
+                    renderFile("Cloud file", "clouds", "Geotiff");
+                    renderFile("Saturated pixel mask", "sat", "Geotiff");
+                                        
+                    
+                    //s.Append("<ul>");
+                    // foreach (var f in p.Files)
+                    // {
+                    //     s.Append("<li>");
+                    //     s.AppendFormat("{0} {1}<br />", f.type, f.path);
+                    //     s.Append("</li>");
+                    // }
+                    // s.Append("</ul>");
+                    s.Append("</div>"); // extra
                     s.Append("</div>"); // content
                     s.Append("</div>"); // item
                 }
@@ -153,9 +171,7 @@ namespace dotnet
     //                         toposhad_file = next((f for f in p['files'] if f['type']=='toposhad'), None)
     //                         valid_file = next((f for f in p['files'] if f['type']=='valid'), None)
 
-    //                             month_index.write('<td><img src="%s" height=100px width=100px></td>\n' % (s3_base + thumbnail_file))
-    //                             month_index.write('<td>\n')
-    //                             month_index.write('<h3>%s</h3>\n' % (p['name']))
+
     //                             month_index.write('<a href="%s">Data file</a>  GeoTIFF %s<br/>\n' % (s3_base + product_file['data'], product_file['size']))
     //                             if clouds_file is not None:
     //                                 month_index.write('<a href="%s">Cloudmask</a> GeoTIFF %s<br/>\n' % (s3_base + clouds_file['data'], clouds_file['size']))

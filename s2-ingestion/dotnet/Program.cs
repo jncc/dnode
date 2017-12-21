@@ -64,8 +64,7 @@ namespace dotnet
                                 Files = (from a in g select new S3File {
                                             type = a.file_type,
                                             path = a.s3_key,
-                                            size_in_bytes = a.s3_size,
-                                            size =  "todo" // ': sizeof_fmt(p.s3_size),
+                                            size =  Utility.GetBytesReadable(long.Parse(a.s3_size)),
                                         }),
                                 Attrs = g.First() // just use the first asset, all *should* be the same
                            };
@@ -100,7 +99,7 @@ namespace dotnet
             Console.WriteLine("Products with fewer than 6 files:");
             (from x in q where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
 
-            HtmlByDate.GenerateHtml(productsWithDataFile);
+            HtmlGenerator.GenerateByDate(productsWithDataFile);
         }
 
         static Asset ParseAsset(string key, string size, Match match)
@@ -123,8 +122,9 @@ namespace dotnet
                 new_projection=      match.Groups[11].Success ? match.Groups[11].Value : match.Groups[10].Value,
                 file_type=           match.Groups[12].Value == "vmsk_sharp_rad_srefdem_stdsref" ? "data" : match.Groups[12].Value,
             };
-        }       
+        }
     }
+
 
 
     // wish we had better type inference! these are just shapes which could be inferred.
@@ -159,7 +159,6 @@ namespace dotnet
     {
         public string type;
         public string path;
-        public string size_in_bytes;
         public string size;
     }        
 }

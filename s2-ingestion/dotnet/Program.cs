@@ -79,6 +79,11 @@ namespace dotnet
             Console.WriteLine("{0} products parsed using GroupBy (should be same).", productsByKey.Count());
             Debug.Assert(products.Count() == productsByKey.Count());
 
+            // there should be exactly 2 satellites, A and B
+            var satellites = products.GroupBy(p => p.Attrs.satellite_code).Select(g => g.Key).ToList();
+            Console.WriteLine($"Satellites are {String.Join(", ", satellites)}.");
+            Debug.Assert(satellites.Count() == 2);
+
             // do all products have a data file?
             var productsWithDataFile = products.Where(p => p.Files.Any(f => f.type == "data"));
             Console.WriteLine("{0} products have a data file.", productsWithDataFile.Count());
@@ -89,7 +94,7 @@ namespace dotnet
                     select new {
                         FileCount = g.Key,
                         ProductCount = g.Count(),
-                        Products = g.AsEnumerable()
+                        Products = g
                     };
 
             // check that the products all have all 6 files associated with them
@@ -98,8 +103,11 @@ namespace dotnet
 
             Console.WriteLine("Products with fewer than 6 files:");
             (from x in q where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
+            
+            HtmlByDate.Generate(productsWithDataFile);
+            HtmlByGridsquare.Generate(productsWithDataFile);
 
-            HtmlGenerator.GenerateByDate(productsWithDataFile);
+            Console.WriteLine("Done.");
         }
 
         static Asset ParseAsset(string key, string size, Match match)

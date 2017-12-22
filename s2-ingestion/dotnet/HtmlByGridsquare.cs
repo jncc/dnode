@@ -20,7 +20,7 @@ namespace dotnet
 
             s.Append(@"<html>
                         <head>
-                        <title>Sentinel 2 ARD Index</title>
+                        <title>Sentinel-2 ARD index by gridsquare</title>
                         <link rel=""stylesheet"" href=""https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css""/>
                         <style>
                             td {
@@ -36,12 +36,8 @@ namespace dotnet
                         </head>
                         <body>
                         <div class=""ui container"">
-                        <h1>Sentinel-2 ARD Index (by gridsquare)</h1>
-                        <table width=""80%"">
-                        <thead>
-                        <td>Gridsquare</td>
-                        </thead>
-                        <tbody>");
+                        <br />
+                        <h1>Sentinel-2 ARD index by gridsquare</h1>");
 
             var productsByGridsquare = from p in products
                                        group p by p.Attrs.grid into g
@@ -52,18 +48,14 @@ namespace dotnet
             {
                 string gridsquare = productsInGridsquare.Key;
                 
-                // (no real reason to use a table in this case)
-                s.Append("<tr>");
-                s.Append("<td>");
                 s.Append($"<a href=\"{gridsquare}.html\">{gridsquare}</a> ");
-                s.Append($"<span class=\"ui tiny \">{productsInGridsquare.Count()} products</span><br/>");
-                s.Append("</td>");
-                s.Append("</tr>");
+                s.Append($"<span style=\"color:#999\">  {productsInGridsquare.Count()} products</span><br/>");
+                s.Append("<hr />");                
 
                 GenerateGridsquarePage(gridsquare, productsInGridsquare);
             }
 
-            s.Append("</tbody></table></div></body></html>");
+            s.Append("</div></body></html>");
 
             Directory.CreateDirectory(outputDir);
             File.WriteAllText(Path.Combine(outputDir, "index.html"), s.ToString());
@@ -74,13 +66,14 @@ namespace dotnet
             var s = new StringBuilder();
 
             s.Append("<html><head><title></title><link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css\"/></head><body><div class=\"ui container\">");
+            s.Append("<br />");
             s.Append($"<h1>{gridsquare}</h1>");
 
             var sorted = from p in products
                          orderby p.Attrs.year, p.Attrs.month, p.Attrs.day
                          select p;
 
-            HtmlProductList.Generate(s, sorted);
+            HtmlProductList.Render(s, sorted);
 
             s.Append("</div></body></html>");
 

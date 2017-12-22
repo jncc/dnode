@@ -20,7 +20,7 @@ namespace dotnet
 
             s.Append(@"<html>
                         <head>
-                        <title>Sentinel 2 ARD Index</title>
+                        <title>Sentinel-2 ARD index by date</title>
                         <link rel=""stylesheet"" href=""https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css""/>
                         <style>
                             td {
@@ -36,7 +36,8 @@ namespace dotnet
                         </head>
                         <body>
                         <div class=""ui container"">
-                        <h1>Sentinel-2 ARD Index (by date)</h1>
+                        <br />
+                        <h1>Sentinel-2 ARD index by date</h1>
                         <table width=""80%"">
                         <thead>
                         <td>Year</td>
@@ -68,7 +69,7 @@ namespace dotnet
                     
                     s.Append("<div>");
                     s.Append($"<a href=\"{year}/{month}.html\">{monthName}</a>");
-                    s.Append($"<span class=\"ui tiny \">{productsInMonth.Count()} products</span><br/>");
+                    s.Append($"<span style=\"color:#999\"> &bullet; {productsInMonth.Count()} products</span><br/>");
                     s.Append("</div>");
 
                     GenerateMonthPage(productsInMonth, year, monthName);
@@ -91,7 +92,8 @@ namespace dotnet
             string month = productsInMonth.Key;
 
             s.Append("<html><head><title></title><link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css\"/></head><body><div class=\"ui container\">");
-            s.Append($"<h1>{year} {month}</h1>");
+            s.Append("<br />");
+            s.Append($"<h1>{monthName} {year}</h1>");
 
             var byGridsquare = from p in productsInMonth
                                group p by p.Attrs.grid into g
@@ -103,7 +105,7 @@ namespace dotnet
                 string gridsquare = productsInGridsquare.Key;
                 s.Append($"<h2>{gridsquare}</h2>");
 
-                HtmlProductList.Generate(s, productsInGridsquare);
+                HtmlProductList.Render(s, productsInGridsquare);
             }
 
             s.Append("</div></body></html>");

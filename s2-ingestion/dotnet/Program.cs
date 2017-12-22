@@ -51,7 +51,7 @@ namespace dotnet
             // why do these files not have a new projection?
             var nonRockallAssetsWithoutNewProjection = assetsWithoutNewProjection.Where(a => !a.s3_key.Contains("Rockall"));
             Console.WriteLine("{0} non-Rockall assets without a new projection.", nonRockallAssetsWithoutNewProjection.Count());
-            nonRockallAssetsWithoutNewProjection.Select(a => a.s3_key).ToList().ForEach(Console.WriteLine);
+//          nonRockallAssetsWithoutNewProjection.Select(a => a.s3_key).ToList().ForEach(Console.WriteLine);
 
             // group the assets into "products", ie things with a name, attributes and multiple associated files
             var products = from a in assets

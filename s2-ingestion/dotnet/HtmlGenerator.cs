@@ -139,22 +139,12 @@ namespace dotnet
                     // s.AppendFormat("<p>{0}</p>", "blah");
                     // s.Append("</div>");
                     s.Append("<div class=\"extra\">");
-
-                    // s.AppendFormat("<div><a href=\"{0}\">Data file</a> Geotiff {1}</div>", s3BasePath + dataFile.path, dataFile.size);
-                    
                     renderFile("Data file", "data", "Geotiff");
                     renderFile("Cloud file", "clouds", "Geotiff");
                     renderFile("Saturated pixel mask", "sat", "Geotiff");
-                                        
-                    
-                    //s.Append("<ul>");
-                    // foreach (var f in p.Files)
-                    // {
-                    //     s.Append("<li>");
-                    //     s.AppendFormat("{0} {1}<br />", f.type, f.path);
-                    //     s.Append("</li>");
-                    // }
-                    // s.Append("</ul>");
+                    renderFile("Valid pixel mask", "valid", "Geotiff");
+                    renderFile("Topographic shadow mask", "toposhad", "Geotiff");
+                    renderFile("Metadata", "meta", "Json");
                     s.Append("</div>"); // extra
                     s.Append("</div>"); // content
                     s.Append("</div>"); // item

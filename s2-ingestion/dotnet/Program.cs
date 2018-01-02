@@ -105,6 +105,10 @@ namespace dotnet
             Console.WriteLine("Products with fewer than 6 files:");
             (from x in q where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
             
+
+            
+
+
             if (args.Any(a => a == "-g" || a == "--generate"))
             {
                 HtmlByDate.Generate(productsWithDataFile);

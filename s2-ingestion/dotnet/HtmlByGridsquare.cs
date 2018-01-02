@@ -1,10 +1,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace dotnet
 {
@@ -16,6 +19,8 @@ namespace dotnet
         {
             Console.WriteLine("Generating HTML by gridsquare...");
             Directory.CreateDirectory(outputDir);
+
+            GenerateGridGeojson(products);
             
             var s = new StringBuilder();
 
@@ -59,6 +64,40 @@ namespace dotnet
             s.Append("</div></body></html>");
 
             File.WriteAllText(Path.Combine(outputDir, "index.html"), s.ToString());
+        }
+
+        private static void GenerateGridGeojson(IEnumerable<Product> products)
+        {
+            var gridsquaresWithProducts = (from p in products
+                                           group p by p.Attrs.grid into g
+                                           select g.Key).ToList();
+
+            Console.WriteLine($"{gridsquaresWithProducts.Count()} gridsquares with products in them.");
+            
+            string json = File.ReadAllText(@"../grid/s2ukwidegrid.json");
+            var geojson = JObject.Parse(json);
+            var gridsquaresInMap = geojson["features"]
+                .Children()
+                .Select(f => f["properties"]["Name"].ToString());
+            
+            Console.WriteLine($"{gridsquaresInMap.Count()} gridsquare features to work with.");
+
+            // ensure we have a feature for each product-containing gridsquare
+            Debug.Assert(gridsquaresWithProducts.All(s => gridsquaresInMap.Contains(s)));
+
+            // generate a geojson with a feature for each product-containing gridsquare
+            var output = new {
+                type = "FeatureCollection",
+                name = "s2grid",
+                features = geojson["features"].Children()
+                    .Where(f => gridsquaresWithProducts.Contains(f["properties"]["Name"].ToString()))
+                    .ToList()
+            };
+
+            Console.WriteLine("blah");
+            File.WriteAllText(Path.Combine(outputDir, "grid.json"), JsonConvert.SerializeObject(output));
+            Console.WriteLine("blah");
+            
         }
 
         static void GenerateGridsquarePage(string gridsquare, IEnumerable<Product> products)

@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace dotnet
 {
+    /// Run with dotnet run --generate to generate HTML pages
     class Program
     {
         // change from python version: remove unnecessary underscores which aren't accepted by .net regex engine 
@@ -104,8 +105,11 @@ namespace dotnet
             Console.WriteLine("Products with fewer than 6 files:");
             (from x in q where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
             
-            HtmlByDate.Generate(productsWithDataFile);
-            HtmlByGridsquare.Generate(productsWithDataFile);
+            if (args.Any(a => a == "-g" || a == "--generate"))
+            {
+                HtmlByDate.Generate(productsWithDataFile);
+                HtmlByGridsquare.Generate(productsWithDataFile);
+            }
 
             Console.WriteLine("Done.");
         }

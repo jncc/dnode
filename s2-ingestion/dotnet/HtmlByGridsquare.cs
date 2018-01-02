@@ -15,6 +15,7 @@ namespace dotnet
         public static void Generate(IEnumerable<Product> products)
         {
             Console.WriteLine("Generating HTML by gridsquare...");
+            Directory.CreateDirectory(outputDir);
             
             var s = new StringBuilder();
 
@@ -57,7 +58,6 @@ namespace dotnet
 
             s.Append("</div></body></html>");
 
-            Directory.CreateDirectory(outputDir);
             File.WriteAllText(Path.Combine(outputDir, "index.html"), s.ToString());
         }
 

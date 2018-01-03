@@ -10,7 +10,7 @@ namespace dotnet
 {
     public static class HtmlByDate
     {
-        static string outputDir = "../output/bydate";
+        static string outputDir = "../output/web/bydate";
         
         public static void Generate(IEnumerable<Product> products)
         {

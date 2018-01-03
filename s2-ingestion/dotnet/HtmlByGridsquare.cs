@@ -13,7 +13,7 @@ namespace dotnet
 {
     public class HtmlByGridsquare
     {
-        static string outputDir = "../output/bygridsquare";
+        static string outputDir = "../output/web/bygridsquare";
 
         public static void Generate(IEnumerable<Product> products)
         {

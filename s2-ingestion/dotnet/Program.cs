@@ -54,12 +54,12 @@ namespace dotnet
 //          nonRockallAssetsWithoutNewProjection.Select(a => a.s3_key).ToList().ForEach(Console.WriteLine);
 
             // group the assets into "products", ie things with a name, attributes and multiple associated files
-            var products = from a in assets
-                           let name = String.Format("S2{0}_{1}{2}{3}_lat{4}lon{5}_T{6}_ORB{7}_{8}{9}",
+            var products = (from a in assets
+                            let name = String.Format("S2{0}_{1}{2}{3}_lat{4}lon{5}_T{6}_ORB{7}_{8}{9}",
                                 a.satellite_code, a.year, a.month, a.day, a.lat, a.lon, a.grid, a.orbit, a.original_projection,
                                 a.new_projection != a.original_projection ? "_" + a.new_projection : "")
-                           group a by name into g
-                           select new Product {
+                            group a by name into g
+                            select new Product {
                                 Name = g.Key,
                                 Files = (from a in g select new S3File {
                                             type = a.file_type,
@@ -67,9 +67,9 @@ namespace dotnet
                                             size =  Utility.GetBytesReadable(long.Parse(a.s3_size)),
                                         }),
                                 Attrs = g.First() // just use the first asset, all *should* be the same
-                           };
+                            }).ToList();
 
-            Console.WriteLine("{0} products parsed using name.", products.Count());
+            Console.WriteLine("{0} products parsed using name.", products.Count);
 
             // sanity-check grouping by Name string is correct
             var productsByKey = from p in assets
@@ -85,26 +85,27 @@ namespace dotnet
             Debug.Assert(satellites.Count() == 2);
 
             // do all products have a data file?
-            var productsWithDataFile = products.Where(p => p.Files.Any(f => f.type == "data"));
+            var productsWithDataFile = products.Where(p => p.Files.Any(f => f.type == "data")).ToList();
             Console.WriteLine("{0} products have a data file.", productsWithDataFile.Count());
 
             // ok, how many files do these products actually have?
-            var q = from p in productsWithDataFile
-                    group p by p.Files.Count() into g
-                    select new {
-                        FileCount = g.Key,
-                        ProductCount = g.Count(),
-                        Products = g
-                    };
+            var byFileCount = (from p in productsWithDataFile
+                               group p by p.Files.Count() into g
+                               select new {
+                                   FileCount = g.Key,
+                                   ProductCount = g.Count(),
+                                   Products = g
+                               }).ToList();
 
             // check that the products all have all 6 files associated with them
             Console.WriteLine("File counts for products with data files:");
-            q.ToList().Select(x => new { x.FileCount, x.ProductCount }).ToList().ForEach(Console.WriteLine);
+            byFileCount.Select(x => new { x.FileCount, x.ProductCount }).ToList().ForEach(Console.WriteLine);
 
+            // note any incomplete products
             Console.WriteLine("Products with fewer than 6 files:");
-            (from x in q where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
+            (from x in byFileCount where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
 
-            // generate the HTML pages (and associated assets)        
+            // generate the HTML pages (and associated assets)
             HtmlByDate.Generate(productsWithDataFile);
             HtmlByGridsquare.Generate(productsWithDataFile);
 

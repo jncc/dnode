@@ -106,8 +106,7 @@ namespace dotnet
             (from x in byFileCount where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
 
             // generate the HTML pages (and associated assets)
-            HtmlByDate.Generate(productsWithDataFile);
-            HtmlByGridsquare.Generate(productsWithDataFile);
+            Html.Generate(productsWithDataFile);
 
             Console.WriteLine("Done.");
         }

@@ -38,6 +38,7 @@ namespace dotnet
                         <div class=""ui container"">
                         <br />
                         <h1>Sentinel-2 ARD index by date</h1>
+                        <br />
                         <table width=""80%"">
                         <thead>
                         <td>Year</td>
@@ -69,7 +70,7 @@ namespace dotnet
                     
                     s.Append("<div>");
                     s.Append($"<a href=\"{year}/{month}.html\">{monthName}</a>");
-                    s.Append($"<span style=\"color:#999\"> &bullet; {productsInMonth.Count()} products</span><br/>");
+                    s.Append($"<span style=\"color:#aaa; \"> &nbsp; {productsInMonth.Count()} products</span><br/>");
                     s.Append("</div>");
 
                     GenerateMonthPage(productsInMonth, year, monthName);

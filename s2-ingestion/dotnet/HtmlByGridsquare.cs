@@ -91,21 +91,30 @@ namespace dotnet
                         <div class=""ui grid container"">
                         <br />
                         <h1>Sentinel-2 ARD index by gridsquare</h1>
+                        <br />
                         <div class=""ten wide column"">
                             <div id=""map""></div>
                         </div>
                         <script>
                             var url = 'https://api.mapbox.com/styles/v1/sumothecat/cj5w3i6w672u12slb33spg3te/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic3Vtb3RoZWNhdCIsImEiOiJjaWxocngyanYwMDY4dmprcTg4ODN2Z3B2In0.CockfZdHAzqOfsbw8VcQyQ';
-                            var map = L.map('map').setView([54.5, -4], 5);
+                            var map = L.map('map').setView([54.5, -4], 6);
                             L.tileLayer(url, { maxZoom: 20 }).addTo(map);
                             function onEachFeature(feature, layer) {
-                                layer.on('click', function(e) {
-                                    window.open(feature.properties.Name + '.html');
-                                });
-
                                 layer.bindTooltip(feature.properties.Name, {
                                     permanent: true
                                 })
+                                layer.on('click', function(e) {
+                                    window.open(feature.properties.Name + '.html');
+                                });
+                                layer.on('mouseover', function() {
+                                    layer.setStyle( { color: '#ff3232' } );
+                                });
+                                layer.on('mouseout', function() {
+                                    layer.setStyle( { color: '#66a5ff' } );
+                                });
+
+
+                                
                             }
                             L.geoJSON(grid, { onEachFeature: onEachFeature }).addTo(map);
                         </script>

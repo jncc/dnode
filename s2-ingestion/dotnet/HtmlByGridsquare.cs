@@ -100,8 +100,12 @@ namespace dotnet
                             var map = L.map('map').setView([54.5, -4], 6);
                             L.tileLayer(url, { maxZoom: 20 }).addTo(map);
                             function onEachFeature(feature, layer) {
-                                layer.bindTooltip(feature.properties.Name, {
-                                    permanent: true
+
+                                var label = ""<a>"" + feature.properties.Name + ""</a>"";
+
+                                layer.bindTooltip(label, {
+                                    permanent: true,
+                                    interactive: true
                                 })
                                 layer.on('click', function(e) {
                                     window.open(feature.properties.Name + '.html');
@@ -112,9 +116,6 @@ namespace dotnet
                                 layer.on('mouseout', function() {
                                     layer.setStyle( { color: '#66a5ff' } );
                                 });
-
-
-                                
                             }
                             L.geoJSON(grid, { onEachFeature: onEachFeature }).addTo(map);
                         </script>

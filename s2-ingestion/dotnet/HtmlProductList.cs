@@ -44,7 +44,7 @@ namespace dotnet
                 s.Append("<div class=\"extra\">");
 
                 renderFile("Data file", "data");
-                renderFile("Cloud file", "clouds");
+                renderFile("Cloud mask", "clouds");
                 renderFile("Saturated pixel mask", "sat");
                 renderFile("Valid pixel mask", "valid");
                 renderFile("Topographic shadow mask", "toposhad");

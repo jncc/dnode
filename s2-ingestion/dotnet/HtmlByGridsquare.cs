@@ -96,7 +96,7 @@ namespace dotnet
                             <div id=""map""></div>
                         </div>
                         <script>
-                            var url = 'https://api.mapbox.com/styles/v1/sumothecat/cj5w3i6w672u12slb33spg3te/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic3Vtb3RoZWNhdCIsImEiOiJjaWxocngyanYwMDY4dmprcTg4ODN2Z3B2In0.CockfZdHAzqOfsbw8VcQyQ';
+                            var url = 'https://{s}.tiles.mapbox.com/v4/petmon.lp99j25j/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoicGV0bW9uIiwiYSI6ImdjaXJLTEEifQ.cLlYNK1-bfT0Vv4xUHhDBA';
                             var map = L.map('map').setView([54.5, -4], 6);
                             L.tileLayer(url, { maxZoom: 20 }).addTo(map);
                             function onEachFeature(feature, layer) {

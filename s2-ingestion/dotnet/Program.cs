@@ -106,7 +106,10 @@ namespace dotnet
             (from x in byFileCount where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
 
             // generate the HTML pages (and associated assets)
-            Html.Generate(productsWithDataFile);
+            Html.GenerateHtml(productsWithDataFile);
+
+            // generate the catalog json output
+            Catalog.GenerateJson(products);
 
             Console.WriteLine("Done.");
         }

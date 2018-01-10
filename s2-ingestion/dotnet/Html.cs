@@ -9,7 +9,7 @@ namespace dotnet
     {
         static string outputDir = "../output/web";
         
-        public static void Generate(List<Product> products)
+        public static void GenerateHtml(List<Product> products)
         {
             Directory.CreateDirectory(outputDir);
 

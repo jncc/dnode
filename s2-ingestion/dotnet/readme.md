@@ -3,6 +3,10 @@ This is an experimental .NET Core v2 scripts folder.
 
 To install on Ubuntu, https://www.microsoft.com/net/learn/get-started/linuxubuntu
 
+To install packages:
+
+    dotnet restore
+    
 To run the script:
 
     dotnet run
@@ -10,4 +14,6 @@ To run the script:
 To add packages:
 
     dotnet add package Newtonsoft.Json
+
+
 

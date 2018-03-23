@@ -105,6 +105,22 @@ namespace dotnet
             Console.WriteLine("Products with fewer than 6 files:");
             (from x in byFileCount where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
 
+            // custom query as requested
+            Console.WriteLine("Custom query - S2A product counts by month:");
+            var s2aNonRockall2016CountByMonth = (from p in products
+                                where p.Attrs.satellite_code == "A"
+                                where !p.Attrs.s3_key.Contains("Rockall")
+                                where p.Attrs.year == "2016"
+                                group p by new { p.Attrs.year, p.Attrs.month } into g
+                                orderby g.Key.year, g.Key.month
+                                select new {
+                                    Year = g.Key.year,
+                                    Month = g.Key.month,
+                                    Count = g.Count()
+                                }).ToList();
+            s2aNonRockall2016CountByMonth.ForEach(Console.WriteLine);
+            Console.WriteLine("Custom query - S2A product count for 2016: " + s2aNonRockall2016CountByMonth.Sum(x => x.Count));
+            
             // generate the HTML pages (and associated assets)
             Html.GenerateHtml(productsWithDataFile);
 

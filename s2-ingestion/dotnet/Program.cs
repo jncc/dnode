@@ -65,6 +65,7 @@ namespace dotnet
                                             type = a.file_type,
                                             path = a.s3_key,
                                             size =  Utility.GetBytesReadable(long.Parse(a.s3_size)),
+                                            sizeLong = long.Parse(a.s3_size)
                                         }),
                                 Attrs = g.First() // just use the first asset, all *should* be the same
                             }).ToList();
@@ -106,21 +107,31 @@ namespace dotnet
             (from x in byFileCount where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
 
             // custom query as requested
+            var s2aNonRockall2016Products = from p in products
+                                            where p.Attrs.satellite_code == "A"
+                                            where !p.Attrs.s3_key.Contains("Rockall")
+                                            where p.Attrs.year == "2016"
+                                            select p;
+
             Console.WriteLine("Custom query - S2A product counts by month:");
-            var s2aNonRockall2016CountByMonth = (from p in products
-                                where p.Attrs.satellite_code == "A"
-                                where !p.Attrs.s3_key.Contains("Rockall")
-                                where p.Attrs.year == "2016"
-                                group p by new { p.Attrs.year, p.Attrs.month } into g
-                                orderby g.Key.year, g.Key.month
-                                select new {
-                                    Year = g.Key.year,
-                                    Month = g.Key.month,
-                                    Count = g.Count()
-                                }).ToList();
+            var s2aNonRockall2016CountByMonth = (from p in s2aNonRockall2016Products
+                                                 group p by new { p.Attrs.year, p.Attrs.month } into g
+                                                 orderby g.Key.year, g.Key.month
+                                                 select new
+                                                 {
+                                                     Year = g.Key.year,
+                                                     Month = g.Key.month,
+                                                     Count = g.Count()
+                                                 }).ToList();
             s2aNonRockall2016CountByMonth.ForEach(Console.WriteLine);
             Console.WriteLine("Custom query - S2A product count for 2016: " + s2aNonRockall2016CountByMonth.Sum(x => x.Count));
-            
+            var s2NonRockall2016MeanDataFileSize = (from p in s2aNonRockall2016Products
+                                                    from f in p.Files
+                                                    where f.type == "data"
+                                                    select f.sizeLong).Average();
+
+            Console.WriteLine("Custom query - S2A product average data file sile for 2016: " + s2NonRockall2016MeanDataFileSize +  $" ({Utility.GetBytesReadable(Convert.ToInt64(s2NonRockall2016MeanDataFileSize))})");
+
             // generate the HTML pages (and associated assets)
             Html.GenerateHtml(productsWithDataFile);
 
@@ -188,5 +199,6 @@ namespace dotnet
         public string type;
         public string path;
         public string size;
+        public long sizeLong;
     }        
 }

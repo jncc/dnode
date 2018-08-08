@@ -1,15 +1,19 @@
 
 
 # Gets the current list of objects (key and size) in the S3 bucket.
+
+# You need python (tested on pyton 3), which includes pip
+# You need to ensure you have the dependencies in the import statements, e.g.
+# pip install boto3
+
 # You need read access to S3, so you can use a user such as the "s3-read-only" user.
 # To create a local security profile called 's3-read-only', run
 # `aws configure --profile s3-read-only`
-# add the key details, and then
+# add the key details, (and eu-west-1 for region - not sure if necessary) and then
 # `python list.py --profile s3-read-only`.
 
-
-# example:
-# python get.py --profile s3-read-only
+# then run like this:
+# python list.py --profile s3-read-only
 
 import argparse
 import boto3
@@ -38,7 +42,7 @@ def parse_command_line_args():
     parser.add_argument('-b', '--bucket', type=str, required=False, default='eocoe-sentinel-2', help='S3 bucket to look in')
     parser.add_argument('-l', '--limit', type=int, required=False, default=1000000000, help='Limit the number of S3 objects scanned for dev')
     parser.add_argument('-a', '--path', type=str, required=False, default='initial', help='Folder within S3 bucket')
-    parser.add_argument('-o', '--outdir', type=str, required=False, default='output', help='Local output directory [Default: ./output]')
+    parser.add_argument('-o', '--outdir', type=str, required=False, default='saved', help='Local output directory [Default: ./output]')
     return parser.parse_args()
 
 main()

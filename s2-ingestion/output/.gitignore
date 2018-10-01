@@ -1,6 +1,0 @@
-
-# ignore everything in this directory (so we don't accidentally commit output)
-*
-
-# except this file
-!.gitignore

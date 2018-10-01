@@ -1,0 +1,50 @@
+<html>
+                        <head>
+                        <title>Sentinel-2 ARD index by gridsquare</title>
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css"/>
+                        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css"
+                            integrity="sha512-wcw6ts8Anuw10Mzh9Ytw4pylW8+NAD4ch3lqm9lzAsTxg0GFeJgoAtxuCLREZSC5lUXdVyo/7yfsqFjQ4S+aKw=="
+                            crossorigin=""/>
+                        <script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet.js"
+                            integrity="sha512-mNqn2Wg7tSToJhvHcqfzLMU6J4mkOImSPTxVZAdo+lcPlk+GhZmYgACEe0x35K7YzW1zJ7XyJV/TT1MrdXvMcA=="
+                            crossorigin=""></script>
+                        <script src="grid.json.js" type="text/javascript"></script>
+                        <style>
+                            html, body { height: 100%; }
+                            #map { height: 90%; width:100%; }
+                        </style>
+                        </head>
+                        <body>
+                        <div class="ui grid container">
+                        <br />
+                        <h1>Sentinel-2 ARD index by gridsquare</h1>
+                        <br />
+                        <div class="ten wide column">
+                            <div id="map"></div>
+                        </div>
+                        <script>
+                            var url = 'https://{s}.tiles.mapbox.com/v4/petmon.lp99j25j/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoicGV0bW9uIiwiYSI6ImdjaXJLTEEifQ.cLlYNK1-bfT0Vv4xUHhDBA';
+                            var map = L.map('map').setView([54.5, -4], 6);
+                            L.tileLayer(url, { maxZoom: 20 }).addTo(map);
+                            function onEachFeature(feature, layer) {
+
+                                var label = "<a>" + feature.properties.Name + "</a>";
+
+                                layer.bindTooltip(label, {
+                                    permanent: true,
+                                    interactive: true
+                                })
+                                layer.on('click', function(e) {
+                                    window.open(feature.properties.Name + '.html');
+                                });
+                                layer.on('mouseover', function() {
+                                    layer.setStyle( { color: '#ff3232' } );
+                                });
+                                layer.on('mouseout', function() {
+                                    layer.setStyle( { color: '#66a5ff' } );
+                                });
+                            }
+                            L.geoJSON(grid, { onEachFeature: onEachFeature }).addTo(map);
+                        </script>
+                        <div class="six wide column">
+                        <a href="28VEJ.html">28VEJ</a> <span style="color:#999">  32 products</span><br/><hr /><a href="28VEK.html">28VEK</a> <span style="color:#999">  28 products</span><br/><hr /><a href="29UNA.html">29UNA</a> <span style="color:#999">  70 products</span><br/><hr /><a href="29UNB.html">29UNB</a> <span style="color:#999">  90 products</span><br/><hr /><a href="29UPA.html">29UPA</a> <span style="color:#999">  100 products</span><br/><hr /><a href="29UPB.html">29UPB</a> <span style="color:#999">  109 products</span><br/><hr /><a href="29UPR.html">29UPR</a> <span style="color:#999">  102 products</span><br/><hr /><a href="29UQR.html">29UQR</a> <span style="color:#999">  75 products</span><br/><hr /><a href="29UQV.html">29UQV</a> <span style="color:#999">  106 products</span><br/><hr /><a href="29VNC.html">29VNC</a> <span style="color:#999">  100 products</span><br/><hr /><a href="29VND.html">29VND</a> <span style="color:#999">  104 products</span><br/><hr /><a href="29VNE.html">29VNE</a> <span style="color:#999">  98 products</span><br/><hr /><a href="29VPC.html">29VPC</a> <span style="color:#999">  114 products</span><br/><hr /><a href="29VPD.html">29VPD</a> <span style="color:#999">  76 products</span><br/><hr /><a href="29VPE.html">29VPE</a> <span style="color:#999">  99 products</span><br/><hr /><a href="29VPF.html">29VPF</a> <span style="color:#999">  96 products</span><br/><hr /><a href="30UUA.html">30UUA</a> <span style="color:#999">  75 products</span><br/><hr /><a href="30UUB.html">30UUB</a> <span style="color:#999">  72 products</span><br/><hr /><a href="30UUC.html">30UUC</a> <span style="color:#999">  95 products</span><br/><hr /><a href="30UUD.html">30UUD</a> <span style="color:#999">  103 products</span><br/><hr /><a href="30UUE.html">30UUE</a> <span style="color:#999">  106 products</span><br/><hr /><a href="30UUF.html">30UUF</a> <span style="color:#999">  72 products</span><br/><hr /><a href="30UUG.html">30UUG</a> <span style="color:#999">  95 products</span><br/><hr /><a href="30UVA.html">30UVA</a> <span style="color:#999">  95 products</span><br/><hr /><a href="30UVB.html">30UVB</a> <span style="color:#999">  94 products</span><br/><hr /><a href="30UVC.html">30UVC</a> <span style="color:#999">  84 products</span><br/><hr /><a href="30UVD.html">30UVD</a> <span style="color:#999">  69 products</span><br/><hr /><a href="30UVE.html">30UVE</a> <span style="color:#999">  80 products</span><br/><hr /><a href="30UVF.html">30UVF</a> <span style="color:#999">  105 products</span><br/><hr /><a href="30UVG.html">30UVG</a> <span style="color:#999">  86 products</span><br/><hr /><a href="30UWA.html">30UWA</a> <span style="color:#999">  75 products</span><br/><hr /><a href="30UWB.html">30UWB</a> <span style="color:#999">  59 products</span><br/><hr /><a href="30UWC.html">30UWC</a> <span style="color:#999">  60 products</span><br/><hr /><a href="30UWD.html">30UWD</a> <span style="color:#999">  80 products</span><br/><hr /><a href="30UWE.html">30UWE</a> <span style="color:#999">  91 products</span><br/><hr /><a href="30UWF.html">30UWF</a> <span style="color:#999">  94 products</span><br/><hr /><a href="30UWG.html">30UWG</a> <span style="color:#999">  95 products</span><br/><hr /><a href="30UXA.html">30UXA</a> <span style="color:#999">  78 products</span><br/><hr /><a href="30UXB.html">30UXB</a> <span style="color:#999">  99 products</span><br/><hr /><a href="30UXC.html">30UXC</a> <span style="color:#999">  88 products</span><br/><hr /><a href="30UXD.html">30UXD</a> <span style="color:#999">  88 products</span><br/><hr /><a href="30UXE.html">30UXE</a> <span style="color:#999">  63 products</span><br/><hr /><a href="30UXF.html">30UXF</a> <span style="color:#999">  67 products</span><br/><hr /><a href="30UXG.html">30UXG</a> <span style="color:#999">  110 products</span><br/><hr /><a href="30UYB.html">30UYB</a> <span style="color:#999">  76 products</span><br/><hr /><a href="30UYC.html">30UYC</a> <span style="color:#999">  71 products</span><br/><hr /><a href="30UYD.html">30UYD</a> <span style="color:#999">  71 products</span><br/><hr /><a href="30VUH.html">30VUH</a> <span style="color:#999">  93 products</span><br/><hr /><a href="30VUJ.html">30VUJ</a> <span style="color:#999">  94 products</span><br/><hr /><a href="30VUK.html">30VUK</a> <span style="color:#999">  102 products</span><br/><hr /><a href="30VUL.html">30VUL</a> <span style="color:#999">  88 products</span><br/><hr /><a href="30VVH.html">30VVH</a> <span style="color:#999">  91 products</span><br/><hr /><a href="30VVJ.html">30VVJ</a> <span style="color:#999">  88 products</span><br/><hr /><a href="30VVK.html">30VVK</a> <span style="color:#999">  98 products</span><br/><hr /><a href="30VVL.html">30VVL</a> <span style="color:#999">  104 products</span><br/><hr /><a href="30VWH.html">30VWH</a> <span style="color:#999">  84 products</span><br/><hr /><a href="30VWJ.html">30VWJ</a> <span style="color:#999">  104 products</span><br/><hr /><a href="30VWK.html">30VWK</a> <span style="color:#999">  117 products</span><br/><hr /><a href="30VWL.html">30VWL</a> <span style="color:#999">  103 products</span><br/><hr /><a href="30VWM.html">30VWM</a> <span style="color:#999">  129 products</span><br/><hr /><a href="30VWN.html">30VWN</a> <span style="color:#999">  91 products</span><br/><hr /><a href="30VXM.html">30VXM</a> <span style="color:#999">  92 products</span><br/><hr /><a href="30VXN.html">30VXN</a> <span style="color:#999">  87 products</span><br/><hr /><a href="31UCA.html">31UCA</a> <span style="color:#999">  102 products</span><br/><hr /><a href="31UCS.html">31UCS</a> <span style="color:#999">  89 products</span><br/><hr /><a href="31UCT.html">31UCT</a> <span style="color:#999">  76 products</span><br/><hr /><a href="31UCU.html">31UCU</a> <span style="color:#999">  75 products</span><br/><hr /><a href="31UCV.html">31UCV</a> <span style="color:#999">  103 products</span><br/><hr /><a href="31UDT.html">31UDT</a> <span style="color:#999">  112 products</span><br/><hr /><a href="31UDU.html">31UDU</a> <span style="color:#999">  122 products</span><br/><hr /></div></div></body></html>

@@ -9,7 +9,7 @@ namespace dotnet
 {
     public class HtmlProductList
     {
-        static string s3BasePath = "https://s3-eu-west-1.amazonaws.com/eocoe-sentinel-2/";
+        static string s3BasePath = "https://s3-eu-west-1.amazonaws.com/jncc-eo/";
         
         public static void Render(StringBuilder s, IEnumerable<Product> products)
         {
@@ -20,7 +20,8 @@ namespace dotnet
                 string monthName = CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(int.Parse(p.Attrs.month));
                 
                 var dataFile = p.Files.Single(f => f.type == "data");
-                string thumbnailPath = "thumbnails/" + Path.GetFileName(dataFile.path.Replace("_vmsk_sharp_rad_srefdem_stdsref.tif", "_thumbnail.jpg"));
+                var thumbnailFile = p.Files.Single(f => f.type == "thumbnail");
+                string thumbnailPath = thumbnailFile.path;
 
                 Action<string, string> renderFile = (name, type) =>
                 {

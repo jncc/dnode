@@ -95,6 +95,7 @@ namespace dotnet
             s.Append("<html><head><title></title><link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css\"/></head><body><div class=\"ui container\">");
             s.Append("<br />");
             s.Append($"<h1>{monthName} {year}</h1>");
+            s.Append("<p><strong>Please note</strong> that all filenames have been updated to include the satellite code</p>");
 
             var byGridsquare = from p in productsInMonth
                                group p by p.Attrs.grid into g

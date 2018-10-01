@@ -10,13 +10,13 @@ namespace dotnet
     class Program
     {
         // change from python version: remove unnecessary underscores which aren't accepted by .net regex engine 
-        static string parsingRegex = @"Sentinel2([AB])_((20[0-9]{2})([0-9]{2})([0-9]{2}))\/SEN2_[0-9]{8}_lat([0-9]{2,4})lon([0-9]{2,4})_T([0-9]{2}[A-Z]{3})_ORB([0-9]{3})_(utm[0-9]{2}n)(_osgb)?_(clouds|sat|toposhad|valid|vmsk_sharp_rad_srefdem_stdsref|meta|thumbnail)(?!\.tif\.aux\.xml)";
+        static string parsingRegex = @"S2([AB])_((20[0-9]{2})([0-9]{2})([0-9]{2}))_lat([0-9]{2,4})lon([0-9]{2,4})_T([0-9]{2}[A-Z]{3})_ORB([0-9]{3})_(utm[0-9]{2}n)(_osgb)?_(clouds|sat|toposhad|valid|vmsk_sharp_rad_srefdem_stdsref|meta|thumbnail)(?!\.tif\.aux\.xml)";
         
         static void Main(string[] args)
         {
             Console.WriteLine("Hello!");
 
-            var lines = File.ReadLines(@"../saved/list-20171206-101946.txt");
+            var lines = File.ReadLines(@"../saved/list-20181001-120509.txt");
 
             // load the S3 objects from the local file dump
             var objects = from line in lines
@@ -57,7 +57,7 @@ namespace dotnet
             var products = (from a in assets
                             let name = String.Format("S2{0}_{1}{2}{3}_lat{4}lon{5}_T{6}_ORB{7}_{8}{9}",
                                 a.satellite_code, a.year, a.month, a.day, a.lat, a.lon, a.grid, a.orbit, a.original_projection,
-                                a.new_projection != a.original_projection ? "_" + a.new_projection : "")
+                                a.new_projection != a.original_projection ? a.new_projection : "")
                             group a by name into g
                             select new Product {
                                 Name = g.Key,
@@ -98,13 +98,13 @@ namespace dotnet
                                    Products = g
                                }).ToList();
 
-            // check that the products all have all 6 files associated with them
+            // check that the products all have all 7 files associated with them
             Console.WriteLine("File counts for products with data files:");
             byFileCount.Select(x => new { x.FileCount, x.ProductCount }).ToList().ForEach(Console.WriteLine);
 
             // note any incomplete products
-            Console.WriteLine("Products with fewer than 6 files:");
-            (from x in byFileCount where x.FileCount < 6 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
+            Console.WriteLine("Products with fewer than 7 files:");
+            (from x in byFileCount where x.FileCount < 7 from p in x.Products select p.Name).ToList().ForEach(Console.WriteLine);
 
             // custom query as requested
             var s2aNonRockall2016Products = from p in products
@@ -131,7 +131,7 @@ namespace dotnet
                                                     select f.sizeLong).Average();
 
             Console.WriteLine("Custom query - S2A product average data file sile for 2016: " + s2NonRockall2016MeanDataFileSize +  $" ({Utility.GetBytesReadable(Convert.ToInt64(s2NonRockall2016MeanDataFileSize))})");
-
+            
             // generate the HTML pages (and associated assets)
             Html.GenerateHtml(productsWithDataFile);
 

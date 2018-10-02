@@ -16,7 +16,7 @@ namespace dotnet
         {
             Console.WriteLine("Hello!");
 
-            var lines = File.ReadLines(@"../saved/list-20181001-120509.txt");
+            var lines = File.ReadLines(@"../saved/list.txt");
 
             // load the S3 objects from the local file dump
             var objects = from line in lines

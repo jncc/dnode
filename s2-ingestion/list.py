@@ -18,7 +18,6 @@
 import argparse
 import boto3
 import os
-from datetime import datetime, timezone
 
 
 def main():
@@ -28,7 +27,7 @@ def main():
     session = boto3.Session(profile_name=args.profile)
     bucket = session.resource('s3').Bucket(args.bucket)
 
-    filename = 'list-' + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S") + '.txt'    
+    filename = 'list.txt'    
 
     print('Scanning %s/%s...' % (args.bucket, args.path))
     for o in bucket.objects.filter(Prefix=args.path).limit(args.limit):

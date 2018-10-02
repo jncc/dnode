@@ -37,7 +37,7 @@ def main():
 def parse_command_line_args():
     parser = argparse.ArgumentParser(
         description='Runs through S3 directory looking for S2 ARD images and saves the filename to an output file.')
-    parser.add_argument('-p', '--profile', type=str, required=True, help='Profile to use when connecting to S3')
+    parser.add_argument('-p', '--profile', type=str, required=False, help='Profile to use when connecting to S3')
     parser.add_argument('-b', '--bucket', type=str, required=False, default='jncc-eo', help='S3 bucket to look in')
     parser.add_argument('-l', '--limit', type=int, required=False, default=1000000000, help='Limit the number of S3 objects scanned for dev')
     parser.add_argument('-a', '--path', type=str, required=False, default='sentinel/2/ard/original', help='Folder within S3 bucket')

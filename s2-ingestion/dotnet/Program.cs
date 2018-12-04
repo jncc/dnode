@@ -10,13 +10,13 @@ namespace dotnet
     class Program
     {
         // change from python version: remove unnecessary underscores which aren't accepted by .net regex engine 
-        static string parsingRegex = @"S2([AB])_((20[0-9]{2})([0-9]{2})([0-9]{2}))_lat([0-9]{2,4})lon([0-9]{2,4})_T([0-9]{2}[A-Z]{3})_ORB([0-9]{3})_(utm[0-9]{2}n)(_osgb)?_(clouds|sat|toposhad|valid|vmsk_sharp_rad_srefdem_stdsref|meta|thumbnail)(?!\.tif\.aux\.xml)";
+        static string parsingRegex = @"S2([AB])_((20[0-9]{2})([0-9]{2})([0-9]{2}))_lat([0-9]{2,4})lon([0-9]{2,4})_T([0-9]{2}[A-Z]{3})_ORB([0-9]{3})_(utm[0-9]{2}n)(_osgb|_TM65)?_(clouds|sat|toposhad|valid|vmsk_sharp_rad_srefdem_stdsref|meta|thumbnail)(?!\.tif\.aux\.xml)";
         
         static void Main(string[] args)
         {
             Console.WriteLine("Hello!");
 
-            var lines = File.ReadLines(@"../saved/list-20181001-120509.txt");
+            var lines = File.ReadLines(@"../saved/list.txt");
 
             // load the S3 objects from the local file dump
             var objects = from line in lines

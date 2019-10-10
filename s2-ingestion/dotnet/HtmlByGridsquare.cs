@@ -73,6 +73,13 @@ namespace dotnet
 
             s.Append(@"<html>
                         <head>
+                        <!-- Google Tag Manager -->
+                        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                        })(window,document,'script','dataLayer','GTM-5TGXBJF');</script>
+                        <!-- End Google Tag Manager -->
                         <title>Sentinel-2 ARD index by gridsquare</title>
                         <link rel=""stylesheet"" href=""https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css""/>
                         <link rel=""stylesheet"" href=""https://unpkg.com/leaflet@1.1.0/dist/leaflet.css""
@@ -88,6 +95,10 @@ namespace dotnet
                         </style>
                         </head>
                         <body>
+                        <!-- Google Tag Manager (noscript) -->
+                        <noscript><iframe src='https://www.googletagmanager.com/ns.html?id=GTM-5TGXBJF'
+                        height='0' width='0' style='display:none;visibility:hidden'></iframe></noscript>
+                        <!-- End Google Tag Manager (noscript) -->
                         <div class=""ui grid container"">
                         <br />
                         <h1>Sentinel-2 ARD index by gridsquare</h1>

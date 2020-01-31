@@ -3,5 +3,5 @@ boto==2.43.0
 lxml==3.7.2
 psycopg2==2.6.2
 PyYAML==3.12
-requests==2.12.5
+requests==2.20.0
 luigi==2.3.3

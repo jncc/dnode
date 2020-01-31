@@ -4,4 +4,4 @@ lxml==3.7.2
 psycopg2==2.6.2
 PyYAML==3.12
 requests==2.12.5
-luigi==2.3.3
+luigi==2.8.0

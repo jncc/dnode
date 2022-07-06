@@ -1,6 +1,6 @@
 GDAL==2.1.2
 boto==2.43.0
-lxml==3.7.2
+lxml==4.9.1
 psycopg2==2.6.2
 PyYAML==3.12
 requests==2.12.5
